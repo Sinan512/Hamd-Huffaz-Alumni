@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} - Alumni Admin Portal</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5.3 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --font-main: 'Plus Jakarta Sans', sans-serif;
+      --bg-body: #f8fafc;
+      --sidebar-width: 270px;
+      --sidebar-bg: #0b0f19;
+      --sidebar-card: #151c2c;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+      --card-border: rgba(226, 232, 240, 0.8);
+      --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+      --card-shadow-hover: 0 12px 28px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* --- SIDEBAR STYLING --- */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, #0b0f19 0%, #111827 100%);
+      min-height: 100vh;
+      color: #94a3b8;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1040;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar .brand {
+      padding: 24px 28px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-gradient);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .sidebar-menu {
+      padding: 20px 16px;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #475569;
+      padding: 12px 14px 6px 14px;
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #94a3b8;
+      text-decoration: none;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 10px;
+      margin-bottom: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar a i {
+      font-size: 18px;
+      transition: transform 0.2s ease;
+    }
+
+    .sidebar a:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar a:hover i {
+      transform: translateX(2px);
+    }
+
+    .sidebar a.active {
+      background: var(--primary-gradient);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+
+    .sidebar-user-card {
+      margin: 16px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* --- MAIN CONTENT AREA --- */
+    .main {
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .boxed {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* --- NAVBAR STYLING --- */
+    .navbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 1020;
+      backdrop-filter: blur(8px);
+    }
+
+    .search-box {
+      position: relative;
+      max-width: 420px;
+      width: 100%;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 16px;
+    }
+
+    .search-box input {
+      padding-left: 42px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .search-box input:focus {
+      background: #ffffff;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .nav-icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-icon-btn:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .nav-icon-btn .badge-dot {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+    }
+
+    .user-profile-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px 6px 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 30px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .user-profile-btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* --- CARDS & DASHBOARD WIDGETS --- */
+    .card {
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      background: var(--card-bg);
+      box-shadow: var(--card-shadow);
+      transition: all 0.25s ease;
+
+    }
+
+    .card-header {
+      background: transparent;
+      border-bottom: 1px solid var(--card-border);
+      padding: 20px 24px;
+      font-weight: 700;
+      font-size: 16px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* --- STAT CARDS --- */
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .stat-icon-wrapper {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .stat-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .stat-trend {
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+
+    .trend-up {
+      background: #ecfdf5;
+      color: #10b981;
+    }
+
+    /* STAT CARD GRADIENTS */
+    .stat-indigo .stat-icon-wrapper { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+    .stat-emerald .stat-icon-wrapper { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+    .stat-purple .stat-icon-wrapper { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .stat-amber .stat-icon-wrapper { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .stat-rose .stat-icon-wrapper { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
+    .stat-cyan .stat-icon-wrapper { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
+    .stat-violet .stat-icon-wrapper { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
+
+    /* --- TABLE STYLING --- */
+    .table-responsive {
+      border-radius: 0 0 16px 16px;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .custom-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .custom-table td {
+      padding: 16px 24px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+      color: #334155;
+      vertical-align: middle;
+    }
+
+    .custom-table tbody tr {
+      transition: background-color 0.15s ease;
+    }
+
+    .custom-table tbody tr:hover {
+      background-color: #f8fafc;
+    }
+
+    .member-avatar-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .member-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-dot {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+    }
+
+    .dot-active { background: #10b981; }
+    .dot-verified { background: #3b82f6; }
+    .dot-pending { background: #f59e0b; }
+
+    /* BADGES */
+    .badge-status {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-active { background: #dcfce7; color: #15803d; }
+    .badge-verified { background: #dbeafe; color: #1e40af; }
+    .badge-pending { background: #fef3c7; color: #b45309; }
+
+    .batch-tag {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    /* --- EVENTS LIST --- */
+    .event-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: background 0.15s ease;
+    }
+
+    .event-item:last-child {
+      border-bottom: none;
+    }
+
+    .event-item:hover {
+      background: #f8fafc;
+    }
+
+    .event-date-box {
+      width: 50px;
+      height: 52px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .event-date-month {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #6366f1;
+    }
+
+    .event-date-day {
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1;
+    }
+
+    /* --- QUICK ACTIONS --- */
+    .quick-action-btn {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #334155;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .quick-action-btn:last-child {
+      margin-bottom: 0;
+    }
+
+    .quick-action-btn:hover {
+      background: var(--primary-gradient);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+      transform: translateX(4px);
+    }
+
+    .quick-action-btn i {
+      font-size: 16px;
+    }
+
+    /* --- ACTIVITY FEED --- */
+    .activity-feed {
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .activity-feed::before {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 15px;
+      bottom: 15px;
+      width: 2px;
+      background: #e2e8f0;
+    }
+
+    .activity-item {
+      position: relative;
+      padding-bottom: 20px;
+      display: flex;
+      gap: 16px;
+    }
+
+    .activity-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .activity-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      z-index: 1;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 4px #ffffff;
+    }
+
+    .bg-emerald-soft { background: #dcfce7; color: #10b981; }
+    .bg-indigo-soft { background: #e0e7ff; color: #6366f1; }
+    .bg-amber-soft { background: #fef3c7; color: #f59e0b; }
+    .bg-purple-soft { background: #f3e8ff; color: #a855f7; }
+
+    /* RESPONSIVE TOGGLES */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .main {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="bi bi-mortarboard-fill"></i>
+      </div>
+      <div>
+        <span>Alumni</span><span style="color: #6366f1;">Portal</span>
+        <div style="font-size: 10px; font-weight: 500; color: #64748b; margin-top: -2px;">MANAGEMENT SYSTEM</div>
+      </div>
+    </div>
+
+    <div class="sidebar-menu">
+      <div class="sidebar-section-title">Main Menu</div>
+      <a class="active" href="#"><i class="bi bi-grid-1x2-fill me-2"></i>Dashboard</a>
+      <a href="#members-section"><i class="bi bi-people-fill me-2"></i>Members</a>
+      <a href="#batches-section"><i class="bi bi-collection-fill me-2"></i>Batches</a>
+      <a href="#leaders-section"><i class="bi bi-person-badge-fill me-2"></i>Leaders</a>
+      
+      <div class="sidebar-section-title mt-3">Events & Content</div>
+      <a href="#events-section"><i class="bi bi-calendar2-event-fill me-2"></i>Events</a>
+      <a href="#announcements-section"><i class="bi bi-megaphone-fill me-2"></i>Announcements</a>
+      <a href="#gallery-section"><i class="bi bi-images me-2"></i>Gallery</a>
+
+      <div class="sidebar-section-title mt-3">Administration</div>
+      <a href="#reports-section"><i class="bi bi-bar-chart-line-fill me-2"></i>Reports</a>
+      <a href="#settings-section"><i class="bi bi-gear-fill me-2"></i>Settings</a>
+    </div>
+
+    <div class="sidebar-user-card">
+      <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80" class="rounded-circle" width="38" height="38" alt="Admin">
+      <div class="overflow-hidden">
+        <div style="font-size: 13px; font-weight: 700; color: #fff;" class="text-truncate">{{adminName}}</div>
+        <div style="font-size: 11px; color: #64748b;" class="text-truncate">admin@alumni.org</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main">
+    
+    <!-- TOP NAVBAR -->
+    <nav class="navbar navbar-expand-lg">
+      <div class="container-fluid boxed px-0">
+        
+        <div class="d-flex align-items-center gap-3 w-100">
+          <!-- Mobile Sidebar Toggle -->
+          <button class="btn btn-light d-lg-none" id="sidebarToggleBtn">
+            <i class="bi bi-list fs-4"></i>
+          </button>
+
+          <!-- Search Box -->
+          <div class="search-box me-auto">
+            <i class="bi bi-search"></i>
+            <input type="text" id="memberSearchInput" class="form-control" placeholder="Search members by name, batch or email...">
+          </div>
+
+          <!-- Right Action Items -->
+          <div class="d-flex align-items-center gap-3">
+            
+            <!-- Quick Alert Notification -->
+            <div class="dropdown">
+              <div class="nav-icon-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-bell fs-5"></i>
+                <span class="badge-dot"></span>
+              </div>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2" style="width: 320px;">
+                <li class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                  <span class="fw-bold fs-6">Notifications</span>
+                  <span class="badge bg-primary-subtle text-primary rounded-pill">3 New</span>
+                </li>
+                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#"><strong>Zaid Ibn Shafi</strong> registered as new alumni. <span class="text-muted d-block small">10m ago</span></a></li>
+                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#"><strong>Batch 2022</strong> leader updated. <span class="text-muted d-block small">2h ago</span></a></li>
+                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#">New event request pending approval. <span class="text-muted d-block small">1d ago</span></a></li>
+              </ul>
+            </div>
+
+            <!-- User Profile Dropdown -->
+            <div class="dropdown">
+              <div class="user-profile-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80" class="user-avatar" alt="User">
+                <div class="d-none d-sm-block text-start me-1">
+                  <div style="font-size: 13px; font-weight: 700; color: #0f172a;">{{adminName}}</div>
+                  <div style="font-size: 10px; font-weight: 600; color: #6366f1;">SUPERADMIN</div>
+                </div>
+                <i class="bi bi-chevron-down small text-muted"></i>
+              </div>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2" style="width: 200px;">
+                <li><a class="dropdown-item rounded-3" href="#"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                <li><a class="dropdown-item rounded-3" href="#"><i class="bi bi-shield-lock me-2"></i>Change Password</a></li>
+                <li><a class="dropdown-item rounded-3" href="#"><i class="bi bi-sliders me-2"></i>Account Settings</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item rounded-3 text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </nav>
+
+    <!-- CONTENT BODY -->
+    <div class="container-fluid boxed px-4 py-4">
+
+      <!-- WELCOME BANNER -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+          <h3 class="fw-800 text-slate-900 m-0" style="font-weight: 800; letter-spacing: -0.5px;">Dashboard Overview</h3>
+          <p class="text-muted m-0 small">Welcome back, Super Admin! Here is what's happening with your alumni network today.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm rounded-3 fw-semibold bg-white shadow-sm" onclick="window.location.reload();">
+            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+          </button>
+          <button class="btn btn-primary btn-sm rounded-3 fw-semibold shadow-sm" style="background: var(--primary-gradient); border: none;" data-bs-toggle="modal" data-bs-target="#addAlumniModal">
+            <i class="bi bi-plus-lg me-1"></i> Add Alumni
+          </button>
+        </div>
+      </div>
+
+      <!-- 7 STAT CARDS GRID -->
+      <div class="row g-3 mb-4">
+        
+        <!-- Stat 1: Total Alumni -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card stat-card stat-indigo h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="stat-title">Total Alumni</div>
+                <h3 class="stat-value">{{stats.totalAlumni}}</h3>
+                <span class="stat-trend trend-up"><i class="bi bi-graph-up-arrow"></i> {{stats.alumniGrowth}}</span>
+              </div>
+              <div class="stat-icon-wrapper">
+                <i class="bi bi-people-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat 2: Total Batches -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card stat-card stat-emerald h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="stat-title">Total Batches</div>
+                <h3 class="stat-value">{{stats.totalBatches}}</h3>
+                <span class="stat-trend trend-up"><i class="bi bi-check-circle-fill"></i> Active</span>
+              </div>
+              <div class="stat-icon-wrapper">
+                <i class="bi bi-collection-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat 3: Batch Leaders -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card stat-card stat-purple h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="stat-title">Batch Leaders</div>
+                <h3 class="stat-value">{{stats.batchLeaders}}</h3>
+                <span class="stat-trend trend-up"><i class="bi bi-shield-check"></i> Assigned</span>
+              </div>
+              <div class="stat-icon-wrapper">
+                <i class="bi bi-person-badge-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat 4: Upcoming Events -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card stat-card stat-amber h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="stat-title">Upcoming Events</div>
+                <h3 class="stat-value">{{stats.upcomingEvents}}</h3>
+                <span class="stat-trend trend-up"><i class="bi bi-calendar-check"></i> Scheduled</span>
+              </div>
+              <div class="stat-icon-wrapper">
+                <i class="bi bi-calendar-event-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat 5: Announcements -->
+        <div class="col-xl-4 col-md-4">
+          <div class="card stat-card stat-rose h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="stat-title">Announcements</div>
+                <h3 class="stat-value">{{stats.announcements}}</h3>
+                <span class="stat-trend trend-up"><i class="bi bi-broadcast"></i> Published</span>
+              </div>
+              <div class="stat-icon-wrapper">
+                <i class="bi bi-megaphone-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat 6: New Registrations -->
+        <div class="col-xl-4 col-md-4">
+          <div class="card stat-card stat-cyan h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="stat-title">New Registrations</div>
+                <h3 class="stat-value">{{stats.newRegistrations}}</h3>
+                <span class="stat-trend trend-up"><i class="bi bi-arrow-up-right"></i> {{stats.regGrowth}}</span>
+              </div>
+              <div class="stat-icon-wrapper">
+                <i class="bi bi-person-plus-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat 7: Pending Leaders -->
+        <div class="col-xl-4 col-md-4">
+          <div class="card stat-card stat-violet h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="stat-title">Pending Leaders</div>
+                <h3 class="stat-value">{{stats.pendingLeaders}}</h3>
+                <span class="stat-trend trend-up" style="background: #fff7ed; color: #c2410c;"><i class="bi bi-hourglass-split"></i> Requires Action</span>
+              </div>
+              <div class="stat-icon-wrapper">
+                <i class="bi bi-clock-history"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CHARTS SECTION -->
+      <div class="row g-4 mb-4">
+        
+        <!-- Registration Growth Line Chart -->
+        <div class="col-lg-8">
+          <div class="card h-100">
+            <div class="card-header">
+              <span><i class="bi bi-graph-up text-primary me-2"></i>Alumni Registrations Trend</span>
+              <span class="badge bg-light text-dark font-monospace">2026 Monthly Data</span>
+            </div>
+            <div class="card-body">
+              <div style="height: 320px; position: relative;">
+                <canvas id="lineChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Members per Batch Bar Chart -->
+        <div class="col-lg-4">
+          <div class="card h-100">
+            <div class="card-header">
+              <span><i class="bi bi-bar-chart-fill text-indigo me-2"></i>Members per Batch</span>
+              <span class="badge bg-light text-dark">Batches 2021-2025</span>
+            </div>
+            <div class="card-body">
+              <div style="height: 320px; position: relative;">
+                <canvas id="barChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TABLES & SIDE PANELS -->
+      <div class="row g-4 mb-4" id="members-section">
+        
+        <!-- Recent Members Table -->
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-people-fill text-primary"></i>
+                <span>Recent Registered Members</span>
+              </div>
+              <button class="btn btn-sm btn-link text-primary text-decoration-none fw-bold p-0" data-bs-toggle="modal" data-bs-target="#addAlumniModal">
+                + Add Member
+              </button>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="custom-table" id="membersTable">
+                <thead>
+                  <tr>
+                    <th>Member Profile</th>
+                    <th>Batch</th>
+                    <th>Status</th>
+                    <th>Joined Date</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each recentMembers}}
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        <div class="member-avatar-wrapper">
+                          <img src="{{this.avatar}}" class="member-avatar" alt="{{this.name}}">
+                          <span class="status-dot dot-{{this.statusLower}}"></span>
+                        </div>
+                        <div>
+                          <div class="fw-bold text-dark">{{this.name}}</div>
+                          <div class="text-muted small">{{this.email}}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="batch-tag">Class of {{this.batch}}</span></td>
+                    <td>
+                      <span class="badge-status badge-{{this.statusLower}}">
+                        {{this.status}}
+                      </span>
+                    </td>
+                    <td class="text-muted small fw-medium">{{this.joinedDate}}</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-light border rounded-2 px-2" title="View Profile">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-light border rounded-2 px-2 text-primary" title="Edit Member">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side Widgets -->
+        <div class="col-lg-4">
+          
+          <!-- Upcoming Events -->
+          <div class="card mb-4" id="events-section">
+            <div class="card-header">
+              <span><i class="bi bi-calendar-event text-amber me-2"></i>Upcoming Events</span>
+              <button class="btn btn-sm btn-light text-muted p-0" data-bs-toggle="modal" data-bs-target="#createEventModal">
+                <i class="bi bi-plus-circle"></i>
+              </button>
+            </div>
+            <div>
+              {{#each upcomingEvents}}
+              <div class="event-item">
+                <div class="event-date-box">
+                  <span class="event-date-month">{{this.month}}</span>
+                  <span class="event-date-day">{{this.day}}</span>
+                </div>
+                <div class="overflow-hidden">
+                  <div class="fw-bold text-dark text-truncate small mb-1">{{this.title}}</div>
+                  <div class="text-muted" style="font-size: 11px;"><i class="bi bi-geo-alt me-1"></i>{{this.location}}</div>
+                </div>
+                <span class="badge {{this.badgeColor}} ms-auto rounded-pill" style="font-size: 10px;">{{this.category}}</span>
+              </div>
+              {{/each}}
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-header">
+              <span><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Quick Actions</span>
+            </div>
+            <div class="card-body">
+              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#addAlumniModal">
+                <span><i class="bi bi-person-plus me-2 text-primary"></i>Add Alumni Member</span>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#createBatchModal">
+                <span><i class="bi bi-folder-plus me-2 text-emerald"></i>Create New Batch</span>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#assignLeaderModal">
+                <span><i class="bi bi-person-badge me-2 text-purple"></i>Assign Batch Leader</span>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#createEventModal">
+                <span><i class="bi bi-calendar-plus me-2 text-amber"></i>Create Event</span>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#publishAnnouncementModal">
+                <span><i class="bi bi-broadcast me-2 text-danger"></i>Publish Announcement</span>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- RECENT ACTIVITY FEED -->
+      <div class="card">
+        <div class="card-header">
+          <span><i class="bi bi-clock-history text-secondary me-2"></i>Recent Network Activity</span>
+          <button class="btn btn-sm btn-link text-muted text-decoration-none">View Full Audit Log</button>
+        </div>
+        <div class="card-body">
+          <div class="activity-feed">
+            {{#each recentActivities}}
+            <div class="activity-item">
+              <div class="activity-icon {{this.iconBg}}">
+                <i class="bi {{this.icon}}"></i>
+              </div>
+              <div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fw-bold text-dark fs-6">{{this.title}}</span>
+                  <span class="text-muted small" style="font-size: 11px;">• {{this.time}}</span>
+                </div>
+                <p class="text-muted small mb-0 mt-1">{{this.desc}}</p>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODALS FOR QUICK ACTIONS ==================== -->
+
+  <!-- Modal 1: Add Alumni -->
+  <div class="modal fade" id="addAlumniModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-fw-bold"><i class="bi bi-person-plus text-primary me-2"></i>Add New Alumni Member</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="addAlumniForm">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Admission Number</label>
+              <input type="text" name="admissionNumber" class="form-control rounded-3" placeholder="e.g. HA2021045" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Name</label>
+              <input type="text" name="name" class="form-control rounded-3" placeholder="e.g. Tariq Mahmood" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Place</label>
+              <input type="text" name="place" class="form-control rounded-3" placeholder="e.g. Kozhikode" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Batch</label>
+              <select class="form-select rounded-3" name="batch" required>
+                <option>2021</option>
+                <option>2022</option>
+                <option>2023</option>
+                <option>2024</option>
+                <option>2025</option>
+                <option>2026</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Email</label>
+              <input type="email" name="email" class="form-control rounded-3" placeholder="tariq@example.com" required>
+            </div>
+
+            <div id="addAlumniAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3" role="alert"></div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" id="addAlumniSubmit" class="btn btn-primary rounded-3 px-4" style="background: var(--primary-gradient); border:none;">Save Member</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Create Batch -->
+  <div class="modal fade" id="createBatchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-fw-bold"><i class="bi bi-folder-plus text-emerald me-2"></i>Create New Batch</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Batch Year</label>
+              <input type="number" class="form-control rounded-3" placeholder="2027" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Description / Title</label>
+              <input type="text" class="form-control rounded-3" placeholder="e.g. Class of 2027 Engineering">
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-success rounded-3 px-4">Create Batch</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Assign Leader -->
+  <div class="modal fade" id="assignLeaderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-fw-bold"><i class="bi bi-person-badge text-purple me-2"></i>Assign Batch Leader</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Select Batch</label>
+              <select class="form-select rounded-3">
+                <option>Batch 2021</option>
+                <option>Batch 2022</option>
+                <option>Batch 2023</option>
+                <option>Batch 2024</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Assign Member</label>
+              <select class="form-select rounded-3">
+                <option>Abdullah Al-Mansoor</option>
+                <option>Muhammed Rizwan</option>
+                <option>Faris Hameed</option>
+              </select>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-purple rounded-3 px-4 text-white" style="background:#8b5cf6;">Assign Leader</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Create Event -->
+  <div class="modal fade" id="createEventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-fw-bold"><i class="bi bi-calendar-plus text-amber me-2"></i>Create New Event</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Event Title</label>
+              <input type="text" class="form-control rounded-3" placeholder="e.g. Alumni Homecoming Gala" required>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold">Date</label>
+                <input type="date" class="form-control rounded-3" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">Category</label>
+                <select class="form-select rounded-3">
+                  <option>Reunion</option>
+                  <option>Official</option>
+                  <option>Seminar</option>
+                  <option>Networking</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Location</label>
+              <input type="text" class="form-control rounded-3" placeholder="e.g. Grand Ballroom / Zoom Link">
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-warning rounded-3 px-4 text-dark">Publish Event</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Publish Announcement -->
+  <div class="modal fade" id="publishAnnouncementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-fw-bold"><i class="bi bi-broadcast text-danger me-2"></i>Publish Announcement</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Headline</label>
+              <input type="text" class="form-control rounded-3" placeholder="e.g. Nominations open for Alumni Board 2026" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Message Content</label>
+              <textarea class="form-control rounded-3" rows="4" placeholder="Write full details here..."></textarea>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-danger rounded-3 px-4">Publish Now</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // --- SIDEBAR TOGGLE FOR MOBILE ---
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('show');
+      });
+    }
+
+    // --- CLIENT-SIDE TABLE SEARCH ---
+    const searchInput = document.getElementById('memberSearchInput');
+    const tableBody = document.querySelector('#membersTable tbody');
+
+    if (searchInput && tableBody) {
+      searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        const rows = tableBody.querySelectorAll('tr');
+
+        rows.forEach(row => {
+          const text = row.innerText.toLowerCase();
+          if (text.includes(query)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    // --- CHART.JS INITIALIZATION WITH PREMIUM GRADIENTS ---
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // 1. Line Chart: Registrations
+      const lineCtx = document.getElementById('lineChart').getContext('2d');
+      const gradientLine = lineCtx.createLinearGradient(0, 0, 0, 300);
+      gradientLine.addColorStop(0, 'rgba(99, 102, 241, 0.35)');
+      gradientLine.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+      new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+          datasets: [{
+            label: 'Alumni Registrations',
+            data: [42, 65, 58, 94, 88, 120, 145, 180],
+            borderColor: '#6366f1',
+            borderWidth: 3,
+            backgroundColor: gradientLine,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#4f46e5',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 12 } }
+            },
+            y: {
+              grid: { color: '#f1f5f9' },
+              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 12 } }
+            }
+          }
+        }
+      });
+
+      // 2. Bar Chart: Members per Batch
+      const barCtx = document.getElementById('barChart').getContext('2d');
+      const gradientBar = barCtx.createLinearGradient(0, 0, 0, 300);
+      gradientBar.addColorStop(0, '#8b5cf6');
+      gradientBar.addColorStop(1, '#6366f1');
+
+      new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: ['2021', '2022', '2023', '2024', '2025'],
+          datasets: [{
+            label: 'Members',
+            data: [320, 280, 410, 240, 195],
+            backgroundColor: gradientBar,
+            borderRadius: 8,
+            barThickness: 28
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 12 } }
+            },
+            y: {
+              grid: { color: '#f1f5f9' },
+              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 12 } }
+            }
+          }
+        }
+      });
+
+    });
+  </script>
+
+
+  <script>
+    (function () {
+      var form = document.getElementById('addAlumniForm');
+      if (!form) return;
+      var alertBox = document.getElementById('addAlumniAlert');
+      var submitBtn = document.getElementById('addAlumniSubmit');
+
+      function showAlert(type, message) {
+        alertBox.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = message;
+      }
+
+      function hideAlert() {
+        alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = '';
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideAlert();
+
+        var data = Object.fromEntries(new FormData(form).entries());
+        submitBtn.disabled = true;
+        var originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+
+        try {
+          var res = await fetch('/admin/members', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          var result = await res.json().catch(function () { return {}; });
+
+          if (res.ok) {
+            showAlert('success', result.message || 'Member added successfully.');
+            form.reset();
+            setTimeout(function () {
+              hideAlert();
+              var modalEl = document.getElementById('addAlumniModal');
+              var modal = bootstrap.Modal.getInstance(modalEl);
+              if (modal) modal.hide();
+            }, 1500);
+          } else {
+            showAlert('danger', result.message || 'Could not save, please try again.');
+          }
+        } catch (err) {
+          showAlert('danger', 'Could not save, please try again.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
