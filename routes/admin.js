@@ -3,6 +3,7 @@ var router = express.Router();
 
 var mongoose = require('mongoose');
 var MemberDetails = require('../models/MemberDetails');
+var BatchDetails = require('../models/BatchDetails');
 
 /* Count batch leaders only if such a collection exists in the database. */
 async function getBatchLeaderCount() {
@@ -101,6 +102,9 @@ router.post('/members', async function (req, res) {
 
     const member = await MemberDetails.create({ admissionNumber, name, place, batch, email });
 
+    // Keep BATCH_DETAILS in sync with the new member.
+    await linkMemberToBatch(member);
+
     return res.status(201).json({ success: true, message: 'Member added successfully.', member: member });
   } catch (error) {
     if (error && error.code === 11000) {
@@ -108,6 +112,92 @@ router.post('/members', async function (req, res) {
     }
     console.error('Add member failed:', error.message);
     return res.status(500).json({ success: false, message: 'Could not save the member. Please try again.' });
+  }
+});
+
+/* All MEMBER_DETAILS documents that belong to a given batch year. */
+async function findMembersForYear(year) {
+  const docs = await MemberDetails.find({}, { batch: 1 }).lean();
+  return docs.filter(function (doc) { return batchYear(doc.batch) === year; });
+}
+
+/* Add a freshly created member to its BATCH_DETAILS document (creating it if needed). */
+async function linkMemberToBatch(member) {
+  try {
+    const year = batchYear(member.batch);
+    if (!year) return;
+
+    await BatchDetails.updateOne(
+      { year: year },
+      {
+        $addToSet: { memberIds: member._id },
+        $setOnInsert: { year: year, description: '' }
+      },
+      { upsert: true }
+    );
+
+    const batch = await BatchDetails.findOne({ year: year });
+    if (batch) {
+      batch.memberCount = batch.memberIds.length;
+      await batch.save();
+    }
+  } catch (error) {
+    console.error('Linking member to batch failed:', error.message);
+  }
+}
+
+/* GET how many members would be linked to a batch year (used by the Create Batch modal). */
+router.get('/batches/:year/members-count', async function (req, res) {
+  try {
+    const year = batchYear(req.params.year);
+    if (!/^\d{4}$/.test(year)) {
+      return res.status(400).json({ success: false, message: 'Invalid batch year.', count: 0 });
+    }
+
+    const members = await findMembersForYear(year);
+    return res.json({ success: true, year: year, count: members.length });
+  } catch (error) {
+    console.error('Batch member count failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load member count.', count: 0 });
+  }
+});
+
+/* POST Create a new batch in BATCH_DETAILS. */
+router.post('/batches', async function (req, res) {
+  try {
+    const year = batchYear(req.body.year);
+    const description = (req.body.description || '').trim();
+
+    if (!/^\d{4}$/.test(year)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid 4-digit batch year.' });
+    }
+
+    const existing = await BatchDetails.findOne({ year: year });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'This batch already exists.' });
+    }
+
+    const members = await findMembersForYear(year);
+    const memberIds = members.map(function (doc) { return doc._id; });
+
+    const batch = await BatchDetails.create({
+      year: year,
+      description: description,
+      memberIds: memberIds,
+      memberCount: memberIds.length
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Batch ' + year + ' created with ' + memberIds.length + ' member(s).',
+      batch: batch
+    });
+  } catch (error) {
+    if (error && error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'This batch already exists.' });
+    }
+    console.error('Create batch failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not create the batch. Please try again.' });
   }
 });
 
