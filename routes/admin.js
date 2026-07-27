@@ -30,6 +30,7 @@ router.get('/', async function(req, res, next) {
   let totalBatches = 0;
   let batchLeaders = 0;
   let recentMembers = [];
+  let batchChart = { labels: [], values: [] };
 
   try {
     const batches = await MemberDetails.distinct('batch');
@@ -38,6 +39,7 @@ router.get('/', async function(req, res, next) {
     totalBatches = batches.filter(function (b) { return b && String(b).trim() !== ''; }).length;
     batchLeaders = await getBatchLeaderCount();
     recentMembers = await getRecentMembers(5);
+    batchChart = await getMembersPerBatch();
   } catch (error) {
     console.error('Dashboard stats failed:', error.message);
   }
@@ -51,12 +53,10 @@ router.get('/', async function(req, res, next) {
       alumniGrowth: '+12.4%',
       totalBatches: String(totalBatches),
       batchLeaders: String(batchLeaders),
-      upcomingEvents: '3',
-      announcements: '5',
-      newRegistrations: '12',
-      regGrowth: '+8.2%',
-      pendingLeaders: '1'
+      upcomingEvents: '3'
     },
+    batchChartData: JSON.stringify(batchChart),
+
     recentMembers: recentMembers,
     upcomingEvents: [
       { title: 'Annual Alumni Meet 2026', date: 'Aug 15, 2026', month: 'AUG', day: '15', location: 'Grand Auditorium', category: 'Reunion', badgeColor: 'bg-primary' },
@@ -149,7 +149,34 @@ async function getRecentMembers(limit) {
   }
 }
 
+/* Real member counts grouped by batch year, for the "Members per Batch" chart. */
+async function getMembersPerBatch() {
+  try {
+    const docs = await MemberDetails.find({}, { batch: 1 }).lean();
+    const counts = {};
+
+    docs.forEach(function (doc) {
+      const year = batchYear(doc.batch);
+      if (!year) return;
+      counts[year] = (counts[year] || 0) + 1;
+    });
+
+    const labels = Object.keys(counts).sort(function (a, b) {
+      return String(a).localeCompare(String(b), undefined, { numeric: true });
+    });
+
+    return {
+      labels: labels,
+      values: labels.map(function (label) { return counts[label]; })
+    };
+  } catch (error) {
+    console.error('Members per batch lookup failed:', error.message);
+    return { labels: [], values: [] };
+  }
+}
+
 function escapeRegex(value) {
+
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
