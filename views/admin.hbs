@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -616,6 +616,82 @@
         margin-left: 0;
       }
     }
+
+    /* --- DARK MODE --- */
+    [data-bs-theme="dark"] {
+      --bg-body: #0b1020;
+      --text-main: #e6edf7;
+      --text-muted: #94a3b8;
+      --card-bg: #141b2d;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+      --card-shadow-hover: 0 12px 28px -4px rgba(0, 0, 0, 0.6);
+    }
+
+    [data-bs-theme="dark"] body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+    }
+
+    [data-bs-theme="dark"] .navbar,
+    [data-bs-theme="dark"] .nav-icon-btn,
+    [data-bs-theme="dark"] .user-profile-btn,
+    [data-bs-theme="dark"] .quick-action-btn,
+    [data-bs-theme="dark"] .modal-content,
+    [data-bs-theme="dark"] .dropdown-menu {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border-color: var(--card-border);
+    }
+
+    [data-bs-theme="dark"] .nav-icon-btn:hover,
+    [data-bs-theme="dark"] .user-profile-btn:hover {
+      background: #1d263d;
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    [data-bs-theme="dark"] .search-box input,
+    [data-bs-theme="dark"] .form-control,
+    [data-bs-theme="dark"] .form-select {
+      background: #101728;
+      border-color: var(--card-border);
+      color: var(--text-main);
+    }
+
+    [data-bs-theme="dark"] .search-box input:focus,
+    [data-bs-theme="dark"] .form-control:focus,
+    [data-bs-theme="dark"] .form-select:focus {
+      background: #101728;
+      color: var(--text-main);
+      border-color: #6366f1;
+    }
+
+    [data-bs-theme="dark"] .card-header,
+    [data-bs-theme="dark"] .event-date-day {
+      color: var(--text-main);
+    }
+
+    [data-bs-theme="dark"] .text-dark,
+    [data-bs-theme="dark"] [style*="#0f172a"] {
+      color: var(--text-main) !important;
+    }
+
+    [data-bs-theme="dark"] .bg-white,
+    [data-bs-theme="dark"] .table {
+      background-color: var(--card-bg) !important;
+      color: var(--text-main);
+    }
+
+    [data-bs-theme="dark"] .btn-light {
+      background: #1d263d;
+      border-color: var(--card-border);
+      color: var(--text-main);
+    }
+
+    [data-bs-theme="dark"] .activity-feed::before {
+      background: rgba(255, 255, 255, 0.12);
+    }
   </style>
 </head>
 <body>
@@ -689,22 +765,10 @@
           <!-- Right Action Items -->
           <div class="d-flex align-items-center gap-3">
             
-            <!-- Quick Alert Notification -->
-            <div class="dropdown">
-              <div class="nav-icon-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-bell fs-5"></i>
-                <span class="badge-dot"></span>
-              </div>
-              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2" style="width: 320px;">
-                <li class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                  <span class="fw-bold fs-6">Notifications</span>
-                  <span class="badge bg-primary-subtle text-primary rounded-pill">3 New</span>
-                </li>
-                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#"><strong>Zaid Ibn Shafi</strong> registered as new alumni. <span class="text-muted d-block small">10m ago</span></a></li>
-                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#"><strong>Batch 2022</strong> leader updated. <span class="text-muted d-block small">2h ago</span></a></li>
-                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#">New event request pending approval. <span class="text-muted d-block small">1d ago</span></a></li>
-              </ul>
-            </div>
+            <!-- Dark / Light Mode Toggler -->
+            <button type="button" class="nav-icon-btn" id="themeToggleBtn" title="Toggle dark mode" aria-label="Toggle dark mode">
+              <i class="bi bi-moon-stars fs-5" id="themeToggleIcon"></i>
+            </button>
 
             <!-- User Profile Dropdown -->
             <div class="dropdown">
@@ -959,10 +1023,6 @@
                 <span><i class="bi bi-calendar-plus me-2 text-amber"></i>Create Event</span>
                 <i class="bi bi-chevron-right"></i>
               </button>
-              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#publishAnnouncementModal">
-                <span><i class="bi bi-broadcast me-2 text-danger"></i>Publish Announcement</span>
-                <i class="bi bi-chevron-right"></i>
-              </button>
             </div>
           </div>
 
@@ -1060,18 +1120,20 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
-          <form>
+          <form id="createBatchForm">
             <div class="mb-3">
               <label class="form-label small fw-bold">Batch Year</label>
-              <input type="number" class="form-control rounded-3" placeholder="2027" required>
+              <input type="number" name="batchYear" class="form-control rounded-3" placeholder="2027" required>
+              <div class="form-text small">Members of this year in MEMBER_DETAILS are linked to the batch automatically.</div>
             </div>
             <div class="mb-3">
               <label class="form-label small fw-bold">Description / Title</label>
-              <input type="text" class="form-control rounded-3" placeholder="e.g. Class of 2027 Engineering">
+              <input type="text" name="description" class="form-control rounded-3" placeholder="e.g. Class of 2027 Engineering">
             </div>
+            <div id="createBatchAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3"></div>
             <div class="d-flex justify-content-end gap-2 mt-4">
               <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-success rounded-3 px-4">Create Batch</button>
+              <button type="submit" id="createBatchSubmit" class="btn btn-success rounded-3 px-4">Create Batch</button>
             </div>
           </form>
         </div>
@@ -1088,27 +1150,31 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
-          <form>
+          <form id="assignLeaderForm">
             <div class="mb-3">
               <label class="form-label small fw-bold">Select Batch</label>
-              <select class="form-select rounded-3">
-                <option>Batch 2021</option>
-                <option>Batch 2022</option>
-                <option>Batch 2023</option>
-                <option>Batch 2024</option>
+              <select class="form-select rounded-3" id="leaderBatchSelect" required>
+                <option value="">Loading batches...</option>
               </select>
             </div>
             <div class="mb-3">
               <label class="form-label small fw-bold">Assign Member</label>
-              <select class="form-select rounded-3">
-                <option>Abdullah Al-Mansoor</option>
-                <option>Muhammed Rizwan</option>
-                <option>Faris Hameed</option>
+              <select class="form-select rounded-3" id="leaderMemberSelect" name="memberId" required disabled>
+                <option value="">Select a batch first</option>
               </select>
             </div>
+
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Current Leaders</label>
+              <ul class="list-group list-group-flush small" id="currentLeadersList">
+                <li class="list-group-item px-0 text-muted bg-transparent">No batch selected.</li>
+              </ul>
+            </div>
+
+            <div id="assignLeaderAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3"></div>
             <div class="d-flex justify-content-end gap-2 mt-4">
               <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-purple rounded-3 px-4 text-white" style="background:#8b5cf6;">Assign Leader</button>
+              <button type="submit" id="assignLeaderSubmit" class="btn btn-purple rounded-3 px-4 text-white" style="background:#8b5cf6;">Assign Leader</button>
             </div>
           </form>
         </div>
@@ -1152,34 +1218,6 @@
             <div class="d-flex justify-content-end gap-2 mt-4">
               <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
               <button type="submit" class="btn btn-warning rounded-3 px-4 text-dark">Publish Event</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 5: Publish Announcement -->
-  <div class="modal fade" id="publishAnnouncementModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content rounded-4 border-0 shadow-lg">
-        <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-fw-bold"><i class="bi bi-broadcast text-danger me-2"></i>Publish Announcement</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-4">
-          <form>
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Headline</label>
-              <input type="text" class="form-control rounded-3" placeholder="e.g. Nominations open for Alumni Board 2026" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Message Content</label>
-              <textarea class="form-control rounded-3" rows="4" placeholder="Write full details here..."></textarea>
-            </div>
-            <div class="d-flex justify-content-end gap-2 mt-4">
-              <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-danger rounded-3 px-4">Publish Now</button>
             </div>
           </form>
         </div>
@@ -1362,5 +1400,244 @@
       });
     })();
   </script>
+
+  <script>
+    // --- DARK / LIGHT MODE TOGGLER (replaces the old notification bell) ---
+    (function () {
+      var root = document.documentElement;
+      var btn = document.getElementById('themeToggleBtn');
+      var icon = document.getElementById('themeToggleIcon');
+
+      function applyTheme(theme) {
+        root.setAttribute('data-bs-theme', theme);
+        if (icon) icon.className = (theme === 'dark' ? 'bi bi-sun fs-5' : 'bi bi-moon-stars fs-5');
+        if (btn) btn.title = (theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+      }
+
+      var stored = null;
+      try { stored = localStorage.getItem('admin-theme'); } catch (e) {}
+      applyTheme(stored === 'dark' ? 'dark' : 'light');
+
+      if (btn) {
+        btn.addEventListener('click', function () {
+          var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+          applyTheme(next);
+          try { localStorage.setItem('admin-theme', next); } catch (e) {}
+        });
+      }
+    })();
+
+    // --- CREATE NEW BATCH (saved to BATCH_DETAILS) ---
+    (function () {
+      var form = document.getElementById('createBatchForm');
+      if (!form) return;
+      var alertBox = document.getElementById('createBatchAlert');
+      var submitBtn = document.getElementById('createBatchSubmit');
+
+      function showAlert(type, message) {
+        alertBox.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = message;
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3';
+
+        var data = Object.fromEntries(new FormData(form).entries());
+        submitBtn.disabled = true;
+        var original = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+
+        try {
+          var res = await fetch('/admin/batches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          var result = await res.json().catch(function () { return {}; });
+
+          if (res.ok) {
+            showAlert('success', result.message || 'Batch created.');
+            form.reset();
+            setTimeout(function () { window.location.reload(); }, 1200);
+          } else {
+            showAlert('danger', result.message || 'Could not create the batch.');
+          }
+        } catch (err) {
+          showAlert('danger', 'Network error. Please try again.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = original;
+        }
+      });
+    })();
+
+    // --- ASSIGN / REMOVE BATCH LEADER (saved to BATCH_LEADERS) ---
+    (function () {
+      var form = document.getElementById('assignLeaderForm');
+      if (!form) return;
+
+      var batchSelect = document.getElementById('leaderBatchSelect');
+      var memberSelect = document.getElementById('leaderMemberSelect');
+      var leadersList = document.getElementById('currentLeadersList');
+      var alertBox = document.getElementById('assignLeaderAlert');
+      var submitBtn = document.getElementById('assignLeaderSubmit');
+      var modalEl = document.getElementById('assignLeaderModal');
+
+      function showAlert(type, message) {
+        alertBox.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = message;
+      }
+
+      function hideAlert() {
+        alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = '';
+      }
+
+      async function loadBatches() {
+        batchSelect.innerHTML = '<option value="">Loading batches...</option>';
+        try {
+          var res = await fetch('/admin/batches');
+          var result = await res.json();
+          var batches = (result && result.batches) || [];
+
+          if (!batches.length) {
+            batchSelect.innerHTML = '<option value="">No batches yet - create one first</option>';
+            return;
+          }
+
+          batchSelect.innerHTML = '<option value="">Select a batch</option>' + batches.map(function (b) {
+            return '<option value="' + b.batchYear + '">Batch ' + b.batchYear +
+              ' (' + (b.totalMembers || 0) + ' members)</option>';
+          }).join('');
+        } catch (err) {
+          batchSelect.innerHTML = '<option value="">Could not load batches</option>';
+        }
+      }
+
+      function renderLeaders(leaders) {
+        if (!leaders.length) {
+          leadersList.innerHTML = '<li class="list-group-item px-0 text-muted bg-transparent">No leader assigned for this batch.</li>';
+          return;
+        }
+
+        leadersList.innerHTML = leaders.map(function (l) {
+          return '<li class="list-group-item px-0 bg-transparent d-flex justify-content-between align-items-center">' +
+            '<span><i class="bi bi-person-badge-fill text-purple me-2"></i>' + l.name + '</span>' +
+            '<button type="button" class="btn btn-sm btn-outline-danger rounded-3" data-remove-leader="' + l.id + '">Remove</button>' +
+            '</li>';
+        }).join('');
+      }
+
+      async function loadBatchMembers(year) {
+        memberSelect.disabled = true;
+        memberSelect.innerHTML = '<option value="">Loading members...</option>';
+        leadersList.innerHTML = '<li class="list-group-item px-0 text-muted bg-transparent">Loading...</li>';
+
+        try {
+          var res = await fetch('/admin/batches/' + encodeURIComponent(year) + '/members');
+          var result = await res.json();
+          var members = (result && result.members) || [];
+
+          renderLeaders((result && result.leaders) || []);
+
+          var selectable = members.filter(function (m) { return !m.isLeader; });
+          if (!selectable.length) {
+            memberSelect.innerHTML = '<option value="">No available members in this batch</option>';
+            return;
+          }
+
+          memberSelect.innerHTML = '<option value="">Select a member</option>' + selectable.map(function (m) {
+            return '<option value="' + m.id + '">' + m.name + ' (' + (m.admissionNumber || '') + ')</option>';
+          }).join('');
+          memberSelect.disabled = false;
+        } catch (err) {
+          memberSelect.innerHTML = '<option value="">Could not load members</option>';
+          leadersList.innerHTML = '<li class="list-group-item px-0 text-danger bg-transparent">Could not load leaders.</li>';
+        }
+      }
+
+      if (modalEl) {
+        modalEl.addEventListener('show.bs.modal', function () {
+          hideAlert();
+          loadBatches();
+          memberSelect.disabled = true;
+          memberSelect.innerHTML = '<option value="">Select a batch first</option>';
+          leadersList.innerHTML = '<li class="list-group-item px-0 text-muted bg-transparent">No batch selected.</li>';
+        });
+      }
+
+      batchSelect.addEventListener('change', function () {
+        hideAlert();
+        if (!this.value) {
+          memberSelect.disabled = true;
+          memberSelect.innerHTML = '<option value="">Select a batch first</option>';
+          leadersList.innerHTML = '<li class="list-group-item px-0 text-muted bg-transparent">No batch selected.</li>';
+          return;
+        }
+        loadBatchMembers(this.value);
+      });
+
+      leadersList.addEventListener('click', async function (e) {
+        var btn = e.target.closest('[data-remove-leader]');
+        if (!btn) return;
+
+        btn.disabled = true;
+        hideAlert();
+
+        try {
+          var res = await fetch('/admin/leaders/' + btn.getAttribute('data-remove-leader'), { method: 'DELETE' });
+          var result = await res.json().catch(function () { return {}; });
+
+          if (res.ok) {
+            showAlert('success', result.message || 'Leader removed.');
+            loadBatchMembers(batchSelect.value);
+          } else {
+            showAlert('danger', result.message || 'Could not remove the leader.');
+            btn.disabled = false;
+          }
+        } catch (err) {
+          showAlert('danger', 'Network error. Please try again.');
+          btn.disabled = false;
+        }
+      });
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideAlert();
+
+        if (!memberSelect.value) {
+          showAlert('danger', 'Please select a member to assign as leader.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        var original = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+
+        try {
+          var res = await fetch('/admin/leaders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memberId: memberSelect.value })
+          });
+          var result = await res.json().catch(function () { return {}; });
+
+          if (res.ok) {
+            showAlert('success', result.message || 'Leader assigned.');
+            loadBatchMembers(batchSelect.value);
+          } else {
+            showAlert('danger', result.message || 'Could not assign the leader.');
+          }
+        } catch (err) {
+          showAlert('danger', 'Network error. Please try again.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = original;
+        }
+      });
+    })();
+  </script>
 </body>
+
 </html>
