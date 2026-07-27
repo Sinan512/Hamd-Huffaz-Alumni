@@ -3,56 +3,25 @@ var router = express.Router();
 
 var mongoose = require('mongoose');
 var MemberDetails = require('../models/MemberDetails');
-var BatchDetails = require('../models/BatchDetails');
-var BatchLeader = require('../models/BatchLeader');
 
-/* Batch value may be "2021", "2021-2022" or "Batch 2021" - show the year only. */
-function batchYear(batch) {
-  const match = String(batch || '').match(/\d{4}/);
-  return match ? match[0] : String(batch || '').trim();
-}
+/* Count batch leaders only if such a collection exists in the database. */
+async function getBatchLeaderCount() {
+  try {
+    const db = mongoose.connection && mongoose.connection.db;
+    if (!db) return 0;
 
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+    const collections = await db.listCollections().toArray();
+    const leaderCollection = collections.find(function (c) {
+      return /batch[_\s-]*leader/i.test(c.name);
+    });
 
-/* All members whose batch resolves to the given year. */
-async function membersOfBatch(year) {
-  const docs = await MemberDetails.find({}, { name: 1, batch: 1, email: 1, admissionNumber: 1 })
-    .sort({ name: 1 })
-    .lean();
+    if (!leaderCollection) return 0;
 
-  return docs.filter(function (doc) {
-    return batchYear(doc.batch) === year;
-  });
-}
-
-/*
- * Keep BATCH_DETAILS in sync for one batch year: refresh the member id list
- * and the total member count. Creates the batch document when missing.
- */
-async function syncBatchDetails(year, description) {
-  const cleanYear = batchYear(year);
-  if (!cleanYear) return null;
-
-  const members = await membersOfBatch(cleanYear);
-  const memberIds = members.map(function (m) { return m._id; });
-
-  const update = {
-    batchYear: cleanYear,
-    members: memberIds,
-    totalMembers: memberIds.length
-  };
-
-  if (typeof description === 'string' && description.trim() !== '') {
-    update.description = description.trim();
+    return await db.collection(leaderCollection.name).countDocuments();
+  } catch (error) {
+    console.error('Batch leader count failed:', error.message);
+    return 0;
   }
-
-  return BatchDetails.findOneAndUpdate(
-    { batchYear: cleanYear },
-    { $set: update },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
 }
 
 /* GET Admin Dashboard. */
@@ -68,7 +37,7 @@ router.get('/', async function(req, res, next) {
 
     totalAlumni = await MemberDetails.countDocuments();
     totalBatches = batches.filter(function (b) { return b && String(b).trim() !== ''; }).length;
-    batchLeaders = await BatchLeader.countDocuments();
+    batchLeaders = await getBatchLeaderCount();
     recentMembers = await getRecentMembers(5);
     batchChart = await getMembersPerBatch();
   } catch (error) {
@@ -132,13 +101,6 @@ router.post('/members', async function (req, res) {
 
     const member = await MemberDetails.create({ admissionNumber, name, place, batch, email });
 
-    // Keep the batch document (BATCH_DETAILS) up to date with the new member.
-    try {
-      await syncBatchDetails(batch);
-    } catch (syncError) {
-      console.error('Batch sync after member add failed:', syncError.message);
-    }
-
     return res.status(201).json({ success: true, message: 'Member added successfully.', member: member });
   } catch (error) {
     if (error && error.code === 11000) {
@@ -149,146 +111,11 @@ router.post('/members', async function (req, res) {
   }
 });
 
-/* GET all batches from BATCH_DETAILS. */
-router.get('/batches', async function (req, res) {
-  try {
-    const batches = await BatchDetails.find({}, { batchYear: 1, description: 1, totalMembers: 1 })
-      .sort({ batchYear: 1 })
-      .lean();
-
-    return res.json({ success: true, batches: batches });
-  } catch (error) {
-    console.error('Batch list failed:', error.message);
-    return res.status(500).json({ success: false, message: 'Could not load batches.' });
-  }
-});
-
-/* POST Create a new batch in BATCH_DETAILS. */
-router.post('/batches', async function (req, res) {
-  try {
-    const year = batchYear(req.body.batchYear);
-    const description = (req.body.description || '').trim();
-
-    if (!/^\d{4}$/.test(year)) {
-      return res.status(400).json({ success: false, message: 'Please enter a valid 4-digit batch year.' });
-    }
-
-    const existing = await BatchDetails.findOne({ batchYear: year });
-    if (existing) {
-      return res.status(409).json({ success: false, message: 'This batch already exists.' });
-    }
-
-    const batch = await syncBatchDetails(year, description);
-
-    return res.status(201).json({
-      success: true,
-      message: 'Batch created with ' + batch.totalMembers + ' member(s).',
-      batch: { batchYear: batch.batchYear, totalMembers: batch.totalMembers, description: batch.description }
-    });
-  } catch (error) {
-    if (error && error.code === 11000) {
-      return res.status(409).json({ success: false, message: 'This batch already exists.' });
-    }
-    console.error('Create batch failed:', error.message);
-    return res.status(500).json({ success: false, message: 'Could not create the batch. Please try again.' });
-  }
-});
-
-/* GET members + current leaders of one batch. */
-router.get('/batches/:year/members', async function (req, res) {
-  try {
-    const year = batchYear(req.params.year);
-    if (!year) {
-      return res.status(400).json({ success: false, message: 'Invalid batch year.' });
-    }
-
-    const members = await membersOfBatch(year);
-    const leaders = await BatchLeader.find({ batchYear: year }).sort({ createdAt: -1 }).lean();
-    const leaderIds = leaders.map(function (l) { return String(l.memberId); });
-
-    return res.json({
-      success: true,
-      members: members.map(function (m) {
-        return {
-          id: String(m._id),
-          name: m.name,
-          admissionNumber: m.admissionNumber,
-          email: m.email,
-          isLeader: leaderIds.indexOf(String(m._id)) !== -1
-        };
-      }),
-      leaders: leaders.map(function (l) {
-        return { id: String(l._id), memberId: String(l.memberId), name: l.name, email: l.email };
-      })
-    });
-  } catch (error) {
-    console.error('Batch members lookup failed:', error.message);
-    return res.status(500).json({ success: false, message: 'Could not load batch members.' });
-  }
-});
-
-/* POST Assign a batch leader (saved in BATCH_LEADERS). */
-router.post('/leaders', async function (req, res) {
-  try {
-    const memberId = (req.body.memberId || '').trim();
-
-    if (!mongoose.Types.ObjectId.isValid(memberId)) {
-      return res.status(400).json({ success: false, message: 'Please select a member.' });
-    }
-
-    const member = await MemberDetails.findById(memberId).lean();
-    if (!member) {
-      return res.status(404).json({ success: false, message: 'Member not found.' });
-    }
-
-    const year = batchYear(member.batch);
-
-    const existing = await BatchLeader.findOne({ batchYear: year, memberId: member._id });
-    if (existing) {
-      return res.status(409).json({ success: false, message: 'This member is already a leader of this batch.' });
-    }
-
-    const leader = await BatchLeader.create({
-      batchYear: year,
-      memberId: member._id,
-      name: member.name,
-      admissionNumber: member.admissionNumber,
-      email: member.email
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: member.name + ' is now a leader of Batch ' + year + '.',
-      leader: { id: String(leader._id), memberId: String(leader.memberId), name: leader.name }
-    });
-  } catch (error) {
-    if (error && error.code === 11000) {
-      return res.status(409).json({ success: false, message: 'This member is already a leader of this batch.' });
-    }
-    console.error('Assign leader failed:', error.message);
-    return res.status(500).json({ success: false, message: 'Could not assign the leader. Please try again.' });
-  }
-});
-
-/* DELETE Remove a batch leader. */
-router.delete('/leaders/:id', async function (req, res) {
-  try {
-    const id = req.params.id;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid leader id.' });
-    }
-
-    const removed = await BatchLeader.findByIdAndDelete(id);
-    if (!removed) {
-      return res.status(404).json({ success: false, message: 'Leader not found.' });
-    }
-
-    return res.json({ success: true, message: removed.name + ' removed from leaders.' });
-  } catch (error) {
-    console.error('Remove leader failed:', error.message);
-    return res.status(500).json({ success: false, message: 'Could not remove the leader. Please try again.' });
-  }
-});
+/* Batch value may be "2021", "2021-2022" or "Batch 2021" - show the year only. */
+function batchYear(batch) {
+  const match = String(batch || '').match(/\d{4}/);
+  return match ? match[0] : String(batch || '').trim();
+}
 
 function formatJoinedDate(date) {
   if (!date) return '';
@@ -346,6 +173,11 @@ async function getMembersPerBatch() {
     console.error('Members per batch lookup failed:', error.message);
     return { labels: [], values: [] };
   }
+}
+
+function escapeRegex(value) {
+
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 module.exports = router;
