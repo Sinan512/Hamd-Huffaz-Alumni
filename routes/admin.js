@@ -3,6 +3,7 @@ var router = express.Router();
 
 var mongoose = require('mongoose');
 var MemberDetails = require('../models/MemberDetails');
+var BatchDetails = require('../models/BatchDetails');
 
 /* Count batch leaders only if such a collection exists in the database. */
 async function getBatchLeaderCount() {
@@ -101,6 +102,9 @@ router.post('/members', async function (req, res) {
 
     const member = await MemberDetails.create({ admissionNumber, name, place, batch, email });
 
+    // Keep BATCH_DETAILS in sync with the new member.
+    await syncBatchDetails(batchYear(batch));
+
     return res.status(201).json({ success: true, message: 'Member added successfully.', member: member });
   } catch (error) {
     if (error && error.code === 11000) {
@@ -110,6 +114,64 @@ router.post('/members', async function (req, res) {
     return res.status(500).json({ success: false, message: 'Could not save the member. Please try again.' });
   }
 });
+
+/* POST Create a new batch in BATCH_DETAILS. */
+router.post('/batches', async function (req, res) {
+  try {
+    const year = batchYear(req.body.batchYear || req.body.batch || '');
+    const description = (req.body.description || '').trim();
+
+    if (!year) {
+      return res.status(400).json({ success: false, message: 'Batch year is required.' });
+    }
+
+    const existing = await BatchDetails.findOne({ batchYear: year });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'This batch already exists.' });
+    }
+
+    const batch = await syncBatchDetails(year, description);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Batch created successfully.',
+      batch: batch
+    });
+  } catch (error) {
+    if (error && error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'This batch already exists.' });
+    }
+    console.error('Create batch failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not create the batch. Please try again.' });
+  }
+});
+
+/* Recalculate one batch document from MEMBER_DETAILS (members ids + count). */
+async function syncBatchDetails(year, description) {
+  if (!year) return null;
+
+  const members = await MemberDetails.find(
+    { batch: new RegExp(escapeRegex(year)) },
+    { _id: 1 }
+  ).lean();
+
+  const memberIds = members.map(function (m) { return m._id; });
+
+  const update = {
+    $set: { batchYear: year, members: memberIds, totalMembers: memberIds.length }
+  };
+  if (typeof description === 'string') {
+    update.$set.description = description;
+  } else {
+    update.$setOnInsert = { description: '' };
+  }
+
+  return BatchDetails.findOneAndUpdate({ batchYear: year }, update, {
+    new: true,
+    upsert: true,
+    setDefaultsOnInsert: true
+  });
+}
 
 /* Batch value may be "2021", "2021-2022" or "Batch 2021" - show the year only. */
 function batchYear(batch) {
