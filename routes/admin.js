@@ -1,19 +1,54 @@
 var express = require('express');
 var router = express.Router();
 
+var mongoose = require('mongoose');
 var MemberDetails = require('../models/MemberDetails');
 
+/* Count batch leaders only if such a collection exists in the database. */
+async function getBatchLeaderCount() {
+  try {
+    const db = mongoose.connection && mongoose.connection.db;
+    if (!db) return 0;
+
+    const collections = await db.listCollections().toArray();
+    const leaderCollection = collections.find(function (c) {
+      return /batch[_\s-]*leader/i.test(c.name);
+    });
+
+    if (!leaderCollection) return 0;
+
+    return await db.collection(leaderCollection.name).countDocuments();
+  } catch (error) {
+    console.error('Batch leader count failed:', error.message);
+    return 0;
+  }
+}
+
 /* GET Admin Dashboard. */
-router.get('/', function(req, res, next) {
+router.get('/', async function(req, res, next) {
+  let totalAlumni = 0;
+  let totalBatches = 0;
+  let batchLeaders = 0;
+
+  try {
+    const batches = await MemberDetails.distinct('batch');
+
+    totalAlumni = await MemberDetails.countDocuments();
+    totalBatches = batches.filter(function (b) { return b && String(b).trim() !== ''; }).length;
+    batchLeaders = await getBatchLeaderCount();
+  } catch (error) {
+    console.error('Dashboard stats failed:', error.message);
+  }
+
   res.render('admin', {
     layout: false,
     title: 'Alumni Admin Dashboard',
     adminName: 'Super Admin',
     stats: {
-      totalAlumni: '1,245',
+      totalAlumni: totalAlumni.toLocaleString('en-US'),
       alumniGrowth: '+12.4%',
-      totalBatches: '6',
-      batchLeaders: '6',
+      totalBatches: String(totalBatches),
+      batchLeaders: String(batchLeaders),
       upcomingEvents: '3',
       announcements: '5',
       newRegistrations: '12',
