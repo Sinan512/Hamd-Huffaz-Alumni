@@ -4,26 +4,18 @@ var router = express.Router();
 var mongoose = require('mongoose');
 var MemberDetails = require('../models/MemberDetails');
 var BatchDetails = require('../models/BatchDetails');
+var BatchLeader = require('../models/BatchLeader');
 
-/* Count batch leaders only if such a collection exists in the database. */
+/* Number of assigned batch leaders (BATCH_LEADERS collection). */
 async function getBatchLeaderCount() {
   try {
-    const db = mongoose.connection && mongoose.connection.db;
-    if (!db) return 0;
-
-    const collections = await db.listCollections().toArray();
-    const leaderCollection = collections.find(function (c) {
-      return /batch[_\s-]*leader/i.test(c.name);
-    });
-
-    if (!leaderCollection) return 0;
-
-    return await db.collection(leaderCollection.name).countDocuments();
+    return await BatchLeader.countDocuments();
   } catch (error) {
     console.error('Batch leader count failed:', error.message);
     return 0;
   }
 }
+
 
 /* GET Admin Dashboard. */
 router.get('/', async function(req, res, next) {
@@ -200,6 +192,109 @@ router.post('/batches', async function (req, res) {
     return res.status(500).json({ success: false, message: 'Could not create the batch. Please try again.' });
   }
 });
+
+/* GET the list of batch years for the Assign Leader modal. */
+router.get('/batches', async function (req, res) {
+  try {
+    const years = {};
+
+    const batches = await BatchDetails.find({}, { year: 1 }).lean();
+    batches.forEach(function (b) {
+      const year = batchYear(b.year);
+      if (/^\d{4}$/.test(year)) years[year] = true;
+    });
+
+    /* Fall back to whatever years the members themselves carry. */
+    const memberBatches = await MemberDetails.distinct('batch');
+    memberBatches.forEach(function (b) {
+      const year = batchYear(b);
+      if (/^\d{4}$/.test(year)) years[year] = true;
+    });
+
+    const list = Object.keys(years).sort(function (a, b) { return Number(b) - Number(a); });
+    return res.json({ success: true, years: list });
+  } catch (error) {
+    console.error('Batch list failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load batches.', years: [] });
+  }
+});
+
+/* GET the members of a batch year (used to fill the leader dropdown). */
+router.get('/batches/:year/members', async function (req, res) {
+  try {
+    const year = batchYear(req.params.year);
+    if (!/^\d{4}$/.test(year)) {
+      return res.status(400).json({ success: false, message: 'Invalid batch year.', members: [] });
+    }
+
+    const docs = await MemberDetails.find({}, { name: 1, admissionNumber: 1, batch: 1 }).lean();
+    const members = docs
+      .filter(function (doc) { return batchYear(doc.batch) === year; })
+      .map(function (doc) {
+        return {
+          _id: String(doc._id),
+          name: doc.name || 'Unnamed member',
+          admissionNumber: doc.admissionNumber || ''
+        };
+      })
+      .sort(function (a, b) { return a.name.localeCompare(b.name); });
+
+    return res.json({ success: true, year: year, members: members });
+  } catch (error) {
+    console.error('Batch members lookup failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load members.', members: [] });
+  }
+});
+
+/* POST Assign a batch leader into BATCH_LEADERS. */
+router.post('/leaders', async function (req, res) {
+  try {
+    const year = batchYear(req.body.year);
+    const memberId = String(req.body.memberId || '').trim();
+
+    if (!/^\d{4}$/.test(year)) {
+      return res.status(400).json({ success: false, message: 'Please select a valid batch year.' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(memberId)) {
+      return res.status(400).json({ success: false, message: 'Please select a member to assign.' });
+    }
+
+    const member = await MemberDetails.findById(memberId).lean();
+    if (!member) {
+      return res.status(404).json({ success: false, message: 'That member no longer exists.' });
+    }
+    if (batchYear(member.batch) !== year) {
+      return res.status(400).json({ success: false, message: 'That member does not belong to batch ' + year + '.' });
+    }
+
+    const batch = await BatchDetails.findOne({ year: year }).lean();
+
+    const leader = await BatchLeader.findOneAndUpdate(
+      { year: year },
+      {
+        $set: {
+          year: year,
+          batchId: batch ? batch._id : undefined,
+          memberId: member._id,
+          memberName: member.name || '',
+          assignedAt: new Date()
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: (member.name || 'Member') + ' is now the leader of batch ' + year + '.',
+      leader: leader
+    });
+  } catch (error) {
+    console.error('Assign batch leader failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not assign the leader. Please try again.' });
+  }
+});
+
+
 
 /* Batch value may be "2021", "2021-2022" or "Batch 2021" - show the year only. */
 function batchYear(batch) {

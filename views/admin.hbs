@@ -1088,30 +1088,28 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
-          <form>
+          <form id="assignLeaderForm">
             <div class="mb-3">
               <label class="form-label small fw-bold">Select Batch</label>
-              <select class="form-select rounded-3">
-                <option>Batch 2021</option>
-                <option>Batch 2022</option>
-                <option>Batch 2023</option>
-                <option>Batch 2024</option>
+              <select class="form-select rounded-3" name="year" id="leaderBatchSelect" required>
+                <option value="">Loading batches...</option>
               </select>
             </div>
             <div class="mb-3">
               <label class="form-label small fw-bold">Assign Member</label>
-              <select class="form-select rounded-3">
-                <option>Abdullah Al-Mansoor</option>
-                <option>Muhammed Rizwan</option>
-                <option>Faris Hameed</option>
+              <select class="form-select rounded-3" name="memberId" id="leaderMemberSelect" required disabled>
+                <option value="">Select a batch first</option>
               </select>
+              <div class="form-text small" id="leaderMemberHint">Members of the selected batch will appear here.</div>
             </div>
+            <div id="assignLeaderAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3"></div>
             <div class="d-flex justify-content-end gap-2 mt-4">
               <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-purple rounded-3 px-4 text-white" style="background:#8b5cf6;">Assign Leader</button>
+              <button type="submit" id="assignLeaderSubmit" class="btn btn-purple rounded-3 px-4 text-white" style="background:#8b5cf6;">Assign Leader</button>
             </div>
           </form>
         </div>
+
       </div>
     </div>
   </div>
@@ -1416,6 +1414,143 @@
       });
     })();
   </script>
+
+  <!-- Assign Batch Leader: load batches, load that batch's members, save to BATCH_LEADERS -->
+  <script>
+    (function () {
+      var form = document.getElementById('assignLeaderForm');
+      if (!form) return;
+
+      var modalEl = document.getElementById('assignLeaderModal');
+      var batchSelect = document.getElementById('leaderBatchSelect');
+      var memberSelect = document.getElementById('leaderMemberSelect');
+      var hint = document.getElementById('leaderMemberHint');
+      var alertBox = document.getElementById('assignLeaderAlert');
+      var submitBtn = document.getElementById('assignLeaderSubmit');
+      var batchesLoaded = false;
+
+      function showAlert(type, message) {
+        alertBox.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = message;
+      }
+
+      function hideAlert() {
+        alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = '';
+      }
+
+      function resetMembers(message) {
+        memberSelect.innerHTML = '<option value="">' + message + '</option>';
+        memberSelect.disabled = true;
+      }
+
+      async function loadBatches() {
+        try {
+          var res = await fetch('/admin/batches');
+          var result = await res.json();
+          var years = result.years || [];
+
+          if (!years.length) {
+            batchSelect.innerHTML = '<option value="">No batches found</option>';
+            return;
+          }
+
+          batchSelect.innerHTML = '<option value="">Select a batch</option>' +
+            years.map(function (y) { return '<option value="' + y + '">Batch ' + y + '</option>'; }).join('');
+          batchesLoaded = true;
+        } catch (err) {
+          batchSelect.innerHTML = '<option value="">Could not load batches</option>';
+        }
+      }
+
+      async function loadMembers(year) {
+        resetMembers('Loading members...');
+        hint.textContent = 'Loading members of batch ' + year + '...';
+
+        try {
+          var res = await fetch('/admin/batches/' + year + '/members');
+          var result = await res.json();
+          var members = result.members || [];
+
+          if (!members.length) {
+            resetMembers('No members found in this batch');
+            hint.textContent = 'No members found in batch ' + year + '.';
+            return;
+          }
+
+          memberSelect.innerHTML = '<option value="">Select a member</option>' +
+            members.map(function (m) {
+              var label = m.name + (m.admissionNumber ? ' (' + m.admissionNumber + ')' : '');
+              return '<option value="' + m._id + '">' + label + '</option>';
+            }).join('');
+          memberSelect.disabled = false;
+          hint.textContent = members.length + (members.length === 1 ? ' member' : ' members') + ' in batch ' + year + '.';
+        } catch (err) {
+          resetMembers('Could not load members');
+          hint.textContent = 'Could not load the members of this batch.';
+        }
+      }
+
+      if (modalEl) {
+        modalEl.addEventListener('show.bs.modal', function () {
+          hideAlert();
+          if (!batchesLoaded) loadBatches();
+        });
+      }
+
+      batchSelect.addEventListener('change', function () {
+        hideAlert();
+        var year = batchSelect.value;
+        if (!year) {
+          resetMembers('Select a batch first');
+          hint.textContent = 'Members of the selected batch will appear here.';
+          return;
+        }
+        loadMembers(year);
+      });
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideAlert();
+
+        var data = Object.fromEntries(new FormData(form).entries());
+        if (!data.year || !data.memberId) {
+          showAlert('danger', 'Please select both a batch and a member.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        var originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Assigning...';
+
+        try {
+          var res = await fetch('/admin/leaders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          var result = await res.json().catch(function () { return {}; });
+
+          if (res.ok) {
+            showAlert('success', result.message || 'Batch leader assigned.');
+            setTimeout(function () {
+              var modal = bootstrap.Modal.getInstance(modalEl);
+              if (modal) modal.hide();
+              window.location.reload();
+            }, 1200);
+          } else {
+            showAlert('danger', result.message || 'Could not assign the leader, please try again.');
+          }
+        } catch (err) {
+          showAlert('danger', 'Could not assign the leader, please try again.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      });
+    })();
+  </script>
+
 </body>
 
 </html>
