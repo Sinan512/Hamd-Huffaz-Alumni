@@ -395,6 +395,20 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
+    .member-avatar-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eef2ff;
+      color: #4f46e5;
+      font-size: 22px;
+    }
+
     .status-dot {
       position: absolute;
       bottom: 0;
@@ -862,7 +876,6 @@
                   <tr>
                     <th>Member Profile</th>
                     <th>Batch</th>
-                    <th>Status</th>
                     <th>Joined Date</th>
                     <th class="text-end">Actions</th>
                   </tr>
@@ -873,8 +886,9 @@
                     <td>
                       <div class="d-flex align-items-center gap-3">
                         <div class="member-avatar-wrapper">
-                          <img src="{{this.avatar}}" class="member-avatar" alt="{{this.name}}">
-                          <span class="status-dot dot-{{this.statusLower}}"></span>
+                          <div class="member-avatar-icon">
+                            <i class="bi bi-person-circle"></i>
+                          </div>
                         </div>
                         <div>
                           <div class="fw-bold text-dark">{{this.name}}</div>
@@ -882,12 +896,7 @@
                         </div>
                       </div>
                     </td>
-                    <td><span class="batch-tag">Class of {{this.batch}}</span></td>
-                    <td>
-                      <span class="badge-status badge-{{this.statusLower}}">
-                        {{this.status}}
-                      </span>
-                    </td>
+                    <td><span class="batch-tag">{{this.batch}}</span></td>
                     <td class="text-muted small fw-medium">{{this.joinedDate}}</td>
                     <td class="text-end">
                       <button class="btn btn-sm btn-light border rounded-2 px-2" title="View Profile">
@@ -899,6 +908,11 @@
                     </td>
                   </tr>
                   {{/each}}
+                  {{#unless recentMembers}}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-4">No members registered yet.</td>
+                  </tr>
+                  {{/unless}}
                 </tbody>
               </table>
             </div>

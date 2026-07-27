@@ -29,6 +29,7 @@ router.get('/', async function(req, res, next) {
   let totalAlumni = 0;
   let totalBatches = 0;
   let batchLeaders = 0;
+  let recentMembers = [];
 
   try {
     const batches = await MemberDetails.distinct('batch');
@@ -36,6 +37,7 @@ router.get('/', async function(req, res, next) {
     totalAlumni = await MemberDetails.countDocuments();
     totalBatches = batches.filter(function (b) { return b && String(b).trim() !== ''; }).length;
     batchLeaders = await getBatchLeaderCount();
+    recentMembers = await getRecentMembers(5);
   } catch (error) {
     console.error('Dashboard stats failed:', error.message);
   }
@@ -55,13 +57,7 @@ router.get('/', async function(req, res, next) {
       regGrowth: '+8.2%',
       pendingLeaders: '1'
     },
-    recentMembers: [
-      { id: 1, name: 'Abdullah Al-Mansoor', email: 'abdullah@example.com', batch: '2021', status: 'Active', statusLower: 'active', joinedDate: '12 Jul 2026', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
-      { id: 2, name: 'Muhammed Rizwan', email: 'rizwan@example.com', batch: '2022', status: 'Verified', statusLower: 'verified', joinedDate: '15 Jul 2026', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
-      { id: 3, name: 'Faris Hameed', email: 'faris@example.com', batch: '2023', status: 'Pending', statusLower: 'pending', joinedDate: '17 Jul 2026', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
-      { id: 4, name: 'Zaid Ibn Shafi', email: 'zaid@example.com', batch: '2024', status: 'Active', statusLower: 'active', joinedDate: '20 Jul 2026', avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&auto=format&fit=crop&q=80' },
-      { id: 5, name: 'Omar Khalid', email: 'omar@example.com', batch: '2025', status: 'Active', statusLower: 'active', joinedDate: '22 Jul 2026', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80' }
-    ],
+    recentMembers: recentMembers,
     upcomingEvents: [
       { title: 'Annual Alumni Meet 2026', date: 'Aug 15, 2026', month: 'AUG', day: '15', location: 'Grand Auditorium', category: 'Reunion', badgeColor: 'bg-primary' },
       { title: 'Executive Committee Meeting', date: 'Aug 25, 2026', month: 'AUG', day: '25', location: 'Conference Room B', category: 'Official', badgeColor: 'bg-info' },
@@ -114,6 +110,44 @@ router.post('/members', async function (req, res) {
     return res.status(500).json({ success: false, message: 'Could not save the member. Please try again.' });
   }
 });
+
+/* Batch value may be "2021", "2021-2022" or "Batch 2021" - show the year only. */
+function batchYear(batch) {
+  const match = String(batch || '').match(/\d{4}/);
+  return match ? match[0] : String(batch || '').trim();
+}
+
+function formatJoinedDate(date) {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
+/* Latest registered members from MEMBER_DETAILS. */
+async function getRecentMembers(limit) {
+  try {
+    const docs = await MemberDetails.find({})
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit)
+      .lean();
+
+    return docs.map(function (doc) {
+      return {
+        id: String(doc._id),
+        name: doc.name,
+        email: doc.email,
+        batch: batchYear(doc.batch),
+        joinedDate: formatJoinedDate(doc.createdAt)
+      };
+    });
+  } catch (error) {
+    console.error('Recent members lookup failed:', error.message);
+    return [];
+  }
+}
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
