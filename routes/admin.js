@@ -5,6 +5,7 @@ var mongoose = require('mongoose');
 var MemberDetails = require('../models/MemberDetails');
 var BatchDetails = require('../models/BatchDetails');
 var BatchLeader = require('../models/BatchLeader');
+const connectDB = require("../config/db");
 
 /* Number of assigned batch leaders (BATCH_LEADERS collection). */
 async function getBatchLeaderCount() {
