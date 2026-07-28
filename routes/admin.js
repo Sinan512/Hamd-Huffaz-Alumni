@@ -19,6 +19,7 @@ async function getBatchLeaderCount() {
 
 /* GET Admin Dashboard. */
 router.get('/', async function(req, res, next) {
+  await connectDB();
   let totalAlumni = 0;
   let totalBatches = 0;
   let batchLeaders = 0;
@@ -67,6 +68,7 @@ router.get('/', async function(req, res, next) {
 
 /* POST Add a new alumni member. */
 router.post('/members', async function (req, res) {
+  await connectDB();
   try {
     const admissionNumber = (req.body.admissionNumber || '').trim();
     const name = (req.body.name || '').trim();
@@ -140,6 +142,7 @@ async function linkMemberToBatch(member) {
 
 /* GET how many members would be linked to a batch year (used by the Create Batch modal). */
 router.get('/batches/:year/members-count', async function (req, res) {
+  await connectDB();
   try {
     const year = batchYear(req.params.year);
     if (!/^\d{4}$/.test(year)) {
@@ -157,6 +160,7 @@ router.get('/batches/:year/members-count', async function (req, res) {
 
 /* GET diagnostics for BATCH_DETAILS indexes (helps explain false duplicate errors). */
 router.get('/batches/diagnostics', async function (req, res) {
+  await connectDB();
   try {
     const indexes = await BatchDetails.collection.indexes();
     const total = await BatchDetails.countDocuments();
@@ -169,6 +173,7 @@ router.get('/batches/diagnostics', async function (req, res) {
 
 /* POST Create a new batch in BATCH_DETAILS. */
 router.post('/batches', async function (req, res) {
+await connectDB();
   try {
     const year = batchYear(req.body.year);
     const description = (req.body.description || '').trim();
@@ -233,6 +238,7 @@ console.error("========================================");
 
 /* GET the list of batch years for the Assign Leader modal. */
 router.get('/batches', async function (req, res) {
+await connectDB();
   try {
     const years = {};
 
@@ -259,6 +265,7 @@ router.get('/batches', async function (req, res) {
 
 /* GET the members of a batch year (used to fill the leader dropdown). */
 router.get('/batches/:year/members', async function (req, res) {
+await connectDB();
   try {
     const year = batchYear(req.params.year);
     if (!/^\d{4}$/.test(year)) {
@@ -286,6 +293,7 @@ router.get('/batches/:year/members', async function (req, res) {
 
 /* POST Assign a batch leader into BATCH_LEADERS. */
 router.post('/leaders', async function (req, res) {
+await connectDB();
   try {
     const year = batchYear(req.body.year);
     const memberId = String(req.body.memberId || '').trim();
@@ -391,7 +399,7 @@ async function liveMemberCountsByYear() {
  */
 async function getMembersPerBatch() {
   try {
-    const docs = await BatchDetails.find({}, { year: 1, memberCount: 1, memberIds: 1 }).lean();
+    const docs = await BatchDetails.find({}, { year: 1, memberCount: 1, memberIds: 1 });
 
     let live = null;
     try {
