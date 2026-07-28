@@ -14,6 +14,19 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
+  <!-- Apply saved theme before paint (avoids flash) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('adminTheme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-bs-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -616,6 +629,48 @@
         margin-left: 0;
       }
     }
+
+    /* --- DARK MODE THEME --- */
+    [data-bs-theme="dark"] {
+      --bg-body: #0b0f19;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --card-bg: #151c2c;
+      --card-border: rgba(148, 163, 184, 0.16);
+      --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+      --card-shadow-hover: 0 12px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+      color-scheme: dark;
+    }
+
+    [data-bs-theme="dark"] body { background-color: var(--bg-body); color: var(--text-main); }
+    [data-bs-theme="dark"] .navbar { background: #111827; border-bottom-color: var(--card-border); }
+    [data-bs-theme="dark"] .search-box input { background: #0f172a; border-color: var(--card-border); color: #e2e8f0; }
+    [data-bs-theme="dark"] .search-box input::placeholder { color: #64748b; }
+    [data-bs-theme="dark"] .search-box input:focus { background: #0b1220; border-color: #6366f1; }
+    [data-bs-theme="dark"] .nav-icon-btn { background: #1e293b; border-color: var(--card-border); color: #cbd5e1; }
+    [data-bs-theme="dark"] .nav-icon-btn:hover { background: #263449; color: #ffffff; }
+    [data-bs-theme="dark"] .user-profile-btn { background: #1e293b; border-color: var(--card-border); }
+    [data-bs-theme="dark"] .user-profile-btn div[style*="color: #0f172a"] { color: #e2e8f0 !important; }
+    [data-bs-theme="dark"] .card-header,
+    [data-bs-theme="dark"] .stat-value,
+    [data-bs-theme="dark"] .fw-800,
+    [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3,
+    [data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 { color: #f1f5f9; }
+    [data-bs-theme="dark"] .text-slate-900,
+    [data-bs-theme="dark"] .text-dark { color: #e2e8f0 !important; }
+    [data-bs-theme="dark"] .bg-white { background-color: #151c2c !important; }
+    [data-bs-theme="dark"] .modal-content,
+    [data-bs-theme="dark"] .dropdown-menu { background-color: #151c2c; color: var(--text-main); }
+    [data-bs-theme="dark"] .modal-header,
+    [data-bs-theme="dark"] .modal-footer { border-color: var(--card-border); }
+    [data-bs-theme="dark"] .form-control,
+    [data-bs-theme="dark"] .form-select { background-color: #0f172a; border-color: var(--card-border); color: #e2e8f0; }
+    [data-bs-theme="dark"] .form-control::placeholder { color: #64748b; }
+    [data-bs-theme="dark"] .table { --bs-table-color: #e2e8f0; --bs-table-bg: transparent; }
+    [data-bs-theme="dark"] .btn-light { background-color: #1e293b; border-color: var(--card-border); color: #e2e8f0; }
+    [data-bs-theme="dark"] .btn-outline-secondary { color: #cbd5e1; border-color: var(--card-border); }
+    [data-bs-theme="dark"] .list-group-item { background-color: transparent; color: var(--text-main); border-color: var(--card-border); }
+
   </style>
 </head>
 <body>
@@ -689,22 +744,10 @@
           <!-- Right Action Items -->
           <div class="d-flex align-items-center gap-3">
             
-            <!-- Quick Alert Notification -->
-            <div class="dropdown">
-              <div class="nav-icon-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-bell fs-5"></i>
-                <span class="badge-dot"></span>
-              </div>
-              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2" style="width: 320px;">
-                <li class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                  <span class="fw-bold fs-6">Notifications</span>
-                  <span class="badge bg-primary-subtle text-primary rounded-pill">3 New</span>
-                </li>
-                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#"><strong>Zaid Ibn Shafi</strong> registered as new alumni. <span class="text-muted d-block small">10m ago</span></a></li>
-                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#"><strong>Batch 2022</strong> leader updated. <span class="text-muted d-block small">2h ago</span></a></li>
-                <li><a class="dropdown-item py-2 rounded-3 text-wrap" href="#">New event request pending approval. <span class="text-muted d-block small">1d ago</span></a></li>
-              </ul>
-            </div>
+            <!-- Dark Mode Toggle -->
+            <button type="button" class="nav-icon-btn border-0 p-0" id="themeToggleBtn" aria-label="Toggle dark mode" title="Toggle dark mode">
+              <i class="bi bi-moon-stars fs-5" id="themeToggleIcon"></i>
+            </button>
 
             <!-- User Profile Dropdown -->
             <div class="dropdown">
@@ -1927,6 +1970,64 @@
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
         }
+      });
+    })();
+  </script>
+
+  <!-- DARK MODE TOGGLE -->
+  <script>
+    (function () {
+      var STORAGE_KEY = 'adminTheme';
+      var root = document.documentElement;
+
+      function preferred() {
+        try {
+          var saved = localStorage.getItem(STORAGE_KEY);
+          if (saved === 'dark' || saved === 'light') return saved;
+        } catch (e) {}
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      function paintCharts(theme) {
+        if (typeof Chart === 'undefined' || !Chart.getChart) return;
+        var tick = theme === 'dark' ? '#94a3b8' : '#94a3b8';
+        var grid = theme === 'dark' ? 'rgba(148,163,184,0.15)' : '#f1f5f9';
+        document.querySelectorAll('canvas').forEach(function (cv) {
+          var c = Chart.getChart(cv);
+          if (!c || !c.options || !c.options.scales) return;
+          Object.keys(c.options.scales).forEach(function (k) {
+            var sc = c.options.scales[k];
+            if (sc.ticks) sc.ticks.color = tick;
+            if (sc.grid && sc.grid.display !== false) sc.grid.color = grid;
+          });
+          c.update('none');
+        });
+      }
+
+      function apply(theme) {
+        root.setAttribute('data-bs-theme', theme);
+        var icon = document.getElementById('themeToggleIcon');
+        if (icon) icon.className = (theme === 'dark' ? 'bi bi-sun fs-5' : 'bi bi-moon-stars fs-5');
+        var btn = document.getElementById('themeToggleBtn');
+        if (btn) {
+          var label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+          btn.setAttribute('aria-label', label);
+          btn.setAttribute('title', label);
+        }
+        paintCharts(theme);
+      }
+
+      apply(preferred());
+
+      document.addEventListener('DOMContentLoaded', function () {
+        apply(root.getAttribute('data-bs-theme') || preferred());
+        var btn = document.getElementById('themeToggleBtn');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+          var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+          try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+          apply(next);
+        });
       });
     })();
   </script>
