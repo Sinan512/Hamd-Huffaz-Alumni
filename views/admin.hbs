@@ -1050,13 +1050,8 @@
             </div>
             <div class="mb-3">
               <label class="form-label small fw-bold">Batch</label>
-              <select class="form-select rounded-3" name="batch" required>
-                <option>2021</option>
-                <option>2022</option>
-                <option>2023</option>
-                <option>2024</option>
-                <option>2025</option>
-                <option>2026</option>
+              <select class="form-select rounded-3" name="batch" id="addAlumniBatchSelect" required>
+                <option value="">Loading batches...</option>
               </select>
             </div>
             <div class="mb-3">
@@ -1662,6 +1657,53 @@
     })();
   </script>
 
+  <!-- Add Alumni: batch dropdown fed from the BATCH_DETAILS collection -->
+  <script>
+    (function () {
+      var select = document.getElementById('addAlumniBatchSelect');
+      var modalEl = document.getElementById('addAlumniModal');
+      if (!select || !modalEl) return;
+
+      var loaded = false;
+      var loading = false;
+
+      function setOptions(html) { select.innerHTML = html; }
+
+      async function loadBatchYears(force) {
+        if (loading || (loaded && !force)) return;
+        loading = true;
+        setOptions('<option value="">Loading batches...</option>');
+        try {
+          var res = await fetch('/admin/batches');
+          var data = await res.json().catch(function () { return {}; });
+          var years = Array.isArray(data.years) ? data.years : [];
+          if (!years.length) {
+            setOptions('<option value="">No batches found \u2014 create a batch first</option>');
+            loaded = false;
+            return;
+          }
+          setOptions('<option value="">Select a batch</option>' +
+            years.map(function (y) {
+              return '<option value="' + y + '">Batch ' + y + '</option>';
+            }).join(''));
+          loaded = true;
+        } catch (err) {
+          setOptions('<option value="">Could not load batches</option>');
+          loaded = false;
+        } finally {
+          loading = false;
+        }
+      }
+
+      modalEl.addEventListener('show.bs.modal', function () { loadBatchYears(false); });
+
+      /* Refresh after a new batch is created so the new year shows up. */
+      window.refreshAddAlumniBatchYears = function () { loadBatchYears(true); };
+
+      loadBatchYears(false);
+    })();
+  </script>
+
   <script>
     (function () {
       var form = document.getElementById('createBatchForm');
@@ -1729,6 +1771,9 @@
 
           if (res.ok) {
             showAlert('success', result.message || 'Batch created successfully.');
+            if (typeof window.refreshAddAlumniBatchYears === 'function') {
+              window.refreshAddAlumniBatchYears();
+            }
             form.reset();
             preview.textContent = 'Enter a year to see how many members will be linked.';
             setTimeout(function () {
