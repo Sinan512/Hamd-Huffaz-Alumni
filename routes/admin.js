@@ -634,13 +634,14 @@ async function getAllBatchLeaders() {
   try {
     var docs = await BatchLeader.find({}).sort({ assignedAt: -1, _id: -1 }).lean();
     return docs.map(function (doc) {
-      return {
-        id:          String(doc._id),
-        memberName:  doc.memberName  || '',
-        year:        batchYear(doc.year),
-        assignedAt:  formatJoinedDate(doc.assignedAt),
-        username:    doc.username    || ''
-      };
+       return {
+    id:         String(doc._id),
+    memberName: doc.memberName || '',
+    year:       batchYear(doc.year),
+    assignedAt: formatJoinedDate(doc.assignedAt),
+    username:   doc.username || '',
+    password:   doc.password || ''
+};
     });
   } catch (error) {
     console.error('All batch leaders lookup failed:', error.message);

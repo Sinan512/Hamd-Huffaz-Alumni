@@ -935,7 +935,8 @@
                               data-leader-year="{{this.year}}"
                               data-leader-assigned="{{this.assignedAt}}"
                               data-leader-username="{{this.username}}"
-                              onclick="openLeaderDetailsModal(this.dataset)">
+data-leader-password="{{this.password}}"
+onclick="openLeaderDetailsModal(this.dataset)">
                         <i class="bi bi-eye"></i>
                       </button>
                     </td>
@@ -2626,6 +2627,7 @@
       var year     = ds.leaderYear;
       var assigned = ds.leaderAssigned;
       var username = ds.leaderUsername;
+      var password = ds.leaderPassword;
 
       /* Info card */
       document.getElementById('ldName').textContent     = name     || '';
@@ -2635,7 +2637,7 @@
       /* Credentials form */
       document.getElementById('ldLeaderId').value          = id       || '';
       document.getElementById('ldUsername').value          = username || '';
-      document.getElementById('ldPassword').value          = '';
+      document.getElementById('ldPassword').value = password || '';
       document.getElementById('ldPassword').type           = 'password';
       document.getElementById('ldTogglePassIcon').className = 'bi bi-eye';
       var credAlert = document.getElementById('ldCredAlert');
