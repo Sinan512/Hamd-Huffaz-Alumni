@@ -1,11 +1,25 @@
 var express = require('express');
 var router = express.Router();
+var multer = require('multer');
 
 var mongoose = require('mongoose');
 var MemberDetails = require('../models/MemberDetails');
 var BatchDetails = require('../models/BatchDetails');
 var BatchLeader = require('../models/BatchLeader');
+var EventDetails = require('../models/EventDetails');
 const connectDB = require("../config/db");
+
+/* Multer: store uploaded files in memory as Buffer. */
+var upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+  fileFilter: function (req, file, cb) {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed.'));
+    }
+    cb(null, true);
+  }
+});
 
 /* Number of assigned batch leaders (BATCH_LEADERS collection). */
 async function getBatchLeaderCount() {
@@ -441,6 +455,61 @@ async function getMembersPerBatch() {
     return { labels: [], values: [], batchCount: 0 };
   }
 }
+
+
+/* POST Create a new event in EVENT_DETAILS. Accepts multipart/form-data for image upload. */
+router.post('/events', upload.single('eventImage'), async function (req, res) {
+  await connectDB();
+  try {
+    const title = (req.body.title || '').trim();
+    const date = (req.body.date || '').trim();
+    const category = (req.body.category || 'General').trim();
+    const location = (req.body.location || '').trim();
+    const description = (req.body.description || '').trim();
+
+    if (!title || !date) {
+      return res.status(400).json({ success: false, message: 'Event title and date are required.' });
+    }
+
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid date.' });
+    }
+
+    const eventData = {
+      title,
+      date: parsedDate,
+      category,
+      location,
+      description,
+      image: { data: null, contentType: null }
+    };
+
+    if (req.file) {
+      eventData.image = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      };
+    }
+
+    const event = await EventDetails.create(eventData);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Event "' + event.title + '" created successfully.',
+      event: {
+        _id: event._id,
+        title: event.title,
+        date: event.date,
+        category: event.category,
+        location: event.location
+      }
+    });
+  } catch (error) {
+    console.error('Create event failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not save the event. Please try again.' });
+  }
+});
 
 
 function escapeRegex(value) {
