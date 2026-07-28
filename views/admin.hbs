@@ -923,7 +923,8 @@
             </div>
             <div>
               {{#each upcomingEvents}}
-              <div class="event-item">
+              <div class="event-item" data-event-id="{{this.id}}" style="cursor:pointer;"
+                   onclick="openEventDetail('{{this.id}}')">
                 <div class="event-date-box">
                   <span class="event-date-month">{{this.month}}</span>
                   <span class="event-date-day">{{this.day}}</span>
@@ -935,6 +936,9 @@
                 <span class="badge {{this.badgeColor}} ms-auto rounded-pill" style="font-size: 10px;">{{this.category}}</span>
               </div>
               {{/each}}
+              {{#unless upcomingEvents}}
+              <div class="px-4 py-3 text-muted small text-center">No events yet. Use "Create Event" to add one.</div>
+              {{/unless}}
             </div>
           </div>
 
@@ -1156,12 +1160,10 @@
               <label class="form-label small fw-bold">Event Image <span class="text-muted fw-normal">(optional, max 5 MB)</span></label>
               <input type="file" name="eventImage" id="eventImageInput" class="form-control rounded-3" accept="image/*">
               <div id="eventImagePreviewWrapper" class="mt-2 d-none">
-                <img id="eventImagePreview" src="" alt="Preview" class="rounded-3 border" style="max-height: 140px; max-width: 100%; object-fit: cover;">
+                <img id="eventImagePreview" src="" alt="Preview" class="rounded-3 border" style="max-height:140px;max-width:100%;object-fit:cover;">
               </div>
             </div>
-
             <div id="createEventAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3" role="alert"></div>
-
             <div class="d-flex justify-content-end gap-2 mt-4">
               <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
               <button type="submit" id="createEventSubmit" class="btn btn-warning rounded-3 px-4 text-dark">Publish Event</button>
@@ -1172,19 +1174,142 @@
     </div>
   </div>
 
+  <!-- Modal 5: Event Detail (view image + info on click) -->
+  <div class="modal fade" id="eventDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+        <div class="modal-header border-0 pb-0 px-4 pt-4">
+          <h5 class="modal-fw-bold d-flex align-items-center gap-2" id="eventDetailTitle">
+            <i class="bi bi-calendar-event text-amber"></i> Event Details
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4 pt-2">
+
+          <!-- Loading spinner -->
+          <div id="eventDetailLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading…</span></div>
+          </div>
+
+          <!-- Error state -->
+          <div id="eventDetailError" class="d-none alert alert-danger rounded-3 small"></div>
+
+          <!-- Content -->
+          <div id="eventDetailContent" class="d-none">
+            <!-- Banner image -->
+            <div id="eventDetailImageWrapper" class="d-none mb-4">
+              <img id="eventDetailImage" src="" alt="Event banner"
+                   class="w-100 rounded-3 border"
+                   style="max-height:280px;object-fit:cover;">
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-8">
+                <h4 class="fw-800 text-dark mb-1" id="eventDetailName" style="font-weight:800;"></h4>
+                <p class="text-muted small mb-3" id="eventDetailDescription"></p>
+              </div>
+              <div class="col-md-4">
+                <!-- Date box -->
+                <div class="d-flex align-items-center gap-3 mb-2">
+                  <div class="event-date-box flex-shrink-0">
+                    <span class="event-date-month" id="eventDetailMonth"></span>
+                    <span class="event-date-day"   id="eventDetailDay"></span>
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark small" id="eventDetailDateFormatted"></div>
+                    <span class="badge rounded-pill small" id="eventDetailBadge"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-2">
+            <div class="d-flex align-items-center gap-2 text-muted small">
+              <i class="bi bi-geo-alt-fill text-primary"></i>
+              <span id="eventDetailLocation">—</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Create Event Form -->
+  <!-- ===== EVENT DETAIL: open modal and load data on click ===== -->
+  <script>
+    var CATEGORY_BADGE = {
+      'Reunion':    'bg-primary',
+      'Official':   'bg-info',
+      'Seminar':    'bg-warning text-dark',
+      'Networking': 'bg-success',
+      'General':    'bg-secondary'
+    };
+
+    async function openEventDetail(eventId) {
+      var modalEl  = document.getElementById('eventDetailModal');
+      var modal    = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+      /* Reset state */
+      document.getElementById('eventDetailLoading').classList.remove('d-none');
+      document.getElementById('eventDetailContent').classList.add('d-none');
+      document.getElementById('eventDetailError').classList.add('d-none');
+      document.getElementById('eventDetailImageWrapper').classList.add('d-none');
+
+      modal.show();
+
+      try {
+        var res    = await fetch('/admin/events/' + eventId);
+        var result = await res.json().catch(function () { return {}; });
+
+        if (!res.ok || !result.success) {
+          throw new Error(result.message || 'Could not load event.');
+        }
+
+        /* Populate text fields */
+        document.getElementById('eventDetailTitle').innerHTML =
+          '<i class="bi bi-calendar-event text-amber me-2"></i>' + (result.title || 'Event Details');
+        document.getElementById('eventDetailName').textContent        = result.title        || '';
+        document.getElementById('eventDetailDescription').textContent = result.description  || '';
+        document.getElementById('eventDetailMonth').textContent       = result.month        || '';
+        document.getElementById('eventDetailDay').textContent         = result.day          || '';
+        document.getElementById('eventDetailDateFormatted').textContent = result.dateFormatted || '';
+        document.getElementById('eventDetailLocation').textContent    = result.location     || '—';
+
+        var badgeEl = document.getElementById('eventDetailBadge');
+        badgeEl.className = 'badge rounded-pill small ' + (CATEGORY_BADGE[result.category] || 'bg-secondary');
+        badgeEl.textContent = result.category || '';
+
+        /* Show image if present */
+        if (result.hasImage) {
+          var imgEl = document.getElementById('eventDetailImage');
+          imgEl.src = '/admin/events/' + eventId + '/image?t=' + Date.now();
+          document.getElementById('eventDetailImageWrapper').classList.remove('d-none');
+        }
+
+        document.getElementById('eventDetailLoading').classList.add('d-none');
+        document.getElementById('eventDetailContent').classList.remove('d-none');
+      } catch (err) {
+        document.getElementById('eventDetailLoading').classList.add('d-none');
+        var errEl = document.getElementById('eventDetailError');
+        errEl.textContent = err.message || 'Could not load event details.';
+        errEl.classList.remove('d-none');
+      }
+    }
+  </script>
+
+  <!-- ===== CREATE EVENT FORM ===== -->
   <script>
     (function () {
-      var form = document.getElementById('createEventForm');
+      var form          = document.getElementById('createEventForm');
       if (!form) return;
-      var alertBox = document.getElementById('createEventAlert');
-      var submitBtn = document.getElementById('createEventSubmit');
-      var imageInput = document.getElementById('eventImageInput');
+      var alertBox      = document.getElementById('createEventAlert');
+      var submitBtn     = document.getElementById('createEventSubmit');
+      var imageInput    = document.getElementById('eventImageInput');
       var previewWrapper = document.getElementById('eventImagePreviewWrapper');
-      var previewImg = document.getElementById('eventImagePreview');
+      var previewImg    = document.getElementById('eventImagePreview');
 
       /* Live image preview */
       if (imageInput) {
@@ -1208,7 +1333,6 @@
         alertBox.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-0 mt-3';
         alertBox.textContent = message;
       }
-
       function hideAlert() {
         alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3';
         alertBox.textContent = '';
@@ -1218,18 +1342,13 @@
         e.preventDefault();
         hideAlert();
 
-        /* Use FormData so the image file is included in the request */
         var formData = new FormData(form);
-
         submitBtn.disabled = true;
         var originalText = submitBtn.textContent;
         submitBtn.textContent = 'Publishing...';
 
         try {
-          var res = await fetch('/admin/events', {
-            method: 'POST',
-            body: formData   /* Do NOT set Content-Type; browser sets multipart boundary */
-          });
+          var res = await fetch('/admin/events', { method: 'POST', body: formData });
           var result = await res.json().catch(function () { return {}; });
 
           if (res.ok) {
@@ -1240,8 +1359,9 @@
             setTimeout(function () {
               hideAlert();
               var modalEl = document.getElementById('createEventModal');
-              var modal = bootstrap.Modal.getInstance(modalEl);
+              var modal   = bootstrap.Modal.getInstance(modalEl);
               if (modal) modal.hide();
+              window.location.reload();
             }, 1500);
           } else {
             showAlert('danger', result.message || 'Could not save the event. Please try again.');
@@ -1249,7 +1369,7 @@
         } catch (err) {
           showAlert('danger', 'Could not save the event. Please try again.');
         } finally {
-          submitBtn.disabled = false;
+          submitBtn.disabled    = false;
           submitBtn.textContent = originalText;
         }
       });
