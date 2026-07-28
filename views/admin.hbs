@@ -848,19 +848,28 @@
       <!-- TABLES & SIDE PANELS -->
       <div class="row g-4 mb-4" id="members-section">
         
-        <!-- Recent Members Table -->
+        <!-- All Members Table -->
         <div class="col-lg-8">
           <div class="card">
             <div class="card-header">
               <div class="d-flex align-items-center gap-2">
                 <i class="bi bi-people-fill text-primary"></i>
-                <span>Recent Registered Members</span>
+                <span>All Registered Members</span>
+                <span id="memberCountBadge" class="badge bg-primary-subtle text-primary rounded-pill ms-1" style="font-size:11px;"></span>
               </div>
-              <button class="btn btn-sm btn-link text-primary text-decoration-none fw-bold p-0" data-bs-toggle="modal" data-bs-target="#addAlumniModal">
-                + Add Member
-              </button>
+              <div class="d-flex align-items-center gap-2">
+                <select id="batchFilterSelect" class="form-select form-select-sm rounded-3" style="width:auto;font-size:13px;">
+                  <option value="">All Batches</option>
+                  {{#each batchYears}}
+                  <option value="{{this}}">Batch {{this}}</option>
+                  {{/each}}
+                </select>
+                <button class="btn btn-sm btn-link text-primary text-decoration-none fw-bold p-0 text-nowrap" data-bs-toggle="modal" data-bs-target="#addAlumniModal">
+                  + Add Member
+                </button>
+              </div>
             </div>
-            
+
             <div class="table-responsive">
               <table class="custom-table" id="membersTable">
                 <thead>
@@ -871,9 +880,9 @@
                     <th class="text-end">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {{#each recentMembers}}
-                  <tr>
+                <tbody id="membersTableBody">
+                  {{#each allMembers}}
+                  <tr data-batch="{{this.batch}}" data-name="{{this.name}}" data-email="{{this.email}}">
                     <td>
                       <div class="d-flex align-items-center gap-3">
                         <div class="member-avatar-wrapper">
@@ -899,14 +908,29 @@
                     </td>
                   </tr>
                   {{/each}}
-                  {{#unless recentMembers}}
-                  <tr>
+                  {{#unless allMembers}}
+                  <tr id="membersEmptyRow">
                     <td colspan="4" class="text-center text-muted py-4">No members registered yet.</td>
                   </tr>
                   {{/unless}}
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination bar -->
+            <div class="d-flex align-items-center justify-content-between px-4 py-3 border-top" id="membersPaginationBar">
+              <div class="text-muted small" id="membersPageInfo"></div>
+              <div class="d-flex align-items-center gap-2">
+                <button id="membersPrevBtn" class="btn btn-sm btn-outline-secondary rounded-3" disabled>
+                  <i class="bi bi-chevron-left"></i> Prev
+                </button>
+                <div id="membersPageDots" class="d-flex gap-1"></div>
+                <button id="membersNextBtn" class="btn btn-sm btn-outline-secondary rounded-3">
+                  Next <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -1238,6 +1262,110 @@
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- ===== MEMBERS TABLE: batch filter + 10-per-page pagination ===== -->
+  <script>
+    (function () {
+      var PAGE_SIZE = 10;
+      var currentPage = 1;
+      var activeBatch = '';
+
+      var tbody      = document.getElementById('membersTableBody');
+      var filterSel  = document.getElementById('batchFilterSelect');
+      var prevBtn    = document.getElementById('membersPrevBtn');
+      var nextBtn    = document.getElementById('membersNextBtn');
+      var pageInfo   = document.getElementById('membersPageInfo');
+      var countBadge = document.getElementById('memberCountBadge');
+      var dotsWrap   = document.getElementById('membersPageDots');
+
+      if (!tbody) return;
+
+      /* Collect all data rows once (exclude the empty-state row) */
+      var allRows = Array.from(tbody.querySelectorAll('tr[data-batch]'));
+
+      /* ---- filter ---- */
+      function getVisibleRows() {
+        return allRows.filter(function (row) {
+          var batchMatch = !activeBatch || row.getAttribute('data-batch') === activeBatch;
+          var query      = (document.getElementById('memberSearchInput') || {}).value || '';
+          var textMatch  = !query || row.innerText.toLowerCase().includes(query.toLowerCase().trim());
+          return batchMatch && textMatch;
+        });
+      }
+
+      /* ---- render ---- */
+      function render() {
+        var visible  = getVisibleRows();
+        var total    = visible.length;
+        var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        currentPage    = Math.min(currentPage, totalPages);
+
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var end   = start + PAGE_SIZE;
+
+        /* Show / hide rows */
+        allRows.forEach(function (row) { row.style.display = 'none'; });
+        visible.slice(start, end).forEach(function (row) { row.style.display = ''; });
+
+        /* Empty state */
+        var emptyRow = document.getElementById('membersEmptyRow');
+        if (emptyRow) emptyRow.style.display = total === 0 ? '' : 'none';
+
+        /* Info text */
+        var from = total === 0 ? 0 : start + 1;
+        var to   = Math.min(end, total);
+        pageInfo.textContent   = 'Showing ' + from + '–' + to + ' of ' + total + ' members';
+        countBadge.textContent = total;
+
+        /* Buttons */
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+
+        /* Page number dots (max 7 shown) */
+        dotsWrap.innerHTML = '';
+        var maxDots = 7;
+        var half    = Math.floor(maxDots / 2);
+        var dotStart = Math.max(1, currentPage - half);
+        var dotEnd   = Math.min(totalPages, dotStart + maxDots - 1);
+        if (dotEnd - dotStart < maxDots - 1) dotStart = Math.max(1, dotEnd - maxDots + 1);
+
+        for (var p = dotStart; p <= dotEnd; p++) {
+          var btn   = document.createElement('button');
+          var isAct = p === currentPage;
+          btn.className   = 'btn btn-sm rounded-3 px-2 py-1 ' + (isAct ? 'btn-primary' : 'btn-outline-secondary');
+          btn.style.fontSize = '12px';
+          btn.style.minWidth = '30px';
+          btn.textContent = p;
+          btn.disabled    = isAct;
+          (function (pg) {
+            btn.addEventListener('click', function () { currentPage = pg; render(); });
+          })(p);
+          dotsWrap.appendChild(btn);
+        }
+      }
+
+      /* ---- event listeners ---- */
+      if (filterSel) {
+        filterSel.addEventListener('change', function () {
+          activeBatch = filterSel.value;
+          currentPage = 1;
+          render();
+        });
+      }
+
+      prevBtn.addEventListener('click', function () { if (currentPage > 1) { currentPage--; render(); } });
+      nextBtn.addEventListener('click', function () { currentPage++; render(); });
+
+      /* Hook into existing search box */
+      var searchInput = document.getElementById('memberSearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', function () { currentPage = 1; render(); });
+      }
+
+      /* Initial render */
+      render();
+    })();
+  </script>
+
   <!-- ===== EVENT DETAIL: open modal and load data on click ===== -->
   <script>
     var CATEGORY_BADGE = {
@@ -1415,26 +1543,6 @@
       if (e.key === 'Escape') closeSidebar();
     });
 
-
-    // --- CLIENT-SIDE TABLE SEARCH ---
-    const searchInput = document.getElementById('memberSearchInput');
-    const tableBody = document.querySelector('#membersTable tbody');
-
-    if (searchInput && tableBody) {
-      searchInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase().trim();
-        const rows = tableBody.querySelectorAll('tr');
-
-        rows.forEach(row => {
-          const text = row.innerText.toLowerCase();
-          if (text.includes(query)) {
-            row.style.display = '';
-          } else {
-            row.style.display = 'none';
-          }
-        });
-      });
-    }
 
     // --- CHART.JS INITIALIZATION (REAL DATA) ---
     document.addEventListener('DOMContentLoaded', () => {

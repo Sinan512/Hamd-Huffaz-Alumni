@@ -113,17 +113,22 @@ router.get('/', async function (req, res, next) {
   var totalAlumni  = 0;
   var totalBatches = 0;
   var batchLeaders = 0;
-  var recentMembers = [];
+  var allMembers   = [];
+  var batchYears   = [];
   var batchChart   = { labels: [], values: [], batchCount: 0 };
   var upcomingEvents = [];
 
   try {
     totalAlumni    = await MemberDetails.countDocuments();
     batchLeaders   = await getBatchLeaderCount();
-    recentMembers  = await getRecentMembers(5);
+    allMembers     = await getAllMembers();
     batchChart     = await getMembersPerBatch();
     totalBatches   = batchChart.batchCount;
     upcomingEvents = await getUpcomingEvents(5);
+    /* Collect sorted unique batch years from the member list */
+    var yearSet = {};
+    allMembers.forEach(function (m) { if (m.batch) yearSet[m.batch] = true; });
+    batchYears = Object.keys(yearSet).sort(function (a, b) { return Number(b) - Number(a); });
   } catch (error) {
     console.error('Dashboard stats failed:', error.message);
   }
@@ -140,7 +145,8 @@ router.get('/', async function (req, res, next) {
       upcomingEvents: String(upcomingEvents.length)
     },
     batchChartData: JSON.stringify(batchChart),
-    recentMembers:  recentMembers,
+    allMembers:     allMembers,
+    batchYears:     batchYears,
     upcomingEvents: upcomingEvents,
     recentActivities: [
       { type: 'user',         icon: 'bi-person-plus-fill',  iconBg: 'bg-emerald-soft text-emerald', title: 'New Alumni Registered',    desc: 'Zaid Ibn Shafi completed verification for Batch 2024.', time: '10 mins ago' },
@@ -491,14 +497,21 @@ function formatJoinedDate(date) {
   return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-async function getRecentMembers(limit) {
+/* All members, newest first – used by the dashboard members table. */
+async function getAllMembers() {
   try {
-    var docs = await MemberDetails.find({}).sort({ createdAt: -1, _id: -1 }).limit(limit).lean();
+    var docs = await MemberDetails.find({}).sort({ createdAt: -1, _id: -1 }).lean();
     return docs.map(function (doc) {
-      return { id: String(doc._id), name: doc.name, email: doc.email, batch: batchYear(doc.batch), joinedDate: formatJoinedDate(doc.createdAt) };
+      return {
+        id:         String(doc._id),
+        name:       doc.name       || '',
+        email:      doc.email      || '',
+        batch:      batchYear(doc.batch),
+        joinedDate: formatJoinedDate(doc.createdAt)
+      };
     });
   } catch (error) {
-    console.error('Recent members lookup failed:', error.message);
+    console.error('All members lookup failed:', error.message);
     return [];
   }
 }
