@@ -334,25 +334,33 @@ async function getRecentMembers(limit) {
   }
 }
 
-/* Real member counts grouped by batch year, for the "Members per Batch" chart. */
+/* Member counts per batch, read from the BATCH_DETAILS collection, ordered by year. */
 async function getMembersPerBatch() {
   try {
-    const docs = await MemberDetails.find({}, { batch: 1 }).lean();
-    const counts = {};
+    const docs = await BatchDetails.find({}, { year: 1, memberCount: 1, memberIds: 1 }).lean();
 
-    docs.forEach(function (doc) {
-      const year = batchYear(doc.batch);
-      if (!year) return;
-      counts[year] = (counts[year] || 0) + 1;
-    });
+    const rows = docs.map(function (doc) {
+      const label = batchYear(doc.year) || String(doc.year || '').trim();
+      const count = typeof doc.memberCount === 'number'
+        ? doc.memberCount
+        : (Array.isArray(doc.memberIds) ? doc.memberIds.length : 0);
+      return { label: label, value: count };
+    }).filter(function (row) { return row.label; });
 
-    const labels = Object.keys(counts).sort(function (a, b) {
-      return String(a).localeCompare(String(b), undefined, { numeric: true });
+    rows.sort(function (a, b) {
+      const na = Number(a.label);
+      const nb = Number(b.label);
+      const aNum = !isNaN(na);
+      const bNum = !isNaN(nb);
+      if (aNum && bNum) return na - nb;
+      if (aNum) return -1;
+      if (bNum) return 1;
+      return String(a.label).localeCompare(String(b.label), undefined, { numeric: true });
     });
 
     return {
-      labels: labels,
-      values: labels.map(function (label) { return counts[label]; })
+      labels: rows.map(function (row) { return row.label; }),
+      values: rows.map(function (row) { return row.value; })
     };
   } catch (error) {
     console.error('Members per batch lookup failed:', error.message);
