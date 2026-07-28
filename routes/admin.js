@@ -217,7 +217,15 @@ router.post('/batches', async function (req, res) {
           ') on BATCH_DETAILS is blocking new batches. Open /admin/batches/diagnostics and drop that index.'
       });
     }
-    console.error('Create batch failed:', error.message);
+
+    console.error("========== CREATE BATCH ERROR ==========");
+console.error(error);
+console.error("Code:", error.code);
+console.error("Name:", error.name);
+console.error("KeyPattern:", error.keyPattern);
+console.error("KeyValue:", error.keyValue);
+console.error("========================================");
+
     return res.status(500).json({ success: false, message: 'Could not create the batch. Please try again.' });
   }
 });
