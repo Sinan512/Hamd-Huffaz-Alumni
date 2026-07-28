@@ -277,6 +277,99 @@ router.post('/events', upload.single('eventImage'), async function (req, res) {
 });
 
 /* ================================================================== */
+/* PUT  /admin/events/:id  – update event                              */
+/* ================================================================== */
+router.put('/events/:id', upload.single('eventImage'), async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid event id.' });
+    }
+    var title       = (req.body.title       || '').trim();
+    var date        = (req.body.date        || '').trim();
+    var category    = (req.body.category    || 'General').trim();
+    var location    = (req.body.location    || '').trim();
+    var description = (req.body.description || '').trim();
+
+    if (!title || !date) {
+      return res.status(400).json({ success: false, message: 'Event title and date are required.' });
+    }
+    var parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid date.' });
+    }
+
+    var update = { title, date: parsedDate, category, location, description };
+    if (req.file) {
+      update['image.data']        = req.file.buffer;
+      update['image.contentType'] = req.file.mimetype;
+    }
+
+    var event = await EventDetails.findByIdAndUpdate(
+      req.params.id, { $set: update }, { new: true }
+    );
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found.' });
+    }
+    return res.json({ success: true, message: 'Event "' + event.title + '" updated successfully.' });
+  } catch (error) {
+    console.error('Update event failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not update the event. Please try again.' });
+  }
+});
+
+/* ================================================================== */
+/* DELETE /admin/events/:id  – remove event                           */
+/* ================================================================== */
+router.delete('/events/:id', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid event id.' });
+    }
+    var event = await EventDetails.findByIdAndDelete(req.params.id);
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found.' });
+    }
+    return res.json({ success: true, message: 'Event "' + event.title + '" deleted successfully.' });
+  } catch (error) {
+    console.error('Delete event failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not delete the event. Please try again.' });
+  }
+});
+
+/* ================================================================== */
+/* PATCH /admin/leaders/:id/credentials  – set leader login creds     */
+/* ================================================================== */
+router.patch('/leaders/:id/credentials', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid leader id.' });
+    }
+    var username = (req.body.username || '').trim();
+    var password = (req.body.password || '').trim();
+
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    }
+
+    var leader = await BatchLeader.findByIdAndUpdate(
+      req.params.id,
+      { $set: { username, password } },
+      { new: true }
+    );
+    if (!leader) {
+      return res.status(404).json({ success: false, message: 'Leader not found.' });
+    }
+    return res.json({ success: true, message: 'Credentials updated for ' + (leader.memberName || 'leader') + '.' });
+  } catch (error) {
+    console.error('Update leader credentials failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not update credentials. Please try again.' });
+  }
+});
+
+/* ================================================================== */
 /* POST /admin/members                                                  */
 /* ================================================================== */
 router.post('/members', async function (req, res) {

@@ -26,6 +26,15 @@ var batchLeaderSchema = new mongoose.Schema(
     assignedAt: {
       type: Date,
       default: Date.now
+    },
+    username: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    password: {
+      type: String,
+      default: ''
     }
   },
   {
