@@ -23,19 +23,19 @@ router.get('/', async function(req, res, next) {
   let totalBatches = 0;
   let batchLeaders = 0;
   let recentMembers = [];
-  let batchChart = { labels: [], values: [] };
+  let batchChart = { labels: [], values: [], batchCount: 0 };
 
   try {
-    const batches = await MemberDetails.distinct('batch');
-
     totalAlumni = await MemberDetails.countDocuments();
-    totalBatches = batches.filter(function (b) { return b && String(b).trim() !== ''; }).length;
     batchLeaders = await getBatchLeaderCount();
     recentMembers = await getRecentMembers(5);
     batchChart = await getMembersPerBatch();
+    /* Batch figures come from BATCH_DETAILS so header, badge and chart agree. */
+    totalBatches = batchChart.batchCount;
   } catch (error) {
     console.error('Dashboard stats failed:', error.message);
   }
+
 
   res.render('admin', {
     layout: false,
@@ -143,14 +143,27 @@ router.get('/batches/:year/members-count', async function (req, res) {
   try {
     const year = batchYear(req.params.year);
     if (!/^\d{4}$/.test(year)) {
-      return res.status(400).json({ success: false, message: 'Invalid batch year.', count: 0 });
+      return res.status(400).json({ success: false, message: 'Invalid batch year.', count: 0, exists: false });
     }
 
     const members = await findMembersForYear(year);
-    return res.json({ success: true, year: year, count: members.length });
+    const existing = await BatchDetails.exists({ year: year });
+    return res.json({ success: true, year: year, count: members.length, exists: Boolean(existing) });
   } catch (error) {
     console.error('Batch member count failed:', error.message);
-    return res.status(500).json({ success: false, message: 'Could not load member count.', count: 0 });
+    return res.status(500).json({ success: false, message: 'Could not load member count.', count: 0, exists: false });
+  }
+});
+
+/* GET diagnostics for BATCH_DETAILS indexes (helps explain false duplicate errors). */
+router.get('/batches/diagnostics', async function (req, res) {
+  try {
+    const indexes = await BatchDetails.collection.indexes();
+    const total = await BatchDetails.countDocuments();
+    return res.json({ success: true, collection: 'BATCH_DETAILS', documents: total, indexes: indexes });
+  } catch (error) {
+    console.error('Batch diagnostics failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not read index information.' });
   }
 });
 
@@ -164,9 +177,10 @@ router.post('/batches', async function (req, res) {
       return res.status(400).json({ success: false, message: 'Please enter a valid 4-digit batch year.' });
     }
 
-    const existing = await BatchDetails.findOne({ year: year });
+    /* The ONLY condition that means "already exists": a BATCH_DETAILS doc with this year. */
+    const existing = await BatchDetails.findOne({ year: year }).lean();
     if (existing) {
-      return res.status(409).json({ success: false, message: 'This batch already exists.' });
+      return res.status(409).json({ success: false, message: 'Batch ' + year + ' already exists.' });
     }
 
     const members = await findMembersForYear(year);
@@ -186,12 +200,28 @@ router.post('/batches', async function (req, res) {
     });
   } catch (error) {
     if (error && error.code === 11000) {
-      return res.status(409).json({ success: false, message: 'This batch already exists.' });
+      const keyPattern = error.keyPattern || {};
+      const keys = Object.keys(keyPattern);
+      /* Only a conflict on `year` is a real duplicate batch. */
+      if (keys.length === 1 && keys[0] === 'year') {
+        return res.status(409).json({ success: false, message: 'This batch already exists.' });
+      }
+      console.error(
+        'Create batch duplicate key on an unexpected index:',
+        JSON.stringify(keyPattern),
+        JSON.stringify(error.keyValue || {})
+      );
+      return res.status(409).json({
+        success: false,
+        message: 'A stale unique index (' + (keys.join(', ') || 'unknown') +
+          ') on BATCH_DETAILS is blocking new batches. Open /admin/batches/diagnostics and drop that index.'
+      });
     }
     console.error('Create batch failed:', error.message);
     return res.status(500).json({ success: false, message: 'Could not create the batch. Please try again.' });
   }
 });
+
 
 /* GET the list of batch years for the Assign Leader modal. */
 router.get('/batches', async function (req, res) {
@@ -334,16 +364,42 @@ async function getRecentMembers(limit) {
   }
 }
 
-/* Member counts per batch, read from the BATCH_DETAILS collection, ordered by year. */
+/* Live member count per year, computed from MEMBER_DETAILS (never stale). */
+async function liveMemberCountsByYear() {
+  const counts = {};
+  const docs = await MemberDetails.find({}, { batch: 1 }).lean();
+  docs.forEach(function (doc) {
+    const year = batchYear(doc.batch);
+    if (!year) return;
+    counts[year] = (counts[year] || 0) + 1;
+  });
+  return counts;
+}
+
+/*
+ * Member counts per batch.
+ * BATCH_DETAILS is the source of truth for WHICH batches exist; the bar value is
+ * a live MEMBER_DETAILS count so an out-of-date memberCount can't show stale data.
+ */
 async function getMembersPerBatch() {
   try {
     const docs = await BatchDetails.find({}, { year: 1, memberCount: 1, memberIds: 1 }).lean();
 
+    let live = null;
+    try {
+      live = await liveMemberCountsByYear();
+    } catch (countError) {
+      console.error('Live member count failed, falling back to stored counts:', countError.message);
+    }
+
     const rows = docs.map(function (doc) {
       const label = batchYear(doc.year) || String(doc.year || '').trim();
-      const count = typeof doc.memberCount === 'number'
+      const stored = typeof doc.memberCount === 'number'
         ? doc.memberCount
         : (Array.isArray(doc.memberIds) ? doc.memberIds.length : 0);
+      const count = (live && Object.prototype.hasOwnProperty.call(live, label))
+        ? live[label]
+        : (live ? 0 : stored);
       return { label: label, value: count };
     }).filter(function (row) { return row.label; });
 
@@ -360,13 +416,15 @@ async function getMembersPerBatch() {
 
     return {
       labels: rows.map(function (row) { return row.label; }),
-      values: rows.map(function (row) { return row.value; })
+      values: rows.map(function (row) { return row.value; }),
+      batchCount: rows.length
     };
   } catch (error) {
     console.error('Members per batch lookup failed:', error.message);
-    return { labels: [], values: [] };
+    return { labels: [], values: [], batchCount: 0 };
   }
 }
+
 
 function escapeRegex(value) {
 

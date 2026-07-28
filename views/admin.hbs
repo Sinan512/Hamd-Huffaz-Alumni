@@ -834,8 +834,9 @@
               <div style="height: 320px; position: relative;">
                 <canvas id="barChart"></canvas>
                 <div id="barChartEmpty" class="d-none h-100 d-flex align-items-center justify-content-center text-muted small">
-                  No member data available yet.
+                  No batches created yet. Use "Create New Batch" to add one.
                 </div>
+
               </div>
             </div>
           </div>
@@ -1223,8 +1224,12 @@
     // --- CHART.JS INITIALIZATION (REAL DATA) ---
     document.addEventListener('DOMContentLoaded', () => {
 
-      // Members per Batch (data comes from the database)
-      const batchChart = {{{batchChartData}}};
+      // Members per Batch (source of truth: BATCH_DETAILS collection)
+      var rawBatchChart = (function () { try { return {{{batchChartData}}}; } catch (e) { console.error('Batch chart data invalid:', e); return {}; } })() || {};
+      const batchChart = {
+        labels: Array.isArray(rawBatchChart.labels) ? rawBatchChart.labels : [],
+        values: Array.isArray(rawBatchChart.values) ? rawBatchChart.values : []
+      };
       const barEl = document.getElementById('barChart');
       if (!barEl) return;
 
@@ -1239,6 +1244,7 @@
         barEl.classList.add('d-none');
         return;
       }
+
 
       new Chart(barCtx, {
         type: 'bar',
@@ -1368,10 +1374,16 @@
             var res = await fetch('/admin/batches/' + year + '/members-count');
             var result = await res.json();
             var count = result.count || 0;
-            preview.textContent = count + (count === 1 ? ' member' : ' members') + ' will be linked from batch ' + year + '.';
+            if (result.exists) {
+              preview.textContent = 'Batch ' + year + ' already exists (' + count +
+                (count === 1 ? ' member' : ' members') + ' linked). Choose another year.';
+            } else {
+              preview.textContent = count + (count === 1 ? ' member' : ' members') + ' will be linked from batch ' + year + '.';
+            }
           } catch (err) {
             preview.textContent = '';
           }
+
         }, 300);
       });
 
