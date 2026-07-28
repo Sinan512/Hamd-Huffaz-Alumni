@@ -114,15 +114,17 @@ router.get('/', async function (req, res, next) {
   var totalBatches = 0;
   var batchLeaders = 0;
   var allMembers   = [];
+  var allBatchLeaders = [];
   var batchYears   = [];
   var batchChart   = { labels: [], values: [], batchCount: 0 };
   var upcomingEvents = [];
 
   try {
-    totalAlumni    = await MemberDetails.countDocuments();
-    batchLeaders   = await getBatchLeaderCount();
-    allMembers     = await getAllMembers();
-    batchChart     = await getMembersPerBatch();
+    totalAlumni     = await MemberDetails.countDocuments();
+    batchLeaders    = await getBatchLeaderCount();
+    allMembers      = await getAllMembers();
+    allBatchLeaders = await getAllBatchLeaders();
+    batchChart      = await getMembersPerBatch();
     totalBatches   = batchChart.batchCount;
     upcomingEvents = await getUpcomingEvents(5);
     /* Collect sorted unique batch years from the member list */
@@ -145,8 +147,9 @@ router.get('/', async function (req, res, next) {
       upcomingEvents: String(upcomingEvents.length)
     },
     batchChartData: JSON.stringify(batchChart),
-    allMembers:     allMembers,
-    batchYears:     batchYears,
+    allMembers:       allMembers,
+    batchLeadersList: allBatchLeaders,
+    batchYears:       batchYears,
     upcomingEvents: upcomingEvents,
     recentActivities: [
       { type: 'user',         icon: 'bi-person-plus-fill',  iconBg: 'bg-emerald-soft text-emerald', title: 'New Alumni Registered',    desc: 'Zaid Ibn Shafi completed verification for Batch 2024.', time: '10 mins ago' },
@@ -495,6 +498,24 @@ function batchYear(batch) {
 function formatJoinedDate(date) {
   if (!date) return '';
   return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/* All batch leaders, newest-assigned first – used by the dashboard batch leaders table. */
+async function getAllBatchLeaders() {
+  try {
+    var docs = await BatchLeader.find({}).sort({ assignedAt: -1, _id: -1 }).lean();
+    return docs.map(function (doc) {
+      return {
+        id:          String(doc._id),
+        memberName:  doc.memberName  || '',
+        year:        batchYear(doc.year),
+        assignedAt:  formatJoinedDate(doc.assignedAt)
+      };
+    });
+  } catch (error) {
+    console.error('All batch leaders lookup failed:', error.message);
+    return [];
+  }
 }
 
 /* All members, newest first – used by the dashboard members table. */

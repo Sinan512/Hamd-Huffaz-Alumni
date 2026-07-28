@@ -888,6 +888,70 @@
       </div>
 
 
+      <!-- BATCH LEADERS TABLE -->
+      <div class="row g-4 mb-4" id="batch-leaders-section">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-person-badge-fill text-indigo"></i>
+                <span>Batch Leaders</span>
+                <span class="badge bg-indigo-soft text-indigo rounded-pill ms-1" style="font-size:11px;" id="batchLeaderCountBadge">{{batchLeadersList.length}}</span>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table" id="batchLeadersTable">
+                <thead>
+                  <tr>
+                    <th>Leader Profile</th>
+                    <th>Batch Year</th>
+                    <th>Assigned Date</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="batchLeadersTableBody">
+                  {{#each batchLeadersList}}
+                  <tr data-year="{{this.year}}" data-name="{{this.memberName}}">
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        <div class="member-avatar-wrapper">
+                          <div class="member-avatar-icon">
+                            <i class="bi bi-person-badge"></i>
+                          </div>
+                        </div>
+                        <div>
+                          <div class="fw-bold text-dark">{{this.memberName}}</div>
+                          <div class="text-muted small">Batch Leader</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="batch-tag">{{this.year}}</span></td>
+                    <td class="text-muted small fw-medium">{{this.assignedAt}}</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-light border rounded-2 px-2" title="View Profile">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-light border rounded-2 px-2 text-primary" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  {{/each}}
+                  {{#unless batchLeadersList}}
+                  <tr id="batchLeadersEmptyRow">
+                    <td colspan="4" class="text-center text-muted py-4">No batch leaders assigned yet.</td>
+                  </tr>
+                  {{/unless}}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+
       <!-- TABLES & SIDE PANELS -->
       <div class="row g-4 mb-4" id="members-section">
         
