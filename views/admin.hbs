@@ -929,14 +929,14 @@
                     <td><span class="batch-tag">{{this.year}}</span></td>
                     <td class="text-muted small fw-medium">{{this.assignedAt}}</td>
                     <td class="text-end">
-                      <button class="btn btn-sm btn-light border rounded-2 px-2 text-purple" title="Change Leader for this Batch"
-                              onclick="openChangeLeaderModal('{{this.year}}')" style="color:#8b5cf6;">
-                        <i class="bi bi-arrow-repeat"></i>
-                      </button>
-                      <button class="btn btn-sm btn-light border rounded-2 px-2 text-primary" title="Set Login Credentials"
-                              data-leader-id="{{this.id}}" data-leader-name="{{this.memberName}}"
-                              onclick="openLeaderCredentialsModal(this.dataset.leaderId, this.dataset.leaderName)">
-                        <i class="bi bi-key"></i>
+                      <button class="btn btn-sm btn-light border rounded-2 px-2 text-primary" title="View Leader Details"
+                              data-leader-id="{{this.id}}"
+                              data-leader-name="{{this.memberName}}"
+                              data-leader-year="{{this.year}}"
+                              data-leader-assigned="{{this.assignedAt}}"
+                              data-leader-username="{{this.username}}"
+                              onclick="openLeaderDetailsModal(this.dataset)">
+                        <i class="bi bi-eye"></i>
                       </button>
                     </td>
                   </tr>
@@ -1055,7 +1055,7 @@
                 <i class="bi bi-plus-circle"></i>
               </button>
             </div>
-            <div>
+            <div style="max-height:440px;overflow-y:auto;">
               {{#each upcomingEvents}}
               <div class="event-item" data-event-id="{{this.id}}" style="cursor:pointer;"
                    onclick="openEventDetail('{{this.id}}')">
@@ -1523,6 +1523,77 @@
               <button type="submit" id="leaderCredentialsSubmit" class="btn btn-primary rounded-3 px-4">Save Credentials</button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 10: Leader Details (view info + credentials + change leader) -->
+  <div class="modal fade" id="leaderDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-fw-bold"><i class="bi bi-person-badge text-primary me-2"></i>Leader Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+
+          <!-- Leader info card -->
+          <div class="p-3 rounded-3 mb-4 d-flex align-items-center gap-3" style="background:#f8fafc;">
+            <div class="member-avatar-wrapper">
+              <div class="member-avatar-icon"><i class="bi bi-person-badge"></i></div>
+            </div>
+            <div>
+              <div class="fw-bold text-dark" id="ldName"></div>
+              <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                <span class="batch-tag" id="ldBatch"></span>
+                <span class="text-muted small" id="ldAssigned"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Credentials section -->
+          <div class="fw-bold small text-muted text-uppercase mb-2" style="letter-spacing:.06em;">
+            <i class="bi bi-key me-1"></i>Login Credentials
+          </div>
+          <form id="ldCredentialsForm">
+            <input type="hidden" id="ldLeaderId">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Username</label>
+              <input type="text" name="username" id="ldUsername" class="form-control rounded-3" autocomplete="off" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Password</label>
+              <div class="input-group">
+                <input type="password" name="password" id="ldPassword" class="form-control rounded-start-3" autocomplete="new-password" placeholder="Enter new password" required>
+                <button type="button" class="btn btn-outline-secondary rounded-end-3" id="ldTogglePass">
+                  <i class="bi bi-eye" id="ldTogglePassIcon"></i>
+                </button>
+              </div>
+            </div>
+            <div id="ldCredAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0"></div>
+            <button type="submit" id="ldCredSubmit" class="btn btn-primary rounded-3 w-100 mt-3">Save Credentials</button>
+          </form>
+
+          <hr class="my-4">
+
+          <!-- Change leader section -->
+          <div class="fw-bold small text-muted text-uppercase mb-2" style="letter-spacing:.06em;">
+            <i class="bi bi-arrow-repeat me-1"></i>Change Leader
+          </div>
+          <form id="ldChangeLeaderForm">
+            <input type="hidden" name="year" id="ldYear">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Select New Leader</label>
+              <select class="form-select rounded-3" name="memberId" id="ldMemberSelect" required>
+                <option value="">Loading members…</option>
+              </select>
+              <div class="form-text small" id="ldMemberHint"></div>
+            </div>
+            <div id="ldChangeAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0"></div>
+            <button type="submit" id="ldChangeSubmit" class="btn rounded-3 w-100 mt-3 text-white" style="background:#8b5cf6;">Assign as New Leader</button>
+          </form>
+
         </div>
       </div>
     </div>
@@ -2544,6 +2615,164 @@
           submitBtn.textContent = orig;
         }
       });
+    })();
+  </script>
+
+  <!-- ===== LEADER DETAILS MODAL ===== -->
+  <script>
+    function openLeaderDetailsModal(ds) {
+      var id       = ds.leaderId;
+      var name     = ds.leaderName;
+      var year     = ds.leaderYear;
+      var assigned = ds.leaderAssigned;
+      var username = ds.leaderUsername;
+
+      /* Info card */
+      document.getElementById('ldName').textContent     = name     || '';
+      document.getElementById('ldBatch').textContent    = 'Batch ' + (year || '');
+      document.getElementById('ldAssigned').textContent = assigned ? 'Assigned ' + assigned : '';
+
+      /* Credentials form */
+      document.getElementById('ldLeaderId').value          = id       || '';
+      document.getElementById('ldUsername').value          = username || '';
+      document.getElementById('ldPassword').value          = '';
+      document.getElementById('ldPassword').type           = 'password';
+      document.getElementById('ldTogglePassIcon').className = 'bi bi-eye';
+      var credAlert = document.getElementById('ldCredAlert');
+      credAlert.className   = 'alert d-none rounded-3 py-2 px-3 small mb-0';
+      credAlert.textContent = '';
+
+      /* Change leader form */
+      document.getElementById('ldYear').value = year || '';
+      var changeAlert = document.getElementById('ldChangeAlert');
+      changeAlert.className   = 'alert d-none rounded-3 py-2 px-3 small mb-0';
+      changeAlert.textContent = '';
+      var memberSelect = document.getElementById('ldMemberSelect');
+      var hint         = document.getElementById('ldMemberHint');
+      memberSelect.innerHTML = '<option value="">Loading members…</option>';
+      memberSelect.disabled  = true;
+      hint.textContent       = '';
+
+      /* Load members for this batch */
+      if (year) {
+        fetch('/admin/batches/' + year + '/members')
+          .then(function (r) { return r.json(); })
+          .then(function (result) {
+            var members = result.members || [];
+            if (!members.length) {
+              memberSelect.innerHTML = '<option value="">No members found in this batch</option>';
+              hint.textContent = 'No members found in batch ' + year + '.';
+              return;
+            }
+            memberSelect.innerHTML = '<option value="">Select a member</option>' +
+              members.map(function (m) {
+                var label = m.name + (m.admissionNumber ? ' (' + m.admissionNumber + ')' : '');
+                return '<option value="' + m._id + '">' + label + '</option>';
+              }).join('');
+            memberSelect.disabled = false;
+            hint.textContent = members.length + (members.length === 1 ? ' member' : ' members') + ' in batch ' + year + '.';
+          })
+          .catch(function () {
+            memberSelect.innerHTML = '<option value="">Could not load members</option>';
+            hint.textContent = 'Could not load members for this batch.';
+          });
+      }
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('leaderDetailsModal')).show();
+    }
+
+    (function () {
+      /* Toggle password visibility */
+      var toggleBtn  = document.getElementById('ldTogglePass');
+      var passInput  = document.getElementById('ldPassword');
+      var toggleIcon = document.getElementById('ldTogglePassIcon');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+          var show = passInput.type === 'password';
+          passInput.type       = show ? 'text' : 'password';
+          toggleIcon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+      }
+
+      /* Credentials form submit */
+      var credForm = document.getElementById('ldCredentialsForm');
+      if (credForm) {
+        credForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          var id       = document.getElementById('ldLeaderId').value;
+          var data     = Object.fromEntries(new FormData(credForm).entries());
+          var alertEl  = document.getElementById('ldCredAlert');
+          var submitBtn = document.getElementById('ldCredSubmit');
+
+          submitBtn.disabled    = true;
+          var orig = submitBtn.textContent;
+          submitBtn.textContent = 'Saving…';
+          alertEl.className     = 'alert d-none rounded-3 py-2 px-3 small mb-0';
+
+          try {
+            var res    = await fetch('/admin/leaders/' + id + '/credentials', {
+              method:  'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify(data)
+            });
+            var result = await res.json().catch(function () { return {}; });
+            alertEl.className   = 'alert alert-' + (res.ok ? 'success' : 'danger') + ' rounded-3 py-2 px-3 small mb-0';
+            alertEl.textContent = result.message || (res.ok ? 'Credentials saved.' : 'Could not save credentials.');
+          } catch (err) {
+            alertEl.className   = 'alert alert-danger rounded-3 py-2 px-3 small mb-0';
+            alertEl.textContent = 'Could not save credentials. Please try again.';
+          } finally {
+            submitBtn.disabled    = false;
+            submitBtn.textContent = orig;
+          }
+        });
+      }
+
+      /* Change leader form submit */
+      var changeForm = document.getElementById('ldChangeLeaderForm');
+      if (changeForm) {
+        changeForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          var data     = Object.fromEntries(new FormData(changeForm).entries());
+          var alertEl  = document.getElementById('ldChangeAlert');
+          var submitBtn = document.getElementById('ldChangeSubmit');
+
+          if (!data.year || !data.memberId) {
+            alertEl.className   = 'alert alert-danger rounded-3 py-2 px-3 small mb-0';
+            alertEl.textContent = 'Please select a member to assign as leader.';
+            return;
+          }
+
+          submitBtn.disabled    = true;
+          var orig = submitBtn.textContent;
+          submitBtn.textContent = 'Assigning…';
+          alertEl.className     = 'alert d-none rounded-3 py-2 px-3 small mb-0';
+
+          try {
+            var res    = await fetch('/admin/leaders', {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify(data)
+            });
+            var result = await res.json().catch(function () { return {}; });
+            alertEl.className   = 'alert alert-' + (res.ok ? 'success' : 'danger') + ' rounded-3 py-2 px-3 small mb-0';
+            alertEl.textContent = result.message || (res.ok ? 'Leader changed.' : 'Could not change leader.');
+            if (res.ok) {
+              setTimeout(function () {
+                var modal = bootstrap.Modal.getInstance(document.getElementById('leaderDetailsModal'));
+                if (modal) modal.hide();
+                window.location.reload();
+              }, 1200);
+            }
+          } catch (err) {
+            alertEl.className   = 'alert alert-danger rounded-3 py-2 px-3 small mb-0';
+            alertEl.textContent = 'Could not change the leader. Please try again.';
+          } finally {
+            submitBtn.disabled    = false;
+            submitBtn.textContent = orig;
+          }
+        });
+      }
     })();
   </script>
 

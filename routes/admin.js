@@ -93,6 +93,42 @@ async function getUpcomingEvents(limit) {
   }
 }
 
+/* ================================================================== */
+/* HELPER: fetch ALL events (no date filter, no limit)                */
+/* ================================================================== */
+async function getAllEvents() {
+  try {
+    var docs = await EventDetails
+      .find({}, { title: 1, date: 1, category: 1, location: 1,
+                  description: 1, 'image.contentType': 1 })
+      .sort({ date: -1 })
+      .lean();
+
+    var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN',
+                  'JUL','AUG','SEP','OCT','NOV','DEC'];
+
+    return docs.map(function (doc) {
+      var d   = new Date(doc.date);
+      var mon = MONTHS[d.getUTCMonth()] || '';
+      var day = String(d.getUTCDate()).padStart(2, '0');
+      return {
+        id:          String(doc._id),
+        title:       doc.title       || '',
+        month:       mon,
+        day:         day,
+        location:    doc.location    || '',
+        category:    doc.category    || 'General',
+        description: doc.description || '',
+        badgeColor:  categoryBadge(doc.category),
+        hasImage:    !!(doc.image && doc.image.contentType)
+      };
+    });
+  } catch (error) {
+    console.error('All events lookup failed:', error.message);
+    return [];
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* HELPER: batch-leader count                                          */
 /* ------------------------------------------------------------------ */
@@ -126,7 +162,7 @@ router.get('/', async function (req, res, next) {
     allBatchLeaders = await getAllBatchLeaders();
     batchChart      = await getMembersPerBatch();
     totalBatches   = batchChart.batchCount;
-    upcomingEvents = await getUpcomingEvents(5);
+    upcomingEvents = await getAllEvents();
     /* Collect sorted unique batch years from the member list */
     var yearSet = {};
     allMembers.forEach(function (m) { if (m.batch) yearSet[m.batch] = true; });
@@ -602,7 +638,8 @@ async function getAllBatchLeaders() {
         id:          String(doc._id),
         memberName:  doc.memberName  || '',
         year:        batchYear(doc.year),
-        assignedAt:  formatJoinedDate(doc.assignedAt)
+        assignedAt:  formatJoinedDate(doc.assignedAt),
+        username:    doc.username    || ''
       };
     });
   } catch (error) {
