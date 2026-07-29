@@ -458,10 +458,7 @@ router.post('/members', async function (req, res) {
       return res.status(409).json({ success: false, message: 'This member is already added.' });
     }
 
-    var member = await MemberDetails.create({
-      admissionNumber, name, place, batch, email,
-      password: defaultPasswordFor(admissionNumber)
-    });
+    var member = await MemberDetails.create({ admissionNumber, name, place, batch, email });
     await linkMemberToBatch(member);
 
     return res.status(201).json({ success: true, message: 'Member added successfully.', member: member });
@@ -617,10 +614,7 @@ router.post('/members/import', function (req, res) {
             skipped++; errors.push('Row ' + line + ': ' + name + ' is already added.'); continue;
           }
 
-          var member = await MemberDetails.create({
-      admissionNumber, name, place, batch, email,
-      password: defaultPasswordFor(admissionNumber)
-    });
+          var member = await MemberDetails.create({ admissionNumber, name, place, batch, email });
           await linkMemberToBatch(member);
           added++;
         } catch (rowError) {
@@ -920,11 +914,6 @@ async function getMembersPerBatch() {
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/* Default login password for a new member: <admissionNumber>@123 */
-function defaultPasswordFor(admissionNumber) {
-  return String(admissionNumber || '').trim() + '@123';
 }
 
 /* ================================================================== */
