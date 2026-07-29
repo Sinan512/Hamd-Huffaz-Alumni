@@ -7,6 +7,7 @@ var MemberDetails = require('../models/MemberDetails');
 var BatchDetails  = require('../models/BatchDetails');
 var BatchLeader   = require('../models/BatchLeader');
 var EventDetails  = require('../models/EventDetails');
+var Gallery       = require('../models/Gallery');
 const connectDB   = require('../config/db');
 
 /* Multer: store uploaded files in memory as Buffer. */
@@ -144,6 +145,30 @@ async function getBatchLeaderCount() {
 /* ================================================================== */
 /* GET  /admin/   – Dashboard                                          */
 /* ================================================================== */
+/* ------------------------------------------------------------------ */
+/* HELPER: fetch gallery images (metadata only, never the binary)      */
+/* ------------------------------------------------------------------ */
+async function getGalleryImages() {
+  try {
+    var docs = await Gallery
+      .find({}, { description: 1, createdAt: 1, 'image.contentType': 1 })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return docs.map(function (doc) {
+      return {
+        _id:         String(doc._id),
+        description: doc.description || '',
+        createdAt:   doc.createdAt ? new Date(doc.createdAt).toISOString() : null,
+        hasImage:    !!(doc.image && doc.image.contentType)
+      };
+    });
+  } catch (error) {
+    console.error('Gallery lookup failed:', error.message);
+    return [];
+  }
+}
+
 router.get('/', async function (req, res, next) {
   await connectDB();
   var totalAlumni  = 0;
@@ -154,6 +179,7 @@ router.get('/', async function (req, res, next) {
   var batchYears   = [];
   var batchChart   = { labels: [], values: [], batchCount: 0 };
   var upcomingEvents = [];
+  var galleryImages  = [];
 
   try {
     totalAlumni     = await MemberDetails.countDocuments();
@@ -163,6 +189,7 @@ router.get('/', async function (req, res, next) {
     batchChart      = await getMembersPerBatch();
     totalBatches   = batchChart.batchCount;
     upcomingEvents = await getAllEvents();
+    galleryImages  = await getGalleryImages();
     /* Collect sorted unique batch years from the member list */
     var yearSet = {};
     allMembers.forEach(function (m) { if (m.batch) yearSet[m.batch] = true; });
@@ -187,12 +214,7 @@ router.get('/', async function (req, res, next) {
     batchLeadersList: allBatchLeaders,
     batchYears:       batchYears,
     upcomingEvents: upcomingEvents,
-    recentActivities: [
-      { type: 'user',         icon: 'bi-person-plus-fill',  iconBg: 'bg-emerald-soft text-emerald', title: 'New Alumni Registered',    desc: 'Zaid Ibn Shafi completed verification for Batch 2024.', time: '10 mins ago' },
-      { type: 'leader',       icon: 'bi-person-badge-fill', iconBg: 'bg-indigo-soft text-indigo',   title: 'Batch Leader Assigned',     desc: 'Muhammed Rizwan assigned as Leader for Batch 2022.',    time: '2 hours ago' },
-      { type: 'announcement', icon: 'bi-megaphone-fill',    iconBg: 'bg-amber-soft text-amber',     title: 'Announcement Published',    desc: 'Registration for Annual Meet 2026 is now open.',        time: '5 hours ago' },
-      { type: 'gallery',      icon: 'bi-images',            iconBg: 'bg-purple-soft text-purple',   title: 'Gallery Album Updated',     desc: 'Uploaded 24 new high-res photos from Convocation Day.', time: '1 day ago'   }
-    ]
+    galleryImages: galleryImages
   });
 });
 
@@ -711,5 +733,94 @@ async function getMembersPerBatch() {
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+/* ================================================================== */
+/* GET  /admin/gallery  – list saved gallery images (JSON, no binary)  */
+/* ================================================================== */
+router.get('/gallery', async function (req, res) {
+  await connectDB();
+  try {
+    var images = await getGalleryImages();
+    return res.json({ success: true, images: images });
+  } catch (error) {
+    console.error('List gallery failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load the gallery.' });
+  }
+});
+
+/* ================================================================== */
+/* GET  /admin/gallery/:id/image  – serve stored gallery image         */
+/* ================================================================== */
+router.get('/gallery/:id/image', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).end();
+    }
+    var doc = await Gallery.findById(req.params.id, { 'image.data': 1, 'image.contentType': 1 }).lean();
+    if (!doc || !doc.image || !doc.image.data) {
+      return res.status(404).end();
+    }
+    res.set('Content-Type', doc.image.contentType);
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.send(doc.image.data.buffer || doc.image.data);
+  } catch (error) {
+    console.error('Serve gallery image failed:', error.message);
+    return res.status(500).end();
+  }
+});
+
+/* ================================================================== */
+/* POST /admin/gallery  – upload image + description into GALLERY      */
+/* ================================================================== */
+router.post('/gallery', upload.single('galleryImage'), async function (req, res) {
+  await connectDB();
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Please choose an image to upload.' });
+    }
+
+    var description = (req.body.description || '').trim();
+
+    var doc = await Gallery.create({
+      image:       { data: req.file.buffer, contentType: req.file.mimetype },
+      description: description
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Image added to the gallery.',
+      image: {
+        _id:         String(doc._id),
+        description: doc.description || '',
+        createdAt:   doc.createdAt ? new Date(doc.createdAt).toISOString() : null,
+        hasImage:    true
+      }
+    });
+  } catch (error) {
+    console.error('Create gallery image failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not save the image. Please try again.' });
+  }
+});
+
+/* ================================================================== */
+/* DELETE /admin/gallery/:id  – remove a saved gallery image           */
+/* ================================================================== */
+router.delete('/gallery/:id', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid image id.' });
+    }
+    var doc = await Gallery.findByIdAndDelete(req.params.id);
+    if (!doc) {
+      return res.status(404).json({ success: false, message: 'Image not found.' });
+    }
+    return res.json({ success: true, message: 'Image deleted.' });
+  } catch (error) {
+    console.error('Delete gallery image failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not delete the image.' });
+  }
+});
 
 module.exports = router;
