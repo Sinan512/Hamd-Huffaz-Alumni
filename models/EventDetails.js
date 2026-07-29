@@ -7,6 +7,7 @@ var eventDetailsSchema = new mongoose.Schema(
     category:    { type: String, trim: true, default: 'General' },
     location:    { type: String, trim: true, default: '' },
     description: { type: String, trim: true, default: '' },
+    registration: { type: Boolean, default: false },
     image: {
       data:        { type: Buffer, default: null },
       contentType: { type: String, default: null }

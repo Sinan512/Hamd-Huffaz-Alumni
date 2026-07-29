@@ -252,7 +252,7 @@ router.get('/events/:id', async function (req, res) {
     var doc = await EventDetails
       .findById(req.params.id,
         { title: 1, date: 1, category: 1, location: 1,
-          description: 1, 'image.contentType': 1 })
+          description: 1, registration: 1, 'image.contentType': 1 })
       .lean();
 
     if (!doc) {
@@ -277,6 +277,7 @@ router.get('/events/:id', async function (req, res) {
       location:    doc.location    || '',
       category:    doc.category    || 'General',
       description: doc.description || '',
+      registration: !!doc.registration,
       hasImage:    !!(doc.image && doc.image.contentType)
     });
   } catch (error) {
@@ -296,6 +297,7 @@ router.post('/events', upload.single('eventImage'), async function (req, res) {
     var category    = (req.body.category    || 'General').trim();
     var location    = (req.body.location    || '').trim();
     var description = (req.body.description || '').trim();
+    var registration = req.body.registration === 'on' || req.body.registration === 'true';
 
     if (!title || !date) {
       return res.status(400).json({ success: false, message: 'Event title and date are required.' });
@@ -307,7 +309,7 @@ router.post('/events', upload.single('eventImage'), async function (req, res) {
     }
 
     var eventData = {
-      title, date: parsedDate, category, location, description,
+      title, date: parsedDate, category, location, description, registration,
       image: { data: null, contentType: null }
     };
 
@@ -348,6 +350,7 @@ router.put('/events/:id', upload.single('eventImage'), async function (req, res)
     var category    = (req.body.category    || 'General').trim();
     var location    = (req.body.location    || '').trim();
     var description = (req.body.description || '').trim();
+    var registration = req.body.registration === 'on' || req.body.registration === 'true';
 
     if (!title || !date) {
       return res.status(400).json({ success: false, message: 'Event title and date are required.' });
@@ -357,7 +360,7 @@ router.put('/events/:id', upload.single('eventImage'), async function (req, res)
       return res.status(400).json({ success: false, message: 'Please enter a valid date.' });
     }
 
-    var update = { title, date: parsedDate, category, location, description };
+    var update = { title, date: parsedDate, category, location, description, registration };
     if (req.file) {
       update['image.data']        = req.file.buffer;
       update['image.contentType'] = req.file.mimetype;

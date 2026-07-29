@@ -1437,6 +1437,10 @@ onclick="openLeaderDetailsModal(this.dataset)">
               <label class="form-label small fw-bold">Location</label>
               <input type="text" name="location" class="form-control rounded-3" placeholder="e.g. Grand Ballroom / Zoom Link">
             </div>
+            <div class="mb-3 form-check form-switch">
+              <input type="checkbox" class="form-check-input" role="switch" name="registration" id="createEventRegistration">
+              <label class="form-check-label small fw-bold" for="createEventRegistration">Use Registration</label>
+            </div>
             <div class="mb-3">
               <label class="form-label small fw-bold">Description</label>
               <textarea name="description" class="form-control rounded-3" rows="2" placeholder="Brief description of the event (optional)"></textarea>
@@ -1557,6 +1561,10 @@ onclick="openLeaderDetailsModal(this.dataset)">
             <div class="mb-3">
               <label class="form-label small fw-bold">Location</label>
               <input type="text" name="location" id="editEventLocation" class="form-control rounded-3">
+            </div>
+            <div class="mb-3 form-check form-switch">
+              <input type="checkbox" class="form-check-input" role="switch" name="registration" id="editEventRegistration">
+              <label class="form-check-label small fw-bold" for="editEventRegistration">Use Registration</label>
             </div>
             <div class="mb-3">
               <label class="form-label small fw-bold">Description</label>
@@ -2614,6 +2622,9 @@ onclick="openLeaderDetailsModal(this.dataset)">
               break;
             }
           }
+
+          /* Use Registration switch */
+          document.getElementById('editEventRegistration').checked = !!result.registration;
 
           /* Reset image preview */
           document.getElementById('editEventImagePreviewWrapper').classList.add('d-none');
