@@ -14,47 +14,74 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
+  <!-- Apply saved theme before paint (avoids flash) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('userTheme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-bs-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
   <style>
     :root {
       --font-main: 'Plus Jakarta Sans', sans-serif;
-      --bg-black: #000000;
-      --surface: #111111;
-      --surface-alt: #1a1a1a;
-      --border-color: rgba(255, 255, 255, 0.12);
-      --text-primary: #ffffff;
-      --text-muted: #a3a3a3;
+      --bg-body: #f8fafc;
+      --surface: #ffffff;
+      --surface-alt: #f1f5f9;
+      --border-color: rgba(226, 232, 240, 0.8);
+      --text-primary: #1e293b;
+      --text-muted: #64748b;
+      --card-shadow: 0 4px 20px -2px rgba(0,0,0,0.04), 0 2px 6px -1px rgba(0,0,0,0.02);
+      --primary: #6366f1;
     }
 
     * { box-sizing: border-box; }
 
     body {
       font-family: var(--font-main);
-      background-color: var(--bg-black);
+      background-color: var(--bg-body);
       color: var(--text-primary);
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
     }
 
-    .boxed { max-width: 1100px; margin: 0 auto; }
+    .boxed { max-width: 1000px; margin: 0 auto; }
+
+    /* ===== DARK MODE ===== */
+    [data-bs-theme="dark"] {
+      --bg-body: #0b0f19;
+      --surface: #111827;
+      --surface-alt: #151c2c;
+      --border-color: rgba(148, 163, 184, 0.16);
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
+      --card-shadow: 0 4px 20px -2px rgba(0,0,0,0.5), 0 2px 6px -1px rgba(0,0,0,0.3);
+      color-scheme: dark;
+    }
 
     /* ===== HEADER ===== */
     .app-header {
-      background: #000000;
+      background: var(--surface);
       border-bottom: 1px solid var(--border-color);
-      padding: 16px 28px;
+      padding: 14px 28px;
       position: sticky;
       top: 0;
       z-index: 1030;
+      box-shadow: var(--card-shadow);
     }
 
     .brand-title {
       font-weight: 800;
       font-size: 20px;
       letter-spacing: -0.5px;
-      color: #ffffff;
+      color: var(--text-primary);
     }
 
-    .brand-title span { color: #737373; }
+    .brand-title span { color: var(--primary); }
 
     .brand-sub {
       font-size: 11px;
@@ -64,68 +91,120 @@
       margin-top: -2px;
     }
 
-    .profile-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface);
+    .nav-icon-btn {
+      width: 40px; height: 40px;
+      border-radius: 10px;
       border: 1px solid var(--border-color);
-      color: #ffffff;
-      padding: 8px 14px;
-      border-radius: 8px;
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
       cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
+      transition: all 0.2s ease;
+      font-size: 18px;
+    }
+
+    .nav-icon-btn:hover {
+      background: var(--surface-alt);
+      color: var(--text-primary);
+    }
+
+    .profile-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px 6px 6px;
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      background: var(--surface);
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
     .profile-btn:hover { background: var(--surface-alt); }
-    .profile-btn i.bi-person-circle { font-size: 20px; }
 
-    .dropdown-menu-dark {
-      background: var(--surface);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 6px;
+    .profile-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.12);
+      color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
     }
 
-    .dropdown-menu-dark .dropdown-item {
-      color: #e5e5e5;
-      border-radius: 6px;
-      padding: 10px 12px;
+    .profile-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .profile-role {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* ===== DROPDOWN ===== */
+    .dropdown-menu {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+    }
+
+    .dropdown-item {
+      color: var(--text-primary);
       font-size: 14px;
     }
 
-    .dropdown-menu-dark .dropdown-item:hover { background: var(--surface-alt); color: #ffffff; }
-    .dropdown-menu-dark .dropdown-item.text-danger:hover { background: #2a1414; color: #f87171; }
-    .dropdown-menu-dark hr.dropdown-divider { border-color: var(--border-color); }
+    .dropdown-item:hover { background: var(--surface-alt); }
+    .dropdown-item.text-danger:hover { background: rgba(239,68,68,0.1); }
 
-    /* ===== CARDS / SECTIONS ===== */
-    .card-dark {
+    /* ===== CARD ===== */
+    .card-surface {
       background: var(--surface);
       border: 1px solid var(--border-color);
-      border-radius: 12px;
+      border-radius: 16px;
       margin-bottom: 24px;
+      box-shadow: var(--card-shadow);
     }
 
-    .card-header-dark {
+    .card-header-bar {
       padding: 18px 24px;
       border-bottom: 1px solid var(--border-color);
       font-weight: 700;
       font-size: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: #ffffff;
+      display: flex; align-items: center; justify-content: space-between;
+      color: var(--text-primary);
     }
 
-    .card-body-dark { padding: 24px; }
+    .card-body-pad { padding: 24px; }
 
-    /* ===== SECTION 1: DETAILS ===== */
+    /* ===== SECTION 1: PROFILE ===== */
+    .profile-hero {
+      display: flex; align-items: center; gap: 20px;
+      padding: 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-icon-big {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.12);
+      color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 44px;
+      flex-shrink: 0;
+      border: 3px solid var(--border-color);
+    }
+
+    .profile-hero-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .profile-hero-sub { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+
     .detail-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 13px 0;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 13px 24px;
       border-bottom: 1px solid var(--border-color);
     }
 
@@ -138,69 +217,85 @@
       letter-spacing: 0.6px;
     }
 
-    .detail-value { font-weight: 600; color: #ffffff; font-size: 14px; }
+    .detail-value { font-weight: 600; color: var(--text-primary); font-size: 14px; }
 
-    /* ===== SECTION 2: GALLERY CAROUSEL ===== */
+    /* ===== SECTION 2: GALLERY ===== */
+    .gallery-carousel-wrap { position: relative; border-radius: 10px; overflow: hidden; }
+
     .carousel-item img {
-      height: 360px;
+      height: 380px;
       object-fit: cover;
-      border-radius: 8px;
+      width: 100%;
+      border-radius: 10px;
+      cursor: pointer;
     }
 
     .carousel-caption {
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(0,0,0,0.55);
       border-radius: 8px;
       bottom: 20px;
       padding: 10px 16px;
+      cursor: pointer;
     }
 
-    .carousel-indicators [data-bs-target] {
-      background-color: #ffffff;
-      opacity: 0.4;
-    }
-
+    .carousel-indicators [data-bs-target] { background-color: #ffffff; opacity: 0.5; }
     .carousel-indicators .active { opacity: 1; }
 
-    @media (max-width: 576px) {
-      .carousel-item img { height: 220px; }
-    }
+    @media (max-width: 576px) { .carousel-item img { height: 220px; } }
 
     /* ===== SECTION 3: EVENTS ===== */
     .event-block {
       border: 1px solid var(--border-color);
       background: var(--surface-alt);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 20px;
       margin-bottom: 16px;
+      transition: box-shadow 0.2s ease;
     }
 
     .event-block:last-child { margin-bottom: 0; }
+    .event-block:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
 
-    .event-title { font-weight: 700; font-size: 16px; color: #ffffff; }
+    .event-title { font-weight: 700; font-size: 16px; color: var(--text-primary); }
+    .event-meta { color: var(--text-muted); font-size: 13px; line-height: 1.8; }
 
-    .event-meta { color: var(--text-muted); font-size: 13px; line-height: 1.7; }
-
-    .event-badge {
-      background: var(--surface);
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 20px;
+    .event-date-box {
+      width: 52px; height: 54px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 12px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
     }
 
-    .btn-outline-mono {
-      border: 1px solid #ffffff;
-      color: #ffffff;
+    .event-date-month { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--primary); }
+    .event-date-day { font-size: 20px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+
+    .btn-register {
+      border: 1.5px solid var(--primary);
+      color: var(--primary);
       background: transparent;
       border-radius: 8px;
-      padding: 8px 18px;
+      padding: 8px 20px;
       font-weight: 600;
       font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .btn-outline-mono:hover { background: #ffffff; color: #000000; }
+    .btn-register:hover { background: var(--primary); color: #ffffff; }
+
+    .btn-registered {
+      border: 1.5px solid #10b981;
+      color: #10b981;
+      background: rgba(16,185,129,0.1);
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: default;
+    }
 
     /* ===== FOOTER ===== */
     .app-footer {
@@ -209,95 +304,159 @@
       font-size: 13px;
       padding: 26px 0;
       text-align: center;
+      background: var(--surface);
     }
 
     .app-footer a { color: var(--text-muted); text-decoration: none; }
-    .app-footer a:hover { color: #ffffff; }
+    .app-footer a:hover { color: var(--primary); }
 
     /* ===== LOGIN VIEW ===== */
     .login-wrapper {
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       padding: 24px;
+      background: var(--bg-body);
     }
 
     .login-card {
       background: var(--surface);
       border: 1px solid var(--border-color);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 40px;
-      width: 100%;
-      max-width: 380px;
+      width: 100%; max-width: 400px;
+      box-shadow: var(--card-shadow);
     }
 
-    .login-card h3 { font-weight: 800; margin-bottom: 2px; }
-    .login-card p.sub { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
-
-    .form-control-dark {
-      background: #000000;
-      border: 1px solid var(--border-color);
-      color: #ffffff;
-      border-radius: 8px;
-      padding: 10px 14px;
+    .login-brand-icon {
+      width: 60px; height: 60px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 28px;
+      margin: 0 auto 16px;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.35);
     }
 
-    .form-control-dark::placeholder { color: #666666; }
-
-    .form-control-dark:focus {
-      border-color: #ffffff;
-      box-shadow: none;
-      background: #000000;
-      color: #ffffff;
+    .login-card h3 {
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
     }
 
-    .btn-solid-mono {
-      background: #ffffff;
-      color: #000000;
-      font-weight: 700;
-      border: none;
-      border-radius: 8px;
-      padding: 10px;
-      width: 100%;
-      font-size: 14px;
+    .login-card p.sub { color: var(--text-muted); font-size: 13px; margin-bottom: 28px; }
+
+    .login-theme-toggle {
+      position: absolute;
+      top: 20px; right: 20px;
     }
 
-    .btn-solid-mono:hover { background: #d4d4d4; color: #000000; }
-
-    /* ===== MODAL (DARK) ===== */
-    .modal-content-dark {
+    /* ===== OFFCANVAS PROFILE FORM ===== */
+    .offcanvas {
       background: var(--surface);
-      color: #ffffff;
-      border: 1px solid var(--border-color);
+      color: var(--text-primary);
     }
 
-    .modal-content-dark .modal-header,
-    .modal-content-dark .modal-footer {
+    .offcanvas-header {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .offcanvas-title { font-weight: 800; color: var(--text-primary); }
+
+    .form-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary);
+      padding: 8px 0 4px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      margin-top: 24px;
+    }
+
+    .form-section-title:first-child { margin-top: 0; }
+
+    .form-label-custom {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .lang-badge {
+      background: rgba(99,102,241,0.1);
+      color: var(--primary);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-badge.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* Form controls adapt to theme via Bootstrap data-bs-theme */
+    .form-control, .form-select {
+      background: var(--surface-alt);
+      border-color: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .form-control:focus, .form-select:focus {
+      background: var(--surface-alt);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+      color: var(--text-primary);
+    }
+
+    .form-control::placeholder { color: var(--text-muted); }
+
+    /* ===== MODAL (image popup & confirm) ===== */
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .modal-header, .modal-footer {
       border-color: var(--border-color);
     }
 
-    .modal-content-dark .form-label { color: var(--text-muted); font-size: 13px; }
-
-    .modal-content-dark .form-control {
-      background: #000000;
-      border: 1px solid var(--border-color);
-      color: #ffffff;
+    .img-popup-wrap img {
+      max-height: 70vh;
+      width: 100%;
+      object-fit: contain;
+      border-radius: 8px;
     }
 
-    .modal-content-dark .form-control:disabled {
-      background: #0a0a0a;
+    /* ===== BADGE ===== */
+    .event-cat-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
       color: var(--text-muted);
     }
 
-    .modal-content-dark .form-control:focus {
-      border-color: #ffffff;
-      box-shadow: none;
-      background: #000000;
-      color: #ffffff;
-    }
+    /* ===== RADIO GROUP ===== */
+    .radio-group { display: flex; gap: 20px; flex-wrap: wrap; }
+    .radio-group label { color: var(--text-primary); font-size: 14px; cursor: pointer; }
 
-    .modal-content-dark hr { border-color: var(--border-color); }
+    /* ===== EMPTY STATE ===== */
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+    .empty-state i { font-size: 42px; margin-bottom: 12px; opacity: 0.4; }
+
+    /* Responsive nav gap */
+    @media (max-width: 480px) {
+      .app-header { padding: 12px 16px; }
+      .brand-title { font-size: 17px; }
+    }
   </style>
 </head>
 <body>
@@ -308,22 +467,55 @@
   <!-- HEADER -->
   <header class="app-header">
     <div class="boxed d-flex align-items-center justify-content-between flex-wrap gap-2">
+
+      <!-- Brand -->
       <div>
         <div class="brand-title">Alumni<span>Portal</span></div>
         <div class="brand-sub">Member Dashboard</div>
       </div>
 
-      <div class="dropdown">
-        <button class="profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="bi bi-person-circle"></i>
-          <span class="d-none d-sm-inline">{{user.name}}</span>
-          <i class="bi bi-chevron-down small"></i>
+      <!-- Right actions -->
+      <div class="d-flex align-items-center gap-2">
+
+        <!-- Dark/Light Toggle -->
+        <button type="button" class="nav-icon-btn border-0" id="themeToggleBtn" aria-label="Toggle theme" title="Toggle dark / light mode">
+          <i class="bi bi-moon-stars" id="themeToggleIcon"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark mt-2">
-          <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i class="bi bi-pencil-square me-2"></i>Edit Profile</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-        </ul>
+
+        <!-- Profile Dropdown -->
+        <div class="dropdown">
+          <div class="profile-btn" data-bs-toggle="dropdown" aria-expanded="false" role="button" tabindex="0">
+            <div class="profile-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="d-none d-sm-block text-start me-1">
+              <div class="profile-name">{{user.name}}</div>
+              <div class="profile-role">MEMBER</div>
+            </div>
+            <i class="bi bi-chevron-down small" style="color:var(--text-muted);"></i>
+          </div>
+          <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2" style="min-width:190px;">
+            <li>
+              <a class="dropdown-item rounded-3 py-2" href="#"
+                 data-bs-toggle="offcanvas" data-bs-target="#editProfileOffcanvas">
+                <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Profile
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item rounded-3 py-2" href="#"
+                 data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                <i class="bi bi-shield-lock me-2 text-primary"></i>Change Password
+              </a>
+            </li>
+            <li><hr class="dropdown-divider" style="border-color:var(--border-color);"></li>
+            <li>
+              <a class="dropdown-item rounded-3 py-2 text-danger" href="/logout">
+                <i class="bi bi-box-arrow-right me-2"></i>Logout
+              </a>
+            </li>
+          </ul>
+        </div>
+
       </div>
     </div>
   </header>
@@ -331,51 +523,98 @@
   <!-- MAIN CONTENT -->
   <main class="boxed px-3 py-4">
 
-    <!-- SECTION 1: MY DETAILS -->
-    <section class="card-dark" id="details-section">
-      <div class="card-header-dark">
-        <span><i class="bi bi-person-badge me-2"></i>My Details</span>
+    <!-- ===== SECTION 1: MY PROFILE ===== -->
+    <section class="card-surface" id="details-section">
+      <div class="card-header-bar">
+        <span><i class="bi bi-person-badge me-2" style="color:var(--primary);"></i>My Profile</span>
       </div>
-      <div class="card-body-dark">
-        <div class="detail-row">
-          <span class="detail-label">Name</span>
-          <span class="detail-value">{{user.name}}</span>
+
+      <!-- Profile hero -->
+      <div class="profile-hero flex-wrap gap-3">
+        <div class="profile-icon-big">
+          <i class="bi bi-person-circle"></i>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">Admission Number</span>
-          <span class="detail-value">{{user.admissionNumber}}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Batch</span>
-          <span class="detail-value">{{user.batch}}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Email</span>
-          <span class="detail-value">{{user.email}}</span>
+        <div>
+          <div class="profile-hero-name">{{user.name}}</div>
+          <div class="profile-hero-sub">
+            <i class="bi bi-mortarboard me-1"></i>Admission No: <strong>{{user.admissionNumber}}</strong>
+            &nbsp;•&nbsp;
+            <i class="bi bi-calendar3 me-1"></i>Batch: <strong>{{user.batch}}</strong>
+          </div>
+          <div class="profile-hero-sub mt-1">
+            <i class="bi bi-envelope me-1"></i>{{user.email}}
+          </div>
         </div>
       </div>
+
+      {{#if user.place}}
+      <div class="detail-row">
+        <span class="detail-label">Place</span>
+        <span class="detail-value">{{user.place}}</span>
+      </div>
+      {{/if}}
+      {{#if user.address}}
+      <div class="detail-row">
+        <span class="detail-label">Address</span>
+        <span class="detail-value">{{user.address}}</span>
+      </div>
+      {{/if}}
+      {{#if user.phone}}
+      <div class="detail-row">
+        <span class="detail-label">Phone</span>
+        <span class="detail-value">{{user.phone}}</span>
+      </div>
+      {{/if}}
+      {{#if user.whatsapp}}
+      <div class="detail-row">
+        <span class="detail-label">WhatsApp</span>
+        <span class="detail-value">{{user.whatsapp}}</span>
+      </div>
+      {{/if}}
+      {{#if user.currentStatus}}
+      <div class="detail-row">
+        <span class="detail-label">Current Status</span>
+        <span class="detail-value">{{user.currentStatus}}</span>
+      </div>
+      {{/if}}
     </section>
 
-    <!-- SECTION 2: GALLERY (auto-moving carousel, from admin's GALLERY collection) -->
-    <section class="card-dark" id="gallery-section">
-      <div class="card-header-dark">
-        <span><i class="bi bi-images me-2"></i>Gallery</span>
+    <!-- ===== SECTION 2: GALLERY ===== -->
+    <section class="card-surface" id="gallery-section">
+      <div class="card-header-bar">
+        <span><i class="bi bi-images me-2" style="color:var(--primary);"></i>Gallery</span>
       </div>
-      <div class="card-body-dark">
-        {{#if galleryItems.length}}
-        <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3500">
+      <div class="card-body-pad">
+        {{#if galleryImages.length}}
+        <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
           <div class="carousel-indicators">
-            {{#each galleryItems}}
-            <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="{{@index}}" class="{{#if @first}}active{{/if}}" aria-current="{{#if @first}}true{{/if}}" aria-label="Slide {{@index}}"></button>
+            {{#each galleryImages}}
+            <button type="button" data-bs-target="#galleryCarousel"
+              data-bs-slide-to="{{@index}}"
+              class="{{#if @first}}active{{/if}}"
+              aria-current="{{#if @first}}true{{/if}}"
+              aria-label="Slide {{@index}}"></button>
             {{/each}}
           </div>
           <div class="carousel-inner rounded-3 overflow-hidden">
-            {{#each galleryItems}}
+            {{#each galleryImages}}
             <div class="carousel-item {{#if @first}}active{{/if}}">
-              <img src="{{this.image}}" class="d-block w-100" alt="{{this.description}}">
-              <div class="carousel-caption d-none d-md-block">
-                <p class="m-0 small">{{this.description}}</p>
+              {{#if this.hasImage}}
+              <img src="/admin/gallery/{{this._id}}/image"
+                   class="d-block w-100"
+                   alt="{{this.description}}"
+                   data-gallery-popup
+                   data-img-src="/admin/gallery/{{this._id}}/image"
+                   data-img-desc="{{this.description}}">
+              {{/if}}
+              {{#if this.description}}
+              <div class="carousel-caption d-none d-md-block"
+                   data-gallery-popup
+                   data-img-src="/admin/gallery/{{this._id}}/image"
+                   data-img-desc="{{this.description}}">
+                <p class="m-0 small fw-semibold">{{this.description}}</p>
               </div>
+              {{/if}}
             </div>
             {{/each}}
           </div>
@@ -387,38 +626,64 @@
           </button>
         </div>
         {{else}}
-        <p class="text-center m-0 py-4" style="color: var(--text-muted);">No gallery images have been added yet.</p>
+        <div class="empty-state">
+          <i class="bi bi-images d-block"></i>
+          <p class="m-0">No gallery images have been added yet.</p>
+        </div>
         {{/if}}
       </div>
     </section>
 
-    <!-- SECTION 3: EVENTS (Register button hidden entirely when registration is disabled) -->
-    <section class="card-dark" id="events-section">
-      <div class="card-header-dark">
-        <span><i class="bi bi-calendar2-event me-2"></i>Events</span>
+    <!-- ===== SECTION 3: EVENTS ===== -->
+    <section class="card-surface" id="events-section">
+      <div class="card-header-bar">
+        <span><i class="bi bi-calendar2-event me-2" style="color:var(--primary);"></i>Events</span>
       </div>
-      <div class="card-body-dark">
+      <div class="card-body-pad">
         {{#if events.length}}
         {{#each events}}
         <div class="event-block">
-          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-            <div class="event-title">{{this.title}}</div>
-            {{#if this.category}}<span class="event-badge">{{this.category}}</span>{{/if}}
+          <div class="d-flex gap-3 align-items-start">
+
+            <!-- Date box -->
+            <div class="event-date-box">
+              <div class="event-date-month">{{this.month}}</div>
+              <div class="event-date-day">{{this.day}}</div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
+                <div class="event-title">{{this.title}}</div>
+                {{#if this.category}}
+                <span class="event-cat-badge {{this.badgeColor}}">{{this.category}}</span>
+                {{/if}}
+              </div>
+              <div class="event-meta">
+                {{#if this.location}}<i class="bi bi-geo-alt me-1"></i>{{this.location}}<br>{{/if}}
+              </div>
+              {{#if this.description}}
+              <p class="mb-3 mt-1 small" style="color:var(--text-primary); opacity:0.85; line-height:1.6;">{{this.description}}</p>
+              {{/if}}
+
+              {{#if this.registration}}
+              <button type="button"
+                class="btn-register"
+                id="reg-btn-{{this.id}}"
+                onclick="openRegisterConfirm('{{this.id}}', '{{this.title}}')">
+                <i class="bi bi-check-circle me-1"></i>Register
+              </button>
+              {{/if}}
+            </div>
+
           </div>
-          <div class="event-meta mb-2">
-            <i class="bi bi-calendar-check me-1"></i>{{this.date}} • {{this.time}}<br>
-            <i class="bi bi-geo-alt me-1"></i>{{this.location}}
-          </div>
-          {{#if this.description}}<p class="mb-3 small" style="color: #d4d4d4;">{{this.description}}</p>{{/if}}
-          {{#if this.registrationEnabled}}
-          <button type="button" class="btn-outline-mono" onclick="handleRegister('{{this.title}}')">
-            <i class="bi bi-check-circle me-1"></i> Register
-          </button>
-          {{/if}}
         </div>
         {{/each}}
         {{else}}
-        <p class="text-center m-0 py-4" style="color: var(--text-muted);">No events at the moment.</p>
+        <div class="empty-state">
+          <i class="bi bi-calendar2-x d-block"></i>
+          <p class="m-0">No events at the moment.</p>
+        </div>
         {{/if}}
       </div>
     </section>
@@ -427,117 +692,827 @@
 
   <!-- FOOTER -->
   <footer class="app-footer">
-    <div class="boxed">
-      <p class="m-0 mb-1 fw-medium" style="color: #ffffff;">© 2026 Alumni Management System. All rights reserved.</p>
+    <div class="boxed px-3">
+      <p class="m-0 mb-2 fw-bold" style="color:var(--text-primary);">
+        © 2026 Alumni Management System. All rights reserved.
+      </p>
       <div class="d-flex justify-content-center flex-wrap gap-2 gap-md-3">
-        <a href="#">Help & Contact</a><span>•</span>
-        <a href="#">Privacy Policy</a><span>•</span>
-        <a href="#">Terms of Service</a><span>•</span>
+        <a href="#">Help &amp; Contact</a><span style="color:var(--border-color);">•</span>
+        <a href="#">Privacy Policy</a><span style="color:var(--border-color);">•</span>
+        <a href="#">Terms of Service</a><span style="color:var(--border-color);">•</span>
         <a href="/admin">Admin Portal</a>
       </div>
     </div>
   </footer>
 
-  <!-- EDIT PROFILE MODAL (with change password) -->
-  <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content modal-content-dark rounded-4">
-        <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="fw-bold m-0"><i class="bi bi-person-badge me-2"></i>Edit Profile</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+
+  <!-- ===================================================== -->
+  <!-- GALLERY IMAGE POPUP MODAL                             -->
+  <!-- ===================================================== -->
+  <div class="modal fade" id="galleryPopupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4 border-0">
+        <div class="modal-header pb-2">
+          <h6 class="modal-title fw-bold m-0" id="galleryPopupCaption"></h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body p-4">
-          <p class="small mb-4" style="color: var(--text-muted);">Name, admission number and batch are official records managed by the admin office and cannot be edited here.</p>
+        <div class="modal-body p-3">
+          <div class="img-popup-wrap">
+            <img id="galleryPopupImg" src="" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
+
+  <!-- ===================================================== -->
+  <!-- EVENT REGISTRATION CONFIRM MODAL                      -->
+  <!-- ===================================================== -->
+  <div class="modal fade" id="registerConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold"><i class="bi bi-calendar-check me-2 text-primary"></i>Event Registration</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body px-4 pb-2">
+          <p class="mb-1" style="color:var(--text-muted); font-size:13px;">Event</p>
+          <p class="fw-bold mb-4" id="regConfirmEventTitle" style="font-size:16px;"></p>
+
+          <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:16px 18px; margin-bottom:8px;">
+            <p class="m-0 fw-semibold" style="font-size:15px; line-height:1.7;">
+              നിശ്ചയിക്കപ്പെട്ട ദിവസത്തിൽ നിങ്ങൾ പരിപാടിയിൽ പങ്കെടുക്കുമോ?
+            </p>
+            <p class="m-0 mt-1" style="font-size:12px; color:var(--text-muted);">
+              Will you attend the event on the scheduled day?
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 px-4 pb-4 gap-2">
+          <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold" data-bs-dismiss="modal">
+            ഇല്ല / No
+          </button>
+          <button type="button" class="btn btn-primary rounded-3 fw-semibold px-4" id="regConfirmYesBtn"
+            style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border:none;">
+            <i class="bi bi-check-circle me-1"></i>ഉണ്ട് / Yes, Register
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- EDIT PROFILE OFFCANVAS                                -->
+  <!-- ===================================================== -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="editProfileOffcanvas" style="width: min(520px, 100vw);">
+    <div class="offcanvas-header">
+      <div>
+        <h5 class="offcanvas-title"><i class="bi bi-person-badge me-2 text-primary"></i>Edit Profile</h5>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+          Fill what you want. Leave others blank. Changes save with the button at the bottom.
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <!-- Language Toggle -->
+        <div class="d-flex gap-1" id="langToggleGroup">
+          <button type="button" class="lang-badge active" id="btnLangEn" onclick="setLang('en')">EN</button>
+          <button type="button" class="lang-badge" id="btnLangMl" onclick="setLang('ml')">ML</button>
+        </div>
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+    </div>
+
+    <div class="offcanvas-body" style="overflow-y:auto;">
+      <div id="profileSaveAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+
+      <form id="editProfileForm" onsubmit="handleSaveProfile(event)">
+
+        <!-- ── PERSONAL DETAILS ── -->
+        <div class="form-section-title">
+          <span data-en="👤 Personal Details" data-ml="👤 വ്യക്തിഗത വിവരങ്ങൾ">👤 Personal Details</span>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom">
+            <span data-en="Name (official — cannot be changed)" data-ml="പേര് (ഔദ്യോഗികം — മാറ്റാൻ കഴിയില്ല)">Name (official — cannot be changed)</span>
+          </label>
+          <input type="text" class="form-control" value="{{user.name}}" disabled>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom" for="ep_place">
+            <span data-en="Place" data-ml="സ്ഥലം">Place</span>
+          </label>
+          <input type="text" class="form-control" id="ep_place" name="place" value="{{user.place}}" placeholder="Your hometown or city">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom" for="ep_address">
+            <span data-en="Address" data-ml="മേൽവിലാസം">Address</span>
+          </label>
+          <textarea class="form-control" id="ep_address" name="address" rows="2" placeholder="Full address">{{user.address}}</textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom" for="ep_email">
+            <span data-en="Email" data-ml="ഇ-മെയിൽ">Email</span>
+          </label>
+          <input type="email" class="form-control" id="ep_email" name="email" value="{{user.email}}">
+        </div>
+
+        <div class="row g-3 mb-0">
+          <div class="col-6">
+            <div class="mb-3">
+              <label class="form-label-custom" for="ep_phone">
+                <span data-en="Phone Number" data-ml="ഫോൺ നമ്പർ">Phone Number</span>
+              </label>
+              <input type="tel" class="form-control" id="ep_phone" name="phone" value="{{user.phone}}" placeholder="+91...">
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mb-3">
+              <label class="form-label-custom" for="ep_whatsapp">
+                <span data-en="WhatsApp Number" data-ml="വാട്സ്ആപ്പ് നമ്പർ">WhatsApp Number</span>
+              </label>
+              <input type="tel" class="form-control" id="ep_whatsapp" name="whatsapp" value="{{user.whatsapp}}" placeholder="+91...">
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ── EDUCATION ── -->
+        <div class="form-section-title">
+          <span data-en="🎓 Education Details" data-ml="🎓 വിദ്യാഭ്യാസ വിവരങ്ങൾ">🎓 Education Details</span>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="mb-3">
+              <label class="form-label-custom" for="ep_admYear">
+                <span data-en="Year of Admission" data-ml="സ്ഥാപനത്തിൽ ചേർന്ന വർഷം">Year of Admission</span>
+              </label>
+              <input type="number" class="form-control" id="ep_admYear" name="admYear" value="{{user.admYear}}" min="1950" max="2099" placeholder="e.g. 2018">
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mb-3">
+              <label class="form-label-custom" for="ep_leaveYear">
+                <span data-en="Year of Leaving" data-ml="സ്ഥാപനത്തിൽ നിന്നും പോയ വർഷം">Year of Leaving</span>
+              </label>
+              <input type="number" class="form-control" id="ep_leaveYear" name="leaveYear" value="{{user.leaveYear}}" min="1950" max="2099" placeholder="e.g. 2022">
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom" for="ep_eduQual">
+            <span data-en="Educational Qualification" data-ml="വിദ്യാഭ്യാസ യോഗ്യത">Educational Qualification</span>
+          </label>
+          <input type="text" class="form-control" id="ep_eduQual" name="eduQual" value="{{user.eduQual}}" placeholder="e.g. B.Tech, SSLC, Plus Two...">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom" for="ep_religiousDegree">
+            <span data-en="Religious / General Degree (മത-ബിരുദം / ഭൗതിക-ബിരുദം)" data-ml="മത-ബിരുദം / ഭൗതിക-ബിരുദം">Religious / General Degree</span>
+          </label>
+          <input type="text" class="form-control" id="ep_religiousDegree" name="religiousDegree" value="{{user.religiousDegree}}" placeholder="e.g. Alim, Hafiz...">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label-custom">
+            <span data-en="Wish to pursue higher education?" data-ml="ഉയർന്ന പഠനം നടത്താൻ ആഗ്രഹിക്കുന്നുണ്ടോ?">Wish to pursue higher education?</span>
+          </label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="higherEdu" value="yes" {{#if user.higherEdu_yes}}checked{{/if}}> 
+              <span data-en="Yes" data-ml="ഉണ്ട്">Yes</span>
+            </label>
+            <label>
+              <input type="radio" name="higherEdu" value="no" {{#if user.higherEdu_no}}checked{{/if}}>
+              <span data-en="No" data-ml="ഇല്ല">No</span>
+            </label>
+          </div>
+        </div>
+
+
+        <!-- ── JOB / STUDY ── -->
+        <div class="form-section-title">
+          <span data-en="💼 Job / Study" data-ml="💼 ജോലി / പഠനം">💼 Job / Study</span>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom" for="ep_status">
+            <span data-en="Current Status" data-ml="ജോലി / പഠനം (നിലവിലെ അവസ്ഥ)">Current Status</span>
+          </label>
+          <select class="form-select" id="ep_status" name="currentStatus" onchange="toggleJobStudy()">
+            <option value="" {{#unless user.currentStatus}}selected{{/unless}}>-- Select --</option>
+            <option value="Job" {{#if user.currentStatus_job}}selected{{/if}}>Job</option>
+            <option value="Study" {{#if user.currentStatus_study}}selected{{/if}}>Study</option>
+            <option value="Job & Study" {{#if user.currentStatus_both}}selected{{/if}}>Job &amp; Study</option>
+            <option value="Other" {{#if user.currentStatus_other}}selected{{/if}}>Other</option>
+          </select>
+        </div>
+
+        <!-- Job fields -->
+        <div id="jobFields" style="display:none;">
           <div class="mb-3">
-            <label class="form-label">Name</label>
-            <input type="text" class="form-control" value="{{user.name}}" disabled>
+            <label class="form-label-custom" for="ep_workLocation">
+              <span data-en="Work Location" data-ml="ജോലി ചെയ്യുന്ന സ്ഥലം">Work Location</span>
+            </label>
+            <input type="text" class="form-control" id="ep_workLocation" name="workLocation" value="{{user.workLocation}}" placeholder="City / Country">
           </div>
           <div class="mb-3">
-            <label class="form-label">Admission Number</label>
-            <input type="text" class="form-control" value="{{user.admissionNumber}}" disabled>
+            <label class="form-label-custom" for="ep_jobRole">
+              <span data-en="Job Role" data-ml="നിങ്ങളുടെ ജോലി">Job Role</span>
+            </label>
+            <input type="text" class="form-control" id="ep_jobRole" name="jobRole" value="{{user.jobRole}}" placeholder="e.g. Software Engineer, Teacher...">
+          </div>
+        </div>
+
+        <!-- Study fields -->
+        <div id="studyFields" style="display:none;">
+          <div class="mb-3">
+            <label class="form-label-custom" for="ep_college">
+              <span data-en="Current College" data-ml="നിലവിൽ പഠിക്കുന്ന കോളേജ്">Current College</span>
+            </label>
+            <input type="text" class="form-control" id="ep_college" name="college" value="{{user.college}}" placeholder="College name">
           </div>
           <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" id="editEmail" name="email" value="{{user.email}}">
+            <label class="form-label-custom" for="ep_course">
+              <span data-en="Course" data-ml="നിലവിൽ പഠിച്ച് കൊണ്ടിരിക്കുന്ന കോഴ്സ്">Course</span>
+            </label>
+            <input type="text" class="form-control" id="ep_course" name="course" value="{{user.course}}" placeholder="e.g. B.Tech CSE">
           </div>
+        </div>
 
-          <hr>
 
-          <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock me-2"></i>Change Password</h6>
-          <form id="changePasswordForm" onsubmit="return handleChangePassword(event)">
+        <!-- ── OTHER INFO ── -->
+        <div class="form-section-title">
+          <span data-en="🌟 Other Information" data-ml="🌟 മറ്റു വിവരങ്ങൾ">🌟 Other Information</span>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom" for="ep_skills">
+            <span data-en="Creative Skills" data-ml="സർഗാത്മക കഴിവുകൾ">Creative Skills</span>
+          </label>
+          <input type="text" class="form-control" id="ep_skills" name="skills" value="{{user.skills}}" placeholder="e.g. Calligraphy, Oratory, Quran recitation...">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom" for="ep_languages">
+            <span data-en="Languages Known" data-ml="അറിയുന്ന ഭാഷകൾ">Languages Known</span>
+          </label>
+          <input type="text" class="form-control" id="ep_languages" name="languages" value="{{user.languages}}" placeholder="e.g. Malayalam, Arabic, English...">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label-custom" for="ep_orgRoles">
+            <span data-en="Organizational Roles" data-ml="സംഘടനാ ഭാരവാഹിത്വം">Organizational Roles</span>
+          </label>
+          <input type="text" class="form-control" id="ep_orgRoles" name="orgRoles" value="{{user.orgRoles}}" placeholder="e.g. Secretary, President...">
+        </div>
+
+
+        <!-- ── FAMILY DETAILS ── -->
+        <div class="form-section-title">
+          <span data-en="🔹 Family Details" data-ml="🔹 കുടുംബ വിവരങ്ങൾ">🔹 Family Details</span>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
             <div class="mb-3">
-              <label class="form-label">Current Password</label>
-              <input type="password" class="form-control" id="currentPassword" name="currentPassword" placeholder="Your admission number or current password" required>
+              <label class="form-label-custom" for="ep_familyCount">
+                <span data-en="Family Members Count" data-ml="കുടുംബത്തിലെ അംഗങ്ങൾ">Family Members</span>
+              </label>
+              <input type="number" class="form-control" id="ep_familyCount" name="familyCount" value="{{user.familyCount}}" min="0" placeholder="Total count">
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mb-3">
+              <label class="form-label-custom" for="ep_earningMembers">
+                <span data-en="Earning Members" data-ml="ഫാമിലിയിൽ ആരൊക്കെ ജോലി ചെയ്യുന്നുണ്ട്">Earning Members</span>
+              </label>
+              <input type="text" class="form-control" id="ep_earningMembers" name="earningMembers" value="{{user.earningMembers}}" placeholder="Who earns in family">
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label-custom">
+            <span data-en="Dependents?" data-ml="ആശ്രിതരുടെ എണ്ണം">Dependents?</span>
+          </label>
+          <div class="radio-group mb-2">
+            <label>
+              <input type="radio" name="hasDependents" value="yes" id="depYes"
+                onchange="document.getElementById('depWhoWrap').style.display='block'"
+                {{#if user.hasDependents_yes}}checked{{/if}}>
+              <span data-en="Yes" data-ml="ഉണ്ട്">Yes</span>
+            </label>
+            <label>
+              <input type="radio" name="hasDependents" value="no" id="depNo"
+                onchange="document.getElementById('depWhoWrap').style.display='none'"
+                {{#if user.hasDependents_no}}checked{{/if}}>
+              <span data-en="No" data-ml="ഇല്ല">No</span>
+            </label>
+          </div>
+          <div id="depWhoWrap" style="display:{{#if user.hasDependents_yes}}block{{else}}none{{/if}};">
+            <input type="text" class="form-control" name="dependentsWho" value="{{user.dependentsWho}}"
+              placeholder="Who are the dependents?">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label-custom">
+            <span data-en="Parents deceased?" data-ml="മാതാപിതാക്കൾ മരണപ്പെട്ടിട്ടുണ്ടോ?">Parents deceased?</span>
+          </label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="parentsDeceased" value="yes" {{#if user.parentsDeceased_yes}}checked{{/if}}>
+              <span data-en="Yes" data-ml="ഉണ്ട്">Yes</span>
+            </label>
+            <label>
+              <input type="radio" name="parentsDeceased" value="no" {{#if user.parentsDeceased_no}}checked{{/if}}>
+              <span data-en="No" data-ml="ഇല്ല">No</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label-custom">
+            <span data-en="Chronically ill family members?" data-ml="വീട്ടിൽ നിത്യ രോഗികൾ ഉണ്ടോ?">Chronically ill family members?</span>
+          </label>
+          <div class="radio-group mb-2">
+            <label>
+              <input type="radio" name="chronicIll" value="yes" id="ciYes"
+                onchange="document.getElementById('ciDetailWrap').style.display='block'"
+                {{#if user.chronicIll_yes}}checked{{/if}}>
+              <span data-en="Yes" data-ml="ഉണ്ട്">Yes</span>
+            </label>
+            <label>
+              <input type="radio" name="chronicIll" value="no" id="ciNo"
+                onchange="document.getElementById('ciDetailWrap').style.display='none'"
+                {{#if user.chronicIll_no}}checked{{/if}}>
+              <span data-en="No" data-ml="ഇല്ല">No</span>
+            </label>
+          </div>
+          <div id="ciDetailWrap" style="display:{{#if user.chronicIll_yes}}block{{else}}none{{/if}};">
+            <input type="text" class="form-control" name="chronicIllDetails" value="{{user.chronicIllDetails}}"
+              placeholder="Who? What illness?">
+          </div>
+        </div>
+
+
+        <!-- ── PARENTS INFO ── -->
+        <div class="form-section-title">
+          <span data-en="👪 Parents' Details" data-ml="👪 മാതാപിതാക്കളുടെ വിവരങ്ങൾ">👪 Parents' Details</span>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="mb-3">
+              <label class="form-label-custom" for="ep_fatherName">
+                <span data-en="Father's Name" data-ml="ഉപ്പയുടെ പേര്">Father's Name</span>
+              </label>
+              <input type="text" class="form-control" id="ep_fatherName" name="fatherName" value="{{user.fatherName}}">
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mb-3">
+              <label class="form-label-custom" for="ep_motherName">
+                <span data-en="Mother's Name" data-ml="ഉമ്മയുടെ പേര്">Mother's Name</span>
+              </label>
+              <input type="text" class="form-control" id="ep_motherName" name="motherName" value="{{user.motherName}}">
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ── OTHER MISC ── -->
+        <div class="form-section-title">
+          <span data-en="🏠 Other Details" data-ml="🏠 മറ്റ് വിവരങ്ങൾ">🏠 Other Details</span>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label-custom">
+            <span data-en="Own a house?" data-ml="സ്വന്തമായി വീടുണ്ടോ?">Own a house?</span>
+          </label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="ownHouse" value="yes" {{#if user.ownHouse_yes}}checked{{/if}}>
+              <span data-en="Yes" data-ml="ഉണ്ട്">Yes</span>
+            </label>
+            <label>
+              <input type="radio" name="ownHouse" value="no" {{#if user.ownHouse_no}}checked{{/if}}>
+              <span data-en="No" data-ml="ഇല്ല">No</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label-custom">
+            <span data-en="Married?" data-ml="വിവാഹം കഴിഞ്ഞിട്ടുണ്ടോ?">Married?</span>
+          </label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="married" value="yes" {{#if user.married_yes}}checked{{/if}}>
+              <span data-en="Yes" data-ml="ഉണ്ട്">Yes</span>
+            </label>
+            <label>
+              <input type="radio" name="married" value="no" {{#if user.married_no}}checked{{/if}}>
+              <span data-en="No" data-ml="ഇല്ല">No</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label-custom" for="ep_childrenCount">
+            <span data-en="Children (count)" data-ml="കുട്ടികൾ (എണ്ണം)">Children (count)</span>
+          </label>
+          <input type="number" class="form-control" id="ep_childrenCount" name="childrenCount" value="{{user.childrenCount}}" min="0" placeholder="0">
+        </div>
+
+        <!-- SAVE BUTTON -->
+        <div class="d-grid mt-2 mb-3">
+          <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-3"
+            style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border:none;">
+            <i class="bi bi-cloud-check me-2"></i>Save Profile
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div><!-- /offcanvas -->
+
+
+  <!-- ===================================================== -->
+  <!-- CHANGE PASSWORD MODAL (separate from Edit Profile)    -->
+  <!-- ===================================================== -->
+  <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-shield-lock me-2 text-primary"></i>Change Password
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body px-4 pb-2">
+          <p class="small mb-4" style="color:var(--text-muted);">
+            Your password keeps your account secure. Use a strong password you haven't used before.
+          </p>
+          <div id="changePwAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+          <form id="changePasswordForm" onsubmit="handleChangePassword(event)">
+            <div class="mb-3">
+              <label class="form-label-custom" for="cp_current">Current Password</label>
+              <input type="password" class="form-control" id="cp_current" name="currentPassword"
+                placeholder="Your current password" required>
             </div>
             <div class="mb-3">
-              <label class="form-label">New Password</label>
-              <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+              <label class="form-label-custom" for="cp_new">New Password</label>
+              <input type="password" class="form-control" id="cp_new" name="newPassword"
+                placeholder="At least 6 characters" required minlength="6">
             </div>
-            <div class="mb-3">
-              <label class="form-label">Confirm New Password</label>
-              <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required minlength="6">
+            <div class="mb-4">
+              <label class="form-label-custom" for="cp_confirm">Confirm New Password</label>
+              <input type="password" class="form-control" id="cp_confirm" name="confirmPassword"
+                placeholder="Repeat new password" required minlength="6">
             </div>
-            <!-- On submit, save new password against this user's record in the "member details" collection -->
-            <button type="submit" class="btn-solid-mono">Update Password</button>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary fw-bold rounded-3"
+                style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border:none;">
+                Update Password
+              </button>
+            </div>
           </form>
         </div>
+        <div class="modal-footer border-0 pt-2 pb-4 px-4"></div>
       </div>
     </div>
   </div>
 
   {{else}}
   <!-- ==================== LOGIN VIEW ==================== -->
+  <!-- Theme toggle visible even on login page -->
+  <div style="position:fixed; top:16px; right:16px; z-index:9999;">
+    <button type="button" class="nav-icon-btn border-0" id="themeToggleBtn" aria-label="Toggle theme">
+      <i class="bi bi-moon-stars" id="themeToggleIcon"></i>
+    </button>
+  </div>
+
   <div class="login-wrapper">
     <div class="login-card">
       <div class="text-center mb-4">
-        <i class="bi bi-mortarboard-fill" style="font-size: 34px;"></i>
-        <h3 class="mt-2 mb-0">Alumni Portal</h3>
-        <p class="sub">Sign in with your name and admission number</p>
+        <div class="login-brand-icon">
+          <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        <h3 class="mt-0 mb-1">Alumni Portal</h3>
+        <p class="sub">Sign in to your member dashboard</p>
       </div>
 
       {{#if error}}
-      <div class="alert alert-danger py-2 small">{{error}}</div>
+      <div class="alert alert-danger py-2 small rounded-3 mb-3">
+        <i class="bi bi-exclamation-circle me-1"></i>{{error}}
+      </div>
       {{/if}}
 
-      <!-- name + admission number (used as password) submitted to the auth route -->
       <form method="POST" action="/login">
         <div class="mb-3">
-          <label class="form-label small" style="color: var(--text-muted);">Full Name</label>
-          <input type="text" name="name" class="form-control form-control-dark" placeholder="Enter your full name" required>
+          <label class="form-label-custom" for="loginName">Full Name</label>
+          <input type="text" name="name" id="loginName" class="form-control"
+            placeholder="Enter your full name" required autocomplete="name">
         </div>
-        <div class="mb-3">
-          <label class="form-label small" style="color: var(--text-muted);">Admission Number</label>
-          <input type="password" name="admissionNumber" class="form-control form-control-dark" placeholder="Used as your password" required>
+        <div class="mb-4">
+          <label class="form-label-custom" for="loginPassword">Password</label>
+          <input type="password" name="password" id="loginPassword" class="form-control"
+            placeholder="Enter your password" required autocomplete="current-password">
         </div>
-        <button type="submit" class="btn-solid-mono mt-2">Login</button>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary fw-bold rounded-3"
+            style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border:none; padding:11px;">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+          </button>
+        </div>
       </form>
+
     </div>
   </div>
   {{/if}}
 
-  <!-- SCRIPTS -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    function handleRegister(eventTitle) {
-      alert(`You have registered for "${eventTitle}". Confirmation details will be sent to your registered email.`);
-    }
+  /* ============================================================ */
+  /* THEME TOGGLE                                                  */
+  /* ============================================================ */
+  (function () {
+    var btn  = document.getElementById('themeToggleBtn');
+    var icon = document.getElementById('themeToggleIcon');
 
-    function handleChangePassword(e) {
-      e.preventDefault();
-      const newPass = document.getElementById('newPassword').value;
-      const confirmPass = document.getElementById('confirmPassword').value;
-
-      if (newPass !== confirmPass) {
-        alert('New password and confirmation do not match.');
-        return false;
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-bs-theme', t);
+      try { localStorage.setItem('userTheme', t); } catch (e) {}
+      if (icon) {
+        icon.className = t === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars';
       }
-
-      // TODO (backend): POST currentPassword/newPassword to the server route that
-      // updates this user's password field in the "member details" collection.
-      alert('Password updated successfully.');
-      return false;
     }
+
+    // Set icon to match current theme on load
+    var current = document.documentElement.getAttribute('data-bs-theme') || 'light';
+    applyTheme(current);
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var cur = document.documentElement.getAttribute('data-bs-theme') || 'light';
+        applyTheme(cur === 'dark' ? 'light' : 'dark');
+      });
+    }
+  })();
+
+
+  /* ============================================================ */
+  /* GALLERY POPUP                                                 */
+  /* ============================================================ */
+  document.addEventListener('click', function (e) {
+    var trigger = e.target.closest('[data-gallery-popup]');
+    if (!trigger) return;
+
+    var src  = trigger.getAttribute('data-img-src');
+    var desc = trigger.getAttribute('data-img-desc') || '';
+
+    var popupImg     = document.getElementById('galleryPopupImg');
+    var popupCaption = document.getElementById('galleryPopupCaption');
+
+    if (popupImg)     popupImg.src         = src;
+    if (popupImg)     popupImg.alt         = desc;
+    if (popupCaption) popupCaption.textContent = desc || 'Gallery Image';
+
+    var modalEl = document.getElementById('galleryPopupModal');
+    if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  });
+
+
+  /* ============================================================ */
+  /* EVENT REGISTRATION                                            */
+  /* ============================================================ */
+  var _pendingRegEventId    = null;
+  var _pendingRegEventTitle = null;
+
+  // Get registration state key per user
+  var REG_STORAGE_KEY = 'alumni_registrations_{{#if user}}{{user.admissionNumber}}{{/if}}';
+
+  function getRegistrations() {
+    try {
+      return JSON.parse(localStorage.getItem(REG_STORAGE_KEY) || '{}');
+    } catch (e) { return {}; }
+  }
+
+  function saveRegistrations(obj) {
+    try { localStorage.setItem(REG_STORAGE_KEY, JSON.stringify(obj)); } catch (e) {}
+  }
+
+  // Apply persisted registration state on page load
+  (function () {
+    var regs = getRegistrations();
+    Object.keys(regs).forEach(function (eventId) {
+      var btn = document.getElementById('reg-btn-' + eventId);
+      if (btn && regs[eventId]) markRegistered(btn);
+    });
+  })();
+
+  function openRegisterConfirm(eventId, eventTitle) {
+    var btn = document.getElementById('reg-btn-' + eventId);
+    if (btn && btn.classList.contains('btn-registered')) return; // already done
+
+    _pendingRegEventId    = eventId;
+    _pendingRegEventTitle = eventTitle;
+
+    var titleEl = document.getElementById('regConfirmEventTitle');
+    if (titleEl) titleEl.textContent = eventTitle;
+
+    bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('registerConfirmModal')
+    ).show();
+  }
+
+  function markRegistered(btn) {
+    btn.className   = 'btn-registered';
+    btn.innerHTML   = '<i class="bi bi-check-circle-fill me-1"></i>Registered';
+    btn.onclick     = null;
+    btn.disabled    = false;
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var confirmBtn = document.getElementById('regConfirmYesBtn');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', function () {
+        if (!_pendingRegEventId) return;
+
+        var btn = document.getElementById('reg-btn-' + _pendingRegEventId);
+
+        // Persist locally
+        var regs = getRegistrations();
+        regs[_pendingRegEventId] = true;
+        saveRegistrations(regs);
+
+        // POST to backend (non-blocking — best effort)
+        fetch('/user/register-event/' + _pendingRegEventId, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventTitle: _pendingRegEventTitle })
+        }).catch(function () { /* silently ignore if route not yet available */ });
+
+        if (btn) markRegistered(btn);
+
+        bootstrap.Modal.getInstance(
+          document.getElementById('registerConfirmModal')
+        ).hide();
+
+        _pendingRegEventId    = null;
+        _pendingRegEventTitle = null;
+      });
+    }
+  });
+
+
+  /* ============================================================ */
+  /* LANGUAGE TOGGLE (Edit Profile form)                           */
+  /* ============================================================ */
+  var currentLang = 'en';
+
+  function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('[data-en][data-ml]').forEach(function (el) {
+      el.textContent = lang === 'ml' ? el.getAttribute('data-ml') : el.getAttribute('data-en');
+    });
+    document.getElementById('btnLangEn').classList.toggle('active', lang === 'en');
+    document.getElementById('btnLangMl').classList.toggle('active', lang === 'ml');
+  }
+
+
+  /* ============================================================ */
+  /* JOB / STUDY CONDITIONAL FIELDS                               */
+  /* ============================================================ */
+  function toggleJobStudy() {
+    var val = document.getElementById('ep_status').value;
+    var showJob   = (val === 'Job'  || val === 'Job & Study');
+    var showStudy = (val === 'Study'|| val === 'Job & Study');
+    var jobDiv   = document.getElementById('jobFields');
+    var studyDiv = document.getElementById('studyFields');
+    if (jobDiv)   jobDiv.style.display   = showJob   ? 'block' : 'none';
+    if (studyDiv) studyDiv.style.display = showStudy ? 'block' : 'none';
+  }
+
+  // Run on load to restore saved state
+  document.addEventListener('DOMContentLoaded', function () {
+    toggleJobStudy();
+  });
+
+
+  /* ============================================================ */
+  /* SAVE PROFILE FORM                                             */
+  /* ============================================================ */
+  function handleSaveProfile(e) {
+    e.preventDefault();
+
+    var alertEl = document.getElementById('profileSaveAlert');
+    var form    = document.getElementById('editProfileForm');
+    var btn     = form.querySelector('[type="submit"]');
+    var origTxt = btn.innerHTML;
+
+    function showAlert(type, msg) {
+      alertEl.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-3';
+      alertEl.textContent = msg;
+      alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
+
+    var data = {};
+    var fd   = new FormData(form);
+    fd.forEach(function (val, key) { data[key] = val; });
+
+    fetch('/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function (res) {
+      return res.json().then(function (d) { return { ok: res.ok, data: d }; });
+    })
+    .then(function (result) {
+      if (result.ok && result.data && result.data.success) {
+        showAlert('success', result.data.message || 'Profile saved successfully.');
+      } else {
+        showAlert('danger', (result.data && result.data.message) || 'Could not save profile. Please try again.');
+      }
+    })
+    .catch(function () {
+      showAlert('danger', 'Network error. Please check your connection and try again.');
+    })
+    .finally(function () {
+      btn.disabled  = false;
+      btn.innerHTML = origTxt;
+    });
+  }
+
+
+  /* ============================================================ */
+  /* CHANGE PASSWORD                                               */
+  /* ============================================================ */
+  function handleChangePassword(e) {
+    e.preventDefault();
+
+    var alertEl = document.getElementById('changePwAlert');
+    var form    = document.getElementById('changePasswordForm');
+    var btn     = form.querySelector('[type="submit"]');
+    var origTxt = btn.textContent;
+
+    function showAlert(type, msg) {
+      alertEl.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-3';
+      alertEl.textContent = msg;
+    }
+
+    var curr    = document.getElementById('cp_current').value;
+    var newPw   = document.getElementById('cp_new').value;
+    var confirm = document.getElementById('cp_confirm').value;
+
+    if (newPw !== confirm) {
+      showAlert('danger', 'New password and confirmation do not match.');
+      return;
+    }
+
+    btn.disabled  = true;
+    btn.textContent = 'Updating…';
+    alertEl.className = 'alert d-none';
+
+    fetch('/user/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: curr, newPassword: newPw })
+    })
+    .then(function (res) {
+      return res.json().then(function (d) { return { ok: res.ok, data: d }; });
+    })
+    .then(function (result) {
+      if (result.ok && result.data && result.data.success) {
+        showAlert('success', result.data.message || 'Password updated successfully.');
+        form.reset();
+      } else {
+        showAlert('danger', (result.data && result.data.message) || 'Could not update password.');
+      }
+    })
+    .catch(function () {
+      showAlert('danger', 'Network error. Please try again.');
+    })
+    .finally(function () {
+      btn.disabled    = false;
+      btn.textContent = origTxt;
+    });
+  }
   </script>
 
 </body>
