@@ -10,6 +10,7 @@ var connectDB = require('./config/db');
 var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
 var leadersRouter = require('./routes/leaders');
+var session = require('express-session');
 
 var app = express();
 
@@ -19,6 +20,13 @@ connectDB();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
+
+app.use(session({
+  secret: process.env.SESSION_SECRET,  // already in your env secrets
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false }  // set true if using HTTPS in production
+}));
 
 app.use(logger('dev'));
 app.use(express.json());
