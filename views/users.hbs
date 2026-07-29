@@ -1,1460 +1,544 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alumni User Dashboard</title>
-
-    <!-- Apply saved theme before paint (avoids flash) -->
-    <script>
-        (function () {
-            try {
-                var t = localStorage.getItem('userTheme');
-                if (t !== 'dark' && t !== 'light') {
-                    t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                }
-                document.documentElement.setAttribute('data-bs-theme', t);
-            } catch (e) {}
-        })();
-    </script>
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
-    <!-- Google Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-
-    <style>
-        /*==========================================================
-        PREMIUM USER DASHBOARD CSS
-==========================================================*/
-
-/* Smooth scrolling */
-html{
-    scroll-behavior:smooth;
-}
-
-/*==========================================================
-        THEME VARIABLES (light / dark)
-==========================================================*/
-
-:root{
-    --bg:#f3f2fa;
-    --text:#1e1b2e;
-    --muted:#5b5768;
-    --primary:#7c3aed;
-    --card-bg:rgba(255,255,255,.9);
-    --card-border:rgba(15,23,42,.08);
-    --navbar-bg:rgba(255,255,255,.92);
-    --footer-bg:#eceaf5;
-    --input-bg:#ffffff;
-}
-
-[data-bs-theme="dark"]{
-    --bg:#0b0f19;
-    --text:#e5e7eb;
-    --muted:#9ca3af;
-    --primary:#7c3aed;
-    --card-bg:rgba(23,32,51,.88);
-    --card-border:rgba(255,255,255,.08);
-    --navbar-bg:rgba(17,24,39,.92);
-    --footer-bg:#101827;
-    --input-bg:#0f172a;
-}
-
-/* Scrollbar */
-
-::-webkit-scrollbar{
-    width:10px;
-}
-
-::-webkit-scrollbar-track{
-    background:#111827;
-}
-
-::-webkit-scrollbar-thumb{
-    background:linear-gradient(180deg,#7c3aed,#4f46e5);
-    border-radius:20px;
-}
-
-::-webkit-scrollbar-thumb:hover{
-    background:#8b5cf6;
-}
-
-/*==========================================================
-        BODY
-==========================================================*/
-
-body{
-
-    background:
-        radial-gradient(circle at top left,#312e8140 0%,transparent 40%),
-        radial-gradient(circle at bottom right,#6d28d940 0%,transparent 40%),
-        var(--bg);
-
-    min-height:100vh;
-    color:var(--text);
-
-}
-
-/*==========================================================
-        NAVBAR
-==========================================================*/
-
-.navbar{
-
-    backdrop-filter:blur(18px);
-    background:var(--navbar-bg)!important;
-    box-shadow:0 10px 25px rgba(0,0,0,.20);
-    z-index:1000;
-
-}
-
-.navbar-brand{
-
-    letter-spacing:.5px;
-
-}
-
-.nav-link{
-
-    position:relative;
-    font-weight:500;
-
-}
-
-.nav-link::after{
-
-    content:"";
-    position:absolute;
-    left:0;
-    bottom:-6px;
-
-    width:0;
-    height:2px;
-
-    background:var(--primary);
-
-    transition:.35s;
-
-}
-
-.nav-link:hover::after{
-
-    width:100%;
-
-}
-
-.profile-btn{
-
-    border:none;
-    background:transparent;
-    color:var(--text);
-    font-size:20px;
-    line-height:1;
-    transition:.35s;
-
-}
-
-.profile-btn:hover{
-
-    transform:scale(1.08);
-
-    box-shadow:0 0 18px rgba(124,58,237,.5);
-
-}
-
-/*==========================================================
-        SECTION TITLE
-==========================================================*/
-
-.section-title{
-
-    position:relative;
-    display:inline-block;
-    padding-bottom:10px;
-
-}
-
-.section-title::after{
-
-    content:"";
-    position:absolute;
-
-    left:0;
-    bottom:0;
-
-    width:60%;
-    height:4px;
-
-    border-radius:20px;
-
-    background:linear-gradient(90deg,#7c3aed,#4f46e5);
-
-}
-
-/*==========================================================
-        GLASS CARD
-==========================================================*/
-
-.profile-card,
-.gallery-card,
-.event-card{
-
-    background:var(--card-bg);
-
-    backdrop-filter:blur(20px);
-
-    border:1px solid var(--card-border);
-
-    transition:.35s;
-
-    box-shadow:
-        0 10px 30px rgba(0,0,0,.18);
-
-}
-
-.profile-card:hover,
-.gallery-card:hover,
-.event-card:hover{
-
-    transform:translateY(-6px);
-
-    box-shadow:
-        0 18px 35px rgba(124,58,237,.18);
-
-}
-
-/*==========================================================
-        PROFILE
-==========================================================*/
-
-.profile-icon{
-
-    transition:.4s;
-
-}
-
-.profile-card:hover .profile-icon{
-
-    transform:rotate(10deg) scale(1.08);
-
-    box-shadow:
-
-    0 0 30px rgba(124,58,237,.35);
-
-}
-
-.profile-name{
-
-    letter-spacing:.5px;
-
-}
-
-.profile-table{
-
-    margin-top:30px;
-
-}
-
-.profile-table td{
-
-    vertical-align:middle;
-
-}
-
-/*==========================================================
-        GALLERY
-==========================================================*/
-
-.gallery-card{
-
-    overflow:hidden;
-
-}
-
-.gallery-card img{
-
-    transition:.6s;
-
-}
-
-.gallery-card:hover img{
-
-    transform:scale(1.03);
-
-}
-
-.gallery-caption{
-
-    background:var(--card-bg);
-    color:var(--text);
-
-}
-
-/*==========================================================
-        EVENT CARD
-==========================================================*/
-
-.event-card{
-
-    border-radius:18px;
-
-    overflow:hidden;
-
-}
-
-.event-image{
-
-    width:100%;
-    height:230px;
-
-    object-fit:cover;
-
-    transition:.5s;
-
-}
-
-.event-card:hover .event-image{
-
-    transform:scale(1.06);
-
-}
-
-.event-body{
-
-    padding:24px;
-
-}
-
-.event-body h4{
-
-    font-size:24px;
-    font-weight:600;
-
-}
-
-.event-info{
-
-    color:var(--muted);
-
-    margin-bottom:10px;
-
-}
-
-.event-description{
-
-    color:var(--text);
-    opacity:.85;
-
-    line-height:1.8;
-
-    min-height:95px;
-
-}
-
-.badge{
-
-    padding:8px 15px;
-
-    font-size:13px;
-
-    border-radius:50px;
-
-}
-
-/*==========================================================
-        BUTTONS
-==========================================================*/
-
-.btn-primary{
-
-    background:linear-gradient(135deg,#7c3aed,#4f46e5);
-
-    border:none;
-
-    border-radius:10px;
-
-    transition:.35s;
-
-}
-
-.btn-primary:hover{
-
-    transform:translateY(-2px);
-
-    box-shadow:
-
-        0 8px 22px rgba(124,58,237,.35);
-
-}
-
-.btn-secondary{
-
-    border-radius:10px;
-
-}
-
-/*==========================================================
-        MODALS
-==========================================================*/
-
-.modal-content{
-
-    border-radius:18px;
-
-    background:var(--card-bg);
-    color:var(--text);
-
-}
-
-.modal-header{
-
-    border-bottom:1px solid var(--card-border);
-
-}
-
-.modal-footer{
-
-    border-top:1px solid var(--card-border);
-
-}
-
-.form-control{
-
-    background:var(--input-bg);
-
-    border:1px solid var(--card-border);
-
-    color:var(--text);
-
-}
-
-.form-control:focus{
-
-    background:var(--input-bg);
-
-    color:var(--text);
-
-    border-color:#7c3aed;
-
-    box-shadow:0 0 0 .2rem rgba(124,58,237,.25);
-
-}
-
-.form-label{
-
-    color:var(--text);
-
-}
-
-/*==========================================================
-        FOOTER
-==========================================================*/
-
-footer{
-
-    background:var(--footer-bg);
-    color:var(--text);
-
-}
-
-footer a{
-
-    transition:.3s;
-
-}
-
-footer a:hover{
-
-    color:white!important;
-
-}
-
-footer i{
-
-    cursor:pointer;
-
-    transition:.35s;
-
-}
-
-footer i:hover{
-
-    color:#8b5cf6;
-
-    transform:translateY(-4px);
-
-}
-
-/*==========================================================
-        ANIMATIONS
-==========================================================*/
-
-.fade-section{
-
-    opacity:0;
-
-    transform:translateY(35px);
-
-    transition:.8s;
-
-}
-
-.fade-section.show{
-
-    opacity:1;
-
-    transform:translateY(0);
-
-}
-
-/*==========================================================
-        MOBILE
-==========================================================*/
-
-@media(max-width:992px){
-
-    .navbar-nav{
-
-        text-align:center;
-        margin-top:15px;
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} - Member Dashboard</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5.3 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --font-main: 'Plus Jakarta Sans', sans-serif;
+      --bg-black: #000000;
+      --surface: #111111;
+      --surface-alt: #1a1a1a;
+      --border-color: rgba(255, 255, 255, 0.12);
+      --text-primary: #ffffff;
+      --text-muted: #a3a3a3;
     }
 
-    .profile-name{
+    * { box-sizing: border-box; }
 
-        margin-top:25px;
-        text-align:center;
-
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-black);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
     }
 
-    .profile-table{
+    .boxed { max-width: 1100px; margin: 0 auto; }
 
-        margin-top:20px;
-
+    /* ===== HEADER ===== */
+    .app-header {
+      background: #000000;
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
     }
 
-}
-
-@media(max-width:768px){
-
-    section{
-
-        padding:55px 0;
-
+    .brand-title {
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      color: #ffffff;
     }
 
-    .section-title{
+    .brand-title span { color: #737373; }
 
-        font-size:26px;
-
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: -2px;
     }
 
-    .event-image{
-
-        height:210px;
-
+    .profile-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
     }
 
-    .gallery-card img{
+    .profile-btn:hover { background: var(--surface-alt); }
+    .profile-btn i.bi-person-circle { font-size: 20px; }
 
-        height:240px;
-
+    .dropdown-menu-dark {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 6px;
     }
 
-}
-
-@media(max-width:576px){
-
-    .profile-icon{
-
-        width:90px;
-        height:90px;
-        font-size:45px;
-
+    .dropdown-menu-dark .dropdown-item {
+      color: #e5e5e5;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 14px;
     }
 
-    .profile-name{
+    .dropdown-menu-dark .dropdown-item:hover { background: var(--surface-alt); color: #ffffff; }
+    .dropdown-menu-dark .dropdown-item.text-danger:hover { background: #2a1414; color: #f87171; }
+    .dropdown-menu-dark hr.dropdown-divider { border-color: var(--border-color); }
 
-        font-size:24px;
-
+    /* ===== CARDS / SECTIONS ===== */
+    .card-dark {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 24px;
     }
 
-    .event-body h4{
-
-        font-size:21px;
-
+    .card-header-dark {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #ffffff;
     }
 
-}
+    .card-body-dark { padding: 24px; }
 
-    </style>
+    /* ===== SECTION 1: DETAILS ===== */
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
 
+    .detail-row:last-child { border-bottom: none; }
+
+    .detail-label {
+      color: var(--text-muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .detail-value { font-weight: 600; color: #ffffff; font-size: 14px; }
+
+    /* ===== SECTION 2: GALLERY CAROUSEL ===== */
+    .carousel-item img {
+      height: 360px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .carousel-caption {
+      background: rgba(0, 0, 0, 0.55);
+      border-radius: 8px;
+      bottom: 20px;
+      padding: 10px 16px;
+    }
+
+    .carousel-indicators [data-bs-target] {
+      background-color: #ffffff;
+      opacity: 0.4;
+    }
+
+    .carousel-indicators .active { opacity: 1; }
+
+    @media (max-width: 576px) {
+      .carousel-item img { height: 220px; }
+    }
+
+    /* ===== SECTION 3: EVENTS ===== */
+    .event-block {
+      border: 1px solid var(--border-color);
+      background: var(--surface-alt);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .event-block:last-child { margin-bottom: 0; }
+
+    .event-title { font-weight: 700; font-size: 16px; color: #ffffff; }
+
+    .event-meta { color: var(--text-muted); font-size: 13px; line-height: 1.7; }
+
+    .event-badge {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .btn-outline-mono {
+      border: 1px solid #ffffff;
+      color: #ffffff;
+      background: transparent;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .btn-outline-mono:hover { background: #ffffff; color: #000000; }
+
+    /* ===== FOOTER ===== */
+    .app-footer {
+      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 26px 0;
+      text-align: center;
+    }
+
+    .app-footer a { color: var(--text-muted); text-decoration: none; }
+    .app-footer a:hover { color: #ffffff; }
+
+    /* ===== LOGIN VIEW ===== */
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .login-card h3 { font-weight: 800; margin-bottom: 2px; }
+    .login-card p.sub { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
+
+    .form-control-dark {
+      background: #000000;
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .form-control-dark::placeholder { color: #666666; }
+
+    .form-control-dark:focus {
+      border-color: #ffffff;
+      box-shadow: none;
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .btn-solid-mono {
+      background: #ffffff;
+      color: #000000;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      width: 100%;
+      font-size: 14px;
+    }
+
+    .btn-solid-mono:hover { background: #d4d4d4; color: #000000; }
+
+    /* ===== MODAL (DARK) ===== */
+    .modal-content-dark {
+      background: var(--surface);
+      color: #ffffff;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-content-dark .modal-header,
+    .modal-content-dark .modal-footer {
+      border-color: var(--border-color);
+    }
+
+    .modal-content-dark .form-label { color: var(--text-muted); font-size: 13px; }
+
+    .modal-content-dark .form-control {
+      background: #000000;
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+    }
+
+    .modal-content-dark .form-control:disabled {
+      background: #0a0a0a;
+      color: var(--text-muted);
+    }
+
+    .modal-content-dark .form-control:focus {
+      border-color: #ffffff;
+      box-shadow: none;
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .modal-content-dark hr { border-color: var(--border-color); }
+  </style>
 </head>
-
 <body>
 
-<!-- ===========================
-        NAVBAR
-=========================== -->
-
-<nav class="navbar navbar-expand-lg sticky-top">
-
-<div class="container">
-
-<a class="navbar-brand" href="#">
-
-<i class="bi bi-mortarboard-fill me-2"></i>
-
-Alumni
-
-</a>
-
-<button class="navbar-toggler bg-light"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#navbar">
-
-<span class="navbar-toggler-icon"></span>
-
-</button>
-
-<div class="collapse navbar-collapse"
-id="navbar">
-
-<ul class="navbar-nav mx-auto">
-
-<li class="nav-item">
-<a href="#profile"
-class="nav-link">
-Dashboard
-</a>
-</li>
-
-<li class="nav-item">
-<a href="#gallery"
-class="nav-link">
-Gallery
-</a>
-</li>
-
-<li class="nav-item">
-<a href="#events"
-class="nav-link">
-Events
-</a>
-</li>
-
-</ul>
-
-<div class="d-flex align-items-center gap-3">
-
-<button
-type="button"
-class="profile-btn"
-id="themeToggleBtn"
-aria-label="Toggle dark mode"
-title="Toggle dark mode">
-
-<i class="bi bi-sun fs-5" id="themeToggleIcon"></i>
-
-</button>
-
-<div class="dropdown">
-
-<button
-class="profile-btn"
-data-bs-toggle="dropdown">
-
-<i class="bi bi-person-fill"></i>
-
-</button>
-
-<ul class="dropdown-menu dropdown-menu-end">
-
-<li>
-
-<a
-class="dropdown-item"
-href="#">
-
-<i class="bi bi-pencil-square me-2"></i>
-
-Edit Profile
-
-</a>
-
-</li>
-
-<li>
-
-<a
-class="dropdown-item"
-href="#">
-
-<i class="bi bi-key me-2"></i>
-
-Change Password
-
-</a>
-
-</li>
-
-<li><hr class="dropdown-divider"></li>
-
-<li>
-
-<a
-class="dropdown-item text-danger"
-href="/logout">
-
-<i class="bi bi-box-arrow-right me-2"></i>
-
-Logout
-
-</a>
-
-</li>
-
-</ul>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</nav>
-
-<!-- ===========================
-        PROFILE
-=========================== -->
-
-<section
-id="profile">
-
-<div class="container">
-
-<h2 class="section-title">
-
-My Profile
-
-</h2>
-
-<div class="profile-card">
-
-<div class="row align-items-center">
-
-<div class="col-lg-3 text-center">
-
-<div class="profile-icon">
-
-<i class="bi bi-person-fill"></i>
-
-</div>
-
-</div>
-
-<div class="col-lg-9">
-
-<h2 class="profile-name">
-
-{{user.name}}
-
-</h2>
-
-<table class="table table-borderless text-light profile-table">
-
-<tr>
-
-<td>
-
-Admission Number
-
-</td>
-
-<td>
-
-{{user.admissionNumber}}
-
-</td>
-
-</tr>
-
-<tr>
-
-<td>
-
-Batch
-
-</td>
-
-<td>
-
-{{user.batch}}
-
-</td>
-
-</tr>
-
-<tr>
-
-<td>
-
-Email
-
-</td>
-
-<td>
-
-{{user.email}}
-
-</td>
-
-</tr>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-<!-- ===========================
-        GALLERY
-=========================== -->
-
-<section id="gallery">
-
-<div class="container">
-
-<h2 class="section-title">
-
-Gallery
-
-</h2>
-
-<div id="galleryCarousel"
-class="carousel slide"
-data-bs-ride="carousel"
-data-bs-interval="5000">
-
-<div class="carousel-indicators">
-
-{{#each galleryImages}}
-
-<button
-type="button"
-data-bs-target="#galleryCarousel"
-data-bs-slide-to="{{@index}}"
-class="{{#if @first}}active{{/if}}">
-</button>
-
-{{/each}}
-
-</div>
-
-<div class="carousel-inner">
-
-{{#each galleryImages}}
-
-<div class="carousel-item {{#if @first}}active{{/if}}">
-
-<div class="gallery-card">
-
-<img
-src="/user/gallery/{{this._id}}/image"
-alt="{{#if this.description}}{{this.description}}{{else}}Gallery image{{/if}}">
-
-<div class="gallery-caption">
-
-<p class="mb-0">
-
-{{#if this.description}}
-{{this.description}}
-{{else}}
-<span class="fst-italic">No description</span>
-{{/if}}
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-{{/each}}
-
-</div>
-
-<button class="carousel-control-prev"
-type="button"
-data-bs-target="#galleryCarousel"
-data-bs-slide="prev">
-
-<span class="carousel-control-prev-icon"></span>
-
-</button>
-
-<button class="carousel-control-next"
-type="button"
-data-bs-target="#galleryCarousel"
-data-bs-slide="next">
-
-<span class="carousel-control-next-icon"></span>
-
-</button>
-
-</div>
-
-</div>
-
-</section>
-
-  <!-- ===========================
-        EVENTS
-=========================== -->
-
-<section id="events">
-
-    <div class="container">
-
-        <h2 class="section-title">
-
-            Upcoming Events
-
-        </h2>
-
-        <div class="row g-4">
-
-            {{#each events}}
-
-            <div class="col-lg-4 col-md-6">
-
-                <div class="event-card h-100">
-
-                    <img
-                        src="/user/events/{{this._id}}/image"
-                        class="event-image"
-                        alt="{{this.title}}">
-
-                    <div class="event-body">
-
-                        <span class="badge bg-primary">
-
-                            {{this.category}}
-
-                        </span>
-
-                        <h4 class="mt-3">
-
-                            {{this.title}}
-
-                        </h4>
-
-                        <p class="event-info">
-
-                            <i class="bi bi-calendar-event me-2"></i>
-
-                            {{this.date}}
-
-                        </p>
-
-                        <p class="event-info">
-
-                            <i class="bi bi-geo-alt-fill me-2"></i>
-
-                            {{this.location}}
-
-                        </p>
-
-                        <p class="event-description">
-
-                            {{this.description}}
-
-                        </p>
-
-                        {{#if this.registration}}
-
-                        <button
-                            class="btn btn-primary register-btn w-100"
-                            data-event="{{this._id}}">
-
-                            <i class="bi bi-person-plus-fill me-2"></i>
-
-                            Register
-
-                        </button>
-
-                        {{/if}}
-
-                    </div>
-
-                </div>
-
-            </div>
-
+  {{#if user}}
+  <!-- ==================== LOGGED-IN DASHBOARD ==================== -->
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="boxed d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <div class="brand-title">Alumni<span>Portal</span></div>
+        <div class="brand-sub">Member Dashboard</div>
+      </div>
+
+      <div class="dropdown">
+        <button class="profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-person-circle"></i>
+          <span class="d-none d-sm-inline">{{user.name}}</span>
+          <i class="bi bi-chevron-down small"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark mt-2">
+          <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i class="bi bi-pencil-square me-2"></i>Edit Profile</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="boxed px-3 py-4">
+
+    <!-- SECTION 1: MY DETAILS -->
+    <section class="card-dark" id="details-section">
+      <div class="card-header-dark">
+        <span><i class="bi bi-person-badge me-2"></i>My Details</span>
+      </div>
+      <div class="card-body-dark">
+        <div class="detail-row">
+          <span class="detail-label">Name</span>
+          <span class="detail-value">{{user.name}}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Admission Number</span>
+          <span class="detail-value">{{user.admissionNumber}}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Batch</span>
+          <span class="detail-value">{{user.batch}}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Email</span>
+          <span class="detail-value">{{user.email}}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: GALLERY (auto-moving carousel, from admin's GALLERY collection) -->
+    <section class="card-dark" id="gallery-section">
+      <div class="card-header-dark">
+        <span><i class="bi bi-images me-2"></i>Gallery</span>
+      </div>
+      <div class="card-body-dark">
+        {{#if galleryItems.length}}
+        <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3500">
+          <div class="carousel-indicators">
+            {{#each galleryItems}}
+            <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="{{@index}}" class="{{#if @first}}active{{/if}}" aria-current="{{#if @first}}true{{/if}}" aria-label="Slide {{@index}}"></button>
             {{/each}}
-
+          </div>
+          <div class="carousel-inner rounded-3 overflow-hidden">
+            {{#each galleryItems}}
+            <div class="carousel-item {{#if @first}}active{{/if}}">
+              <img src="{{this.image}}" class="d-block w-100" alt="{{this.description}}">
+              <div class="carousel-caption d-none d-md-block">
+                <p class="m-0 small">{{this.description}}</p>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+          </button>
         </div>
+        {{else}}
+        <p class="text-center m-0 py-4" style="color: var(--text-muted);">No gallery images have been added yet.</p>
+        {{/if}}
+      </div>
+    </section>
 
+    <!-- SECTION 3: EVENTS (Register button hidden entirely when registration is disabled) -->
+    <section class="card-dark" id="events-section">
+      <div class="card-header-dark">
+        <span><i class="bi bi-calendar2-event me-2"></i>Events</span>
+      </div>
+      <div class="card-body-dark">
+        {{#if events.length}}
+        {{#each events}}
+        <div class="event-block">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+            <div class="event-title">{{this.title}}</div>
+            {{#if this.category}}<span class="event-badge">{{this.category}}</span>{{/if}}
+          </div>
+          <div class="event-meta mb-2">
+            <i class="bi bi-calendar-check me-1"></i>{{this.date}} • {{this.time}}<br>
+            <i class="bi bi-geo-alt me-1"></i>{{this.location}}
+          </div>
+          {{#if this.description}}<p class="mb-3 small" style="color: #d4d4d4;">{{this.description}}</p>{{/if}}
+          {{#if this.registrationEnabled}}
+          <button type="button" class="btn-outline-mono" onclick="handleRegister('{{this.title}}')">
+            <i class="bi bi-check-circle me-1"></i> Register
+          </button>
+          {{/if}}
+        </div>
+        {{/each}}
+        {{else}}
+        <p class="text-center m-0 py-4" style="color: var(--text-muted);">No events at the moment.</p>
+        {{/if}}
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <div class="boxed">
+      <p class="m-0 mb-1 fw-medium" style="color: #ffffff;">© 2026 Alumni Management System. All rights reserved.</p>
+      <div class="d-flex justify-content-center flex-wrap gap-2 gap-md-3">
+        <a href="#">Help & Contact</a><span>•</span>
+        <a href="#">Privacy Policy</a><span>•</span>
+        <a href="#">Terms of Service</a><span>•</span>
+        <a href="/admin">Admin Portal</a>
+      </div>
     </div>
+  </footer>
 
-</section>
-
-<!-- ===========================
-        EDIT PROFILE MODAL
-=========================== -->
-
-<div
-    class="modal fade"
-    id="editProfileModal"
-    tabindex="-1">
-
+  <!-- EDIT PROFILE MODAL (with change password) -->
+  <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <h5 class="modal-title">
-
-                    Edit Profile
-
-                </h5>
-
-                <button
-                    class="btn-close"
-                    data-bs-dismiss="modal">
-
-                </button>
-
-            </div>
-
-            <form
-                action="/user/profile/update"
-                method="POST">
-
-                <div class="modal-body">
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-
-                            Name
-
-                        </label>
-
-                        <input
-                            type="text"
-                            name="name"
-                            class="form-control"
-                            value="{{user.name}}"
-                            required>
-
-                    </div>
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-
-                            Admission Number
-
-                        </label>
-
-                        <input
-                            type="text"
-                            class="form-control"
-                            value="{{user.admissionNumber}}"
-                            readonly>
-
-                    </div>
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-
-                            Batch
-
-                        </label>
-
-                        <input
-                            type="text"
-                            class="form-control"
-                            value="{{user.batch}}"
-                            readonly>
-
-                    </div>
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-
-                            Email
-
-                        </label>
-
-                        <input
-                            type="email"
-                            name="email"
-                            class="form-control"
-                            value="{{user.email}}">
-
-                    </div>
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                        type="button">
-
-                        Cancel
-
-                    </button>
-
-                    <button
-                        class="btn btn-primary"
-                        type="submit">
-
-                        Save Changes
-
-                    </button>
-
-                </div>
-
-            </form>
-
+      <div class="modal-content modal-content-dark rounded-4">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="fw-bold m-0"><i class="bi bi-person-badge me-2"></i>Edit Profile</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+        <div class="modal-body p-4">
+          <p class="small mb-4" style="color: var(--text-muted);">Name, admission number and batch are official records managed by the admin office and cannot be edited here.</p>
 
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" value="{{user.name}}" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Admission Number</label>
+            <input type="text" class="form-control" value="{{user.admissionNumber}}" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" id="editEmail" name="email" value="{{user.email}}">
+          </div>
+
+          <hr>
+
+          <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock me-2"></i>Change Password</h6>
+          <form id="changePasswordForm" onsubmit="return handleChangePassword(event)">
+            <div class="mb-3">
+              <label class="form-label">Current Password</label>
+              <input type="password" class="form-control" id="currentPassword" name="currentPassword" placeholder="Your admission number or current password" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">New Password</label>
+              <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required minlength="6">
+            </div>
+            <!-- On submit, save new password against this user's record in the "member details" collection -->
+            <button type="submit" class="btn-solid-mono">Update Password</button>
+          </form>
+        </div>
+      </div>
     </div>
+  </div>
 
-</div>
+  {{else}}
+  <!-- ==================== LOGIN VIEW ==================== -->
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="text-center mb-4">
+        <i class="bi bi-mortarboard-fill" style="font-size: 34px;"></i>
+        <h3 class="mt-2 mb-0">Alumni Portal</h3>
+        <p class="sub">Sign in with your name and admission number</p>
+      </div>
 
-<!-- ===========================
-      CHANGE PASSWORD
-=========================== -->
+      {{#if error}}
+      <div class="alert alert-danger py-2 small">{{error}}</div>
+      {{/if}}
 
-<div
-    class="modal fade"
-    id="changePasswordModal"
-    tabindex="-1">
-
-    <div class="modal-dialog modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <h5 class="modal-title">
-
-                    Change Password
-
-                </h5>
-
-                <button
-                    class="btn-close"
-                    data-bs-dismiss="modal">
-
-                </button>
-
-            </div>
-
-            <form
-                action="/user/change-password"
-                method="POST">
-
-                <div class="modal-body">
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-
-                            Current Password
-
-                        </label>
-
-                        <input
-                            type="password"
-                            class="form-control"
-                            name="currentPassword"
-                            required>
-
-                    </div>
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-
-                            New Password
-
-                        </label>
-
-                        <input
-                            type="password"
-                            class="form-control"
-                            name="newPassword"
-                            required>
-
-                    </div>
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-
-                            Confirm Password
-
-                        </label>
-
-                        <input
-                            type="password"
-                            class="form-control"
-                            name="confirmPassword"
-                            required>
-
-                    </div>
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button
-                        class="btn btn-secondary"
-                        type="button"
-                        data-bs-dismiss="modal">
-
-                        Cancel
-
-                    </button>
-
-                    <button
-                        class="btn btn-primary"
-                        type="submit">
-
-                        Update Password
-
-                    </button>
-
-                </div>
-
-            </form>
-
+      <!-- name + admission number (used as password) submitted to the auth route -->
+      <form method="POST" action="/login">
+        <div class="mb-3">
+          <label class="form-label small" style="color: var(--text-muted);">Full Name</label>
+          <input type="text" name="name" class="form-control form-control-dark" placeholder="Enter your full name" required>
         </div>
-
+        <div class="mb-3">
+          <label class="form-label small" style="color: var(--text-muted);">Admission Number</label>
+          <input type="password" name="admissionNumber" class="form-control form-control-dark" placeholder="Used as your password" required>
+        </div>
+        <button type="submit" class="btn-solid-mono mt-2">Login</button>
+      </form>
     </div>
-
-</div>
-
-<!-- ===========================
-          FOOTER
-=========================== -->
-
-<footer class="py-5 mt-5 border-top border-secondary">
-
-    <div class="container">
-
-        <div class="row">
-
-            <div class="col-lg-4">
-
-                <h4>
-
-                    Alumni Association
-
-                </h4>
-
-                <p class="text-secondary">
-
-                    Building stronger connections between alumni and the institution.
-
-                </p>
-
-            </div>
-
-            <div class="col-lg-4">
-
-                <h5>
-
-                    Quick Links
-
-                </h5>
-
-                <ul class="list-unstyled">
-
-                    <li>
-
-                        <a
-                            href="#profile"
-                            class="text-secondary">
-
-                            Dashboard
-
-                        </a>
-
-                    </li>
-
-                    <li>
-
-                        <a
-                            href="#gallery"
-                            class="text-secondary">
-
-                            Gallery
-
-                        </a>
-
-                    </li>
-
-                    <li>
-
-                        <a
-                            href="#events"
-                            class="text-secondary">
-
-                            Events
-
-                        </a>
-
-                    </li>
-
-                </ul>
-
-            </div>
-
-            <div class="col-lg-4">
-
-                <h5>
-
-                    Contact
-
-                </h5>
-
-                <p class="text-secondary">
-
-                    alumni@example.com
-
-                </p>
-
-                <div class="fs-4">
-
-                    <i class="bi bi-facebook me-3"></i>
-
-                    <i class="bi bi-instagram me-3"></i>
-
-                    <i class="bi bi-youtube me-3"></i>
-
-                    <i class="bi bi-twitter-x"></i>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <hr class="border-secondary my-4">
-
-        <div class="text-center text-secondary">
-
-            © 2026 Alumni Association. All Rights Reserved.
-
-        </div>
-
-    </div>
-
-</footer>
-
-<!-- Bootstrap -->
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- DARK MODE TOGGLE -->
-<script>
-    (function () {
-        var STORAGE_KEY = 'userTheme';
-        var root = document.documentElement;
-
-        function preferred() {
-            try {
-                var saved = localStorage.getItem(STORAGE_KEY);
-                if (saved === 'dark' || saved === 'light') return saved;
-            } catch (e) {}
-            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-
-        function apply(theme) {
-            root.setAttribute('data-bs-theme', theme);
-            var icon = document.getElementById('themeToggleIcon');
-            if (icon) icon.className = (theme === 'dark' ? 'bi bi-sun fs-5' : 'bi bi-moon-stars fs-5');
-            var btn = document.getElementById('themeToggleBtn');
-            if (btn) {
-                var label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
-                btn.setAttribute('aria-label', label);
-                btn.setAttribute('title', label);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            apply(root.getAttribute('data-bs-theme') || preferred());
-            var btn = document.getElementById('themeToggleBtn');
-            if (!btn) return;
-            btn.addEventListener('click', function () {
-                var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
-                try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
-                apply(next);
-            });
-        });
-    })();
-</script>
-
-<!-- SCROLL REVEAL FOR SECTIONS -->
-<script>
-    (function () {
-        var sections = document.querySelectorAll('section');
-        sections.forEach(function (s) { s.classList.add('fade-section'); });
-
-        if (!('IntersectionObserver' in window)) {
-            sections.forEach(function (s) { s.classList.add('show'); });
-            return;
-        }
-
-        var observer = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('show');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.15 });
-
-        sections.forEach(function (s) { observer.observe(s); });
-    })();
-</script>
-
-<!--
-    Register button (.register-btn, Events section) is intentionally left
-    static for now per request — no click handler wired up yet. When ready,
-    hook it to something like POST /user/events/:id/register using the
-    data-event attribute already on each button.
--->
-
-  </body>
-
+  </div>
+  {{/if}}
+
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function handleRegister(eventTitle) {
+      alert(`You have registered for "${eventTitle}". Confirmation details will be sent to your registered email.`);
+    }
+
+    function handleChangePassword(e) {
+      e.preventDefault();
+      const newPass = document.getElementById('newPassword').value;
+      const confirmPass = document.getElementById('confirmPassword').value;
+
+      if (newPass !== confirmPass) {
+        alert('New password and confirmation do not match.');
+        return false;
+      }
+
+      // TODO (backend): POST currentPassword/newPassword to the server route that
+      // updates this user's password field in the "member details" collection.
+      alert('Password updated successfully.');
+      return false;
+    }
+  </script>
+
+</body>
 </html>
