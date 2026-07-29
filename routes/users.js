@@ -187,7 +187,7 @@ router.get('/', async function (req, res, next) {
     /* Session has a stale id (member deleted) */
     if (!member) {
       req.session.destroy(function () {});
-      return res.redirect('/');
+      return res.redirect('/users');
     }
 
     var results = await Promise.all([getGalleryImages(), getAllEvents()]);
@@ -252,7 +252,7 @@ router.post('/login', async function (req, res, next) {
     req.session.memberId   = String(member._id);
     req.session.memberName = member.name;
 
-    return res.redirect('/');
+    return res.redirect('/users');
   } catch (err) {
     console.error('Login failed:', err.message);
     return next(err);
@@ -264,9 +264,10 @@ router.post('/login', async function (req, res, next) {
 /* ================================================================== */
 
 router.get('/logout', function (req, res, next) {
+  if (!req.session) return res.redirect('/users');
   req.session.destroy(function (err) {
     if (err) console.error('Session destroy failed:', err.message);
-    return res.redirect('/');
+    return res.redirect('/users');
   });
 });
 
