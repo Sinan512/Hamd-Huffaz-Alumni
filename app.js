@@ -11,6 +11,7 @@ var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
 var leadersRouter = require('./routes/leaders');
 var session = require('express-session');
+const MongoStore = require("connect-mongo");
 
 var app = express();
 
@@ -21,11 +22,21 @@ connectDB();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
+app.set("trust proxy", 1);
+
 app.use(session({
-  secret: process.env.SESSION_SECRET,  // already in your env secrets
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: true }  // set true if using HTTPS in production
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI
+  }),
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 1000 * 60 * 60 * 24 * 7 // 7 day
+  }
 }));
 
 app.use(logger('dev'));
