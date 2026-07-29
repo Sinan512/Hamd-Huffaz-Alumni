@@ -987,7 +987,7 @@
                               data-leader-name="{{this.memberName}}"
                               data-leader-year="{{this.year}}"
                               data-leader-assigned="{{this.assignedAt}}"
-                              data-leader-username="{{this.username}}"
+                              data-leader-admission="{{this.admissionNumber}}"
 data-leader-password="{{this.password}}"
 onclick="openLeaderDetailsModal(this.dataset)">
                         <i class="bi bi-eye"></i>
@@ -1647,9 +1647,9 @@ onclick="openLeaderDetailsModal(this.dataset)">
           <form id="leaderCredentialsForm">
             <input type="hidden" id="leaderCredentialsId">
             <div class="mb-3">
-              <label class="form-label small fw-bold">Username</label>
-              <input type="text" name="username" id="leaderCredentialsUsername" class="form-control rounded-3"
-                     placeholder="e.g. leader2024" autocomplete="off" required>
+              <label class="form-label small fw-bold">Admission Number</label>
+              <input type="text" name="admissionNumber" id="leaderCredentialsAdmission" class="form-control rounded-3"
+                     placeholder="Admission number" autocomplete="off" readonly>
             </div>
             <div class="mb-3">
               <label class="form-label small fw-bold">Password</label>
@@ -1704,8 +1704,8 @@ onclick="openLeaderDetailsModal(this.dataset)">
           <form id="ldCredentialsForm">
             <input type="hidden" id="ldLeaderId">
             <div class="mb-3">
-              <label class="form-label small fw-bold">Username</label>
-              <input type="text" name="username" id="ldUsername" class="form-control rounded-3" autocomplete="off" required>
+              <label class="form-label small fw-bold">Admission Number</label>
+              <input type="text" name="admissionNumber" id="ldAdmission" class="form-control rounded-3" autocomplete="off" readonly>
             </div>
             <div class="mb-3">
               <label class="form-label small fw-bold">Password</label>
@@ -2840,11 +2840,11 @@ onclick="openLeaderDetailsModal(this.dataset)">
 
   <!-- ===== LEADER CREDENTIALS ===== -->
   <script>
-    function openLeaderCredentialsModal(leaderId, leaderName) {
+    function openLeaderCredentialsModal(leaderId, leaderName, admissionNumber) {
       document.getElementById('leaderCredentialsId').value      = leaderId   || '';
       document.getElementById('leaderCredentialsSubtitle').textContent =
-        'Set a username and password for ' + (leaderName || 'this leader') + '.';
-      document.getElementById('leaderCredentialsUsername').value = '';
+        'Set a password for ' + (leaderName || 'this leader') + '.';
+      document.getElementById('leaderCredentialsAdmission').value = admissionNumber || '';
       document.getElementById('leaderCredentialsPassword').value = '';
       document.getElementById('leaderCredentialsPassword').type  = 'password';
       document.getElementById('toggleCredPasswordIcon').className = 'bi bi-eye';
@@ -2922,7 +2922,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
       var name     = ds.leaderName;
       var year     = ds.leaderYear;
       var assigned = ds.leaderAssigned;
-      var username = ds.leaderUsername;
+      var admissionNumber = ds.leaderAdmission;
       var password = ds.leaderPassword;
 
       /* Info card */
@@ -2932,7 +2932,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
 
       /* Credentials form */
       document.getElementById('ldLeaderId').value          = id       || '';
-      document.getElementById('ldUsername').value          = username || '';
+      document.getElementById('ldAdmission').value         = admissionNumber || '';
       document.getElementById('ldPassword').value = password || '';
       document.getElementById('ldPassword').type           = 'password';
       document.getElementById('ldTogglePassIcon').className = 'bi bi-eye';
