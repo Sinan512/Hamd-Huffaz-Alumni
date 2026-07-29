@@ -6,6 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alumni User Dashboard</title>
 
+    <!-- Apply saved theme before paint (avoids flash) -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('userTheme');
+                if (t !== 'dark' && t !== 'light') {
+                    t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-bs-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -26,6 +39,34 @@
 /* Smooth scrolling */
 html{
     scroll-behavior:smooth;
+}
+
+/*==========================================================
+        THEME VARIABLES (light / dark)
+==========================================================*/
+
+:root{
+    --bg:#f3f2fa;
+    --text:#1e1b2e;
+    --muted:#5b5768;
+    --primary:#7c3aed;
+    --card-bg:rgba(255,255,255,.9);
+    --card-border:rgba(15,23,42,.08);
+    --navbar-bg:rgba(255,255,255,.92);
+    --footer-bg:#eceaf5;
+    --input-bg:#ffffff;
+}
+
+[data-bs-theme="dark"]{
+    --bg:#0b0f19;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --primary:#7c3aed;
+    --card-bg:rgba(23,32,51,.88);
+    --card-border:rgba(255,255,255,.08);
+    --navbar-bg:rgba(17,24,39,.92);
+    --footer-bg:#101827;
+    --input-bg:#0f172a;
 }
 
 /* Scrollbar */
@@ -70,8 +111,8 @@ body{
 .navbar{
 
     backdrop-filter:blur(18px);
-    background:rgba(17,24,39,.92)!important;
-    box-shadow:0 10px 25px rgba(0,0,0,.35);
+    background:var(--navbar-bg)!important;
+    box-shadow:0 10px 25px rgba(0,0,0,.20);
     z-index:1000;
 
 }
@@ -113,6 +154,11 @@ body{
 
 .profile-btn{
 
+    border:none;
+    background:transparent;
+    color:var(--text);
+    font-size:20px;
+    line-height:1;
     transition:.35s;
 
 }
@@ -162,16 +208,16 @@ body{
 .gallery-card,
 .event-card{
 
-    background:rgba(23,32,51,.88);
+    background:var(--card-bg);
 
     backdrop-filter:blur(20px);
 
-    border:1px solid rgba(255,255,255,.08);
+    border:1px solid var(--card-border);
 
     transition:.35s;
 
     box-shadow:
-        0 10px 30px rgba(0,0,0,.30);
+        0 10px 30px rgba(0,0,0,.18);
 
 }
 
@@ -248,13 +294,8 @@ body{
 
 .gallery-caption{
 
-    background:#172033;
-
-}
-
-.gallery-caption h4{
-
-    margin-bottom:12px;
+    background:var(--card-bg);
+    color:var(--text);
 
 }
 
@@ -310,7 +351,8 @@ body{
 
 .event-description{
 
-    color:#d4d4d8;
+    color:var(--text);
+    opacity:.85;
 
     line-height:1.8;
 
@@ -368,41 +410,48 @@ body{
 
     border-radius:18px;
 
-    background:#172033;
+    background:var(--card-bg);
+    color:var(--text);
 
 }
 
 .modal-header{
 
-    border-bottom:1px solid rgba(255,255,255,.08);
+    border-bottom:1px solid var(--card-border);
 
 }
 
 .modal-footer{
 
-    border-top:1px solid rgba(255,255,255,.08);
+    border-top:1px solid var(--card-border);
 
 }
 
 .form-control{
 
-    background:#0f172a;
+    background:var(--input-bg);
 
-    border:1px solid rgba(255,255,255,.08);
+    border:1px solid var(--card-border);
 
-    color:white;
+    color:var(--text);
 
 }
 
 .form-control:focus{
 
-    background:#0f172a;
+    background:var(--input-bg);
 
-    color:white;
+    color:var(--text);
 
     border-color:#7c3aed;
 
     box-shadow:0 0 0 .2rem rgba(124,58,237,.25);
+
+}
+
+.form-label{
+
+    color:var(--text);
 
 }
 
@@ -412,7 +461,8 @@ body{
 
 footer{
 
-    background:#101827;
+    background:var(--footer-bg);
+    color:var(--text);
 
 }
 
@@ -605,6 +655,19 @@ Events
 
 </ul>
 
+<div class="d-flex align-items-center gap-3">
+
+<button
+type="button"
+class="profile-btn"
+id="themeToggleBtn"
+aria-label="Toggle dark mode"
+title="Toggle dark mode">
+
+<i class="bi bi-sun fs-5" id="themeToggleIcon"></i>
+
+</button>
+
 <div class="dropdown">
 
 <button
@@ -662,6 +725,8 @@ Logout
 </li>
 
 </ul>
+
+</div>
 
 </div>
 
@@ -814,19 +879,17 @@ class="{{#if @first}}active{{/if}}">
 
 <img
 src="/user/gallery/{{this._id}}/image"
-alt="Gallery Image">
+alt="{{#if this.description}}{{this.description}}{{else}}Gallery image{{/if}}">
 
 <div class="gallery-caption">
 
-<h4>
+<p class="mb-0">
 
-Gallery Image
-
-</h4>
-
-<p>
-
+{{#if this.description}}
 {{this.description}}
+{{else}}
+<span class="fst-italic">No description</span>
+{{/if}}
 
 </p>
 
@@ -864,7 +927,6 @@ data-bs-slide="next">
 
 </section>
 
-<!-- PART 2 STARTS FROM HERE -->
   <!-- ===========================
         EVENTS
 =========================== -->
@@ -967,7 +1029,7 @@ data-bs-slide="next">
 
     <div class="modal-dialog modal-dialog-centered">
 
-        <div class="modal-content bg-dark text-light border-secondary">
+        <div class="modal-content">
 
             <div class="modal-header">
 
@@ -978,7 +1040,7 @@ data-bs-slide="next">
                 </h5>
 
                 <button
-                    class="btn-close btn-close-white"
+                    class="btn-close"
                     data-bs-dismiss="modal">
 
                 </button>
@@ -1098,7 +1160,7 @@ data-bs-slide="next">
 
     <div class="modal-dialog modal-dialog-centered">
 
-        <div class="modal-content bg-dark text-light border-secondary">
+        <div class="modal-content">
 
             <div class="modal-header">
 
@@ -1109,7 +1171,7 @@ data-bs-slide="next">
                 </h5>
 
                 <button
-                    class="btn-close btn-close-white"
+                    class="btn-close"
                     data-bs-dismiss="modal">
 
                 </button>
@@ -1323,7 +1385,75 @@ data-bs-slide="next">
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- PART 3 CONTINUES FROM HERE -->
+<!-- DARK MODE TOGGLE -->
+<script>
+    (function () {
+        var STORAGE_KEY = 'userTheme';
+        var root = document.documentElement;
+
+        function preferred() {
+            try {
+                var saved = localStorage.getItem(STORAGE_KEY);
+                if (saved === 'dark' || saved === 'light') return saved;
+            } catch (e) {}
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function apply(theme) {
+            root.setAttribute('data-bs-theme', theme);
+            var icon = document.getElementById('themeToggleIcon');
+            if (icon) icon.className = (theme === 'dark' ? 'bi bi-sun fs-5' : 'bi bi-moon-stars fs-5');
+            var btn = document.getElementById('themeToggleBtn');
+            if (btn) {
+                var label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+                btn.setAttribute('aria-label', label);
+                btn.setAttribute('title', label);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            apply(root.getAttribute('data-bs-theme') || preferred());
+            var btn = document.getElementById('themeToggleBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+                apply(next);
+            });
+        });
+    })();
+</script>
+
+<!-- SCROLL REVEAL FOR SECTIONS -->
+<script>
+    (function () {
+        var sections = document.querySelectorAll('section');
+        sections.forEach(function (s) { s.classList.add('fade-section'); });
+
+        if (!('IntersectionObserver' in window)) {
+            sections.forEach(function (s) { s.classList.add('show'); });
+            return;
+        }
+
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('show');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+
+        sections.forEach(function (s) { observer.observe(s); });
+    })();
+</script>
+
+<!--
+    Register button (.register-btn, Events section) is intentionally left
+    static for now per request — no click handler wired up yet. When ready,
+    hook it to something like POST /user/events/:id/register using the
+    data-event attribute already on each button.
+-->
 
   </body>
 
