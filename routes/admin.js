@@ -405,16 +405,16 @@ router.patch('/leaders/:id/credentials', async function (req, res) {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ success: false, message: 'Invalid leader id.' });
     }
-    var username = (req.body.username || '').trim();
+    var admissionNumber = (req.body.admissionNumber || '').trim();
     var password = (req.body.password || '').trim();
 
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Password is required.' });
     }
 
     var leader = await BatchLeader.findByIdAndUpdate(
       req.params.id,
-      { $set: { username, password } },
+      { $set: { admissionNumber: admissionNumber, password: password } },
       { new: true }
     );
     if (!leader) {
@@ -830,13 +830,17 @@ function formatJoinedDate(date) {
 async function getAllBatchLeaders() {
   try {
     var docs = await BatchLeader.find({}).sort({ assignedAt: -1, _id: -1 }).lean();
+    var memberIds = docs.map(function (d) { return d.memberId; }).filter(Boolean);
+    var members = await MemberDetails.find({ _id: { $in: memberIds } }, { admissionNumber: 1 }).lean();
+    var admissionById = {};
+    members.forEach(function (m) { admissionById[String(m._id)] = m.admissionNumber || ''; });
     return docs.map(function (doc) {
        return {
     id:         String(doc._id),
     memberName: doc.memberName || '',
     year:       batchYear(doc.year),
     assignedAt: formatJoinedDate(doc.assignedAt),
-    username:   doc.username || '',
+    admissionNumber: doc.admissionNumber || admissionById[String(doc.memberId)] || '',
     password:   doc.password || ''
 };
     });

@@ -27,7 +27,7 @@ var batchLeaderSchema = new mongoose.Schema(
       type: Date,
       default: Date.now
     },
-    username: {
+    admissionNumber: {
       type: String,
       trim: true,
       default: ''
