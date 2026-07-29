@@ -469,6 +469,181 @@ router.post('/members', async function (req, res) {
 });
 
 /* ================================================================== */
+/* CSV IMPORT: multer instance + tiny RFC4180-ish parser                */
+/* ================================================================== */
+var csvUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },          // 2 MB max
+  fileFilter: function (req, file, cb) {
+    var name = (file.originalname || '').toLowerCase();
+    var ok = name.endsWith('.csv') ||
+             ['text/csv', 'application/csv', 'text/plain',
+              'application/vnd.ms-excel'].indexOf(file.mimetype) !== -1;
+    if (!ok) return cb(new Error('Only .csv files are allowed.'));
+    cb(null, true);
+  }
+});
+
+function parseCsv(text) {
+  var rows = [];
+  var row = [];
+  var field = '';
+  var inQuotes = false;
+  text = String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else { field += ch; }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      row.push(field); field = '';
+    } else if (ch === '\n') {
+      row.push(field); field = '';
+      rows.push(row); row = [];
+    } else {
+      field += ch;
+    }
+  }
+  row.push(field);
+  rows.push(row);
+
+  return rows.filter(function (r) {
+    return r.some(function (c) { return String(c).trim() !== ''; });
+  });
+}
+
+var CSV_HEADER_ALIASES = {
+  admissionnumber: 'admissionNumber',
+  admissionno:     'admissionNumber',
+  admission:       'admissionNumber',
+  admno:           'admissionNumber',
+  name:            'name',
+  membername:      'name',
+  fullname:        'name',
+  place:           'place',
+  location:        'place',
+  batch:           'batch',
+  year:            'batch',
+  email:           'email',
+  emailaddress:    'email',
+  mail:            'email'
+};
+
+function normaliseHeader(cell) {
+  var key = String(cell || '').trim().toLowerCase().replace(/[^a-z]/g, '');
+  return CSV_HEADER_ALIASES[key] || null;
+}
+
+/* ================================================================== */
+/* POST /admin/members/import  – bulk add members from a CSV file      */
+/* ================================================================== */
+router.post('/members/import', function (req, res) {
+  csvUpload.single('csvFile')(req, res, async function (uploadError) {
+    if (uploadError) {
+      return res.status(400).json({ success: false, message: uploadError.message || 'Could not read the CSV file.' });
+    }
+    if (!req.file || !req.file.buffer || !req.file.buffer.length) {
+      return res.status(400).json({ success: false, message: 'Please choose a CSV file.' });
+    }
+
+    await connectDB();
+    try {
+      var rows = parseCsv(req.file.buffer.toString('utf8'));
+      if (rows.length < 2) {
+        return res.status(400).json({ success: false, message: 'The CSV needs a header row and at least one member row.' });
+      }
+
+      var headers = rows[0].map(normaliseHeader);
+      var required = ['admissionNumber', 'name', 'place', 'batch', 'email'];
+      var missing = required.filter(function (key) { return headers.indexOf(key) === -1; });
+      if (missing.length) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing column(s): ' + missing.join(', ') +
+                   '. Expected header: admissionNumber, name, place, batch, email.'
+        });
+      }
+
+      var added = 0;
+      var skipped = 0;
+      var errors = [];
+      var seen = {};
+
+      for (var i = 1; i < rows.length; i++) {
+        var cells = rows[i];
+        var record = {};
+        headers.forEach(function (key, idx) {
+          if (key) record[key] = String(cells[idx] === undefined ? '' : cells[idx]).trim();
+        });
+
+        var admissionNumber = record.admissionNumber || '';
+        var name  = record.name  || '';
+        var place = record.place || '';
+        var batch = record.batch || '';
+        var email = (record.email || '').toLowerCase();
+        var line  = i + 1;
+
+        if (!admissionNumber || !name || !place || !batch || !email) {
+          skipped++; errors.push('Row ' + line + ': all fields are required.'); continue;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          skipped++; errors.push('Row ' + line + ': invalid email "' + email + '".'); continue;
+        }
+
+        var fingerprint = (admissionNumber + '|' + name + '|' + batch).toLowerCase();
+        if (seen[fingerprint]) {
+          skipped++; errors.push('Row ' + line + ': duplicate row inside the file.'); continue;
+        }
+        seen[fingerprint] = true;
+
+        try {
+          var existing = await MemberDetails.findOne({
+            admissionNumber: new RegExp('^' + escapeRegex(admissionNumber) + '$', 'i'),
+            name:  new RegExp('^' + escapeRegex(name) + '$', 'i'),
+            batch: batch
+          });
+          if (existing) {
+            skipped++; errors.push('Row ' + line + ': ' + name + ' is already added.'); continue;
+          }
+
+          var member = await MemberDetails.create({ admissionNumber, name, place, batch, email });
+          await linkMemberToBatch(member);
+          added++;
+        } catch (rowError) {
+          skipped++;
+          if (rowError && rowError.code === 11000) {
+            errors.push('Row ' + line + ': ' + name + ' is already added.');
+          } else {
+            errors.push('Row ' + line + ': ' + (rowError.message || 'could not be saved.'));
+          }
+        }
+      }
+
+      var message = added
+        ? added + (added === 1 ? ' member' : ' members') + ' imported successfully' +
+          (skipped ? ', ' + skipped + ' skipped.' : '.')
+        : 'No members were imported. Please check the file and try again.';
+
+      return res.status(added ? 201 : 400).json({
+        success: added > 0,
+        message: message,
+        added: added,
+        skipped: skipped,
+        errors: errors.slice(0, 20)
+      });
+    } catch (error) {
+      console.error('CSV import failed:', error.message);
+      return res.status(500).json({ success: false, message: 'Could not import the CSV file. Please try again.' });
+    }
+  });
+});
+
+/* ================================================================== */
 /* HELPERS for members / batches                                        */
 /* ================================================================== */
 async function findMembersForYear(year) {

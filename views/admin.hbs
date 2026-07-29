@@ -1213,6 +1213,24 @@ onclick="openLeaderDetailsModal(this.dataset)">
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
+
+          <ul class="nav nav-pills gap-2 mb-4" id="addAlumniTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active rounded-3 px-3 py-1 small fw-bold" id="addAlumniSingleTab"
+                      data-bs-toggle="pill" data-bs-target="#addAlumniSinglePane" type="button" role="tab">
+                <i class="bi bi-person-plus me-1"></i>Single Member
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link rounded-3 px-3 py-1 small fw-bold" id="addAlumniCsvTab"
+                      data-bs-toggle="pill" data-bs-target="#addAlumniCsvPane" type="button" role="tab">
+                <i class="bi bi-filetype-csv me-1"></i>Import CSV
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+          <div class="tab-pane fade show active" id="addAlumniSinglePane" role="tabpanel">
           <form id="addAlumniForm">
             <div class="mb-3">
               <label class="form-label small fw-bold">Admission Number</label>
@@ -1244,6 +1262,44 @@ onclick="openLeaderDetailsModal(this.dataset)">
               <button type="submit" id="addAlumniSubmit" class="btn btn-primary rounded-3 px-4" style="background: var(--primary-gradient); border:none;">Save Member</button>
             </div>
           </form>
+          </div>
+
+          <div class="tab-pane fade" id="addAlumniCsvPane" role="tabpanel">
+            <form id="importCsvForm">
+              <div class="border rounded-4 p-4 text-center bg-light-subtle mb-3">
+                <i class="bi bi-filetype-csv text-primary" style="font-size:2rem;"></i>
+                <div class="fw-bold mt-2">Import multiple members at once</div>
+                <p class="text-muted small mb-3">
+                  Upload a .csv file with the columns
+                  <code>admissionNumber, name, place, batch, email</code>
+                </p>
+                <input type="file" name="csvFile" id="csvFileInput" class="form-control rounded-3" accept=".csv,text/csv" required>
+                <div id="csvFileHint" class="form-text small text-muted mt-2">Maximum file size 2 MB.</div>
+                <a href="#" id="csvTemplateLink" class="small text-decoration-none d-inline-block mt-2">
+                  <i class="bi bi-download me-1"></i>Download sample template
+                </a>
+              </div>
+
+              <div id="csvPreviewWrap" class="d-none mb-3">
+                <div class="small fw-bold mb-2">Preview <span id="csvPreviewCount" class="text-muted fw-normal"></span></div>
+                <div class="table-responsive border rounded-3" style="max-height:190px; overflow:auto;">
+                  <table class="table table-sm mb-0 small">
+                    <thead class="table-light"><tr id="csvPreviewHead"></tr></thead>
+                    <tbody id="csvPreviewBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div id="importCsvAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3" role="alert"></div>
+              <ul id="importCsvErrors" class="small text-muted mt-2 mb-0 ps-3 d-none"></ul>
+
+              <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" id="importCsvSubmit" class="btn btn-primary rounded-3 px-4" style="background: var(--primary-gradient); border:none;">Import Members</button>
+              </div>
+            </form>
+          </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2083,6 +2139,158 @@ onclick="openLeaderDetailsModal(this.dataset)">
           }
         } catch (err) {
           showAlert('danger', 'Could not save, please try again.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      });
+    })();
+  </script>
+
+  <!-- Add Alumni: CSV bulk import -->
+  <script>
+    (function () {
+      var form = document.getElementById('importCsvForm');
+      if (!form) return;
+
+      var input      = document.getElementById('csvFileInput');
+      var alertBox   = document.getElementById('importCsvAlert');
+      var errorList  = document.getElementById('importCsvErrors');
+      var submitBtn  = document.getElementById('importCsvSubmit');
+      var previewWrap= document.getElementById('csvPreviewWrap');
+      var previewHead= document.getElementById('csvPreviewHead');
+      var previewBody= document.getElementById('csvPreviewBody');
+      var previewCnt = document.getElementById('csvPreviewCount');
+      var templateLink = document.getElementById('csvTemplateLink');
+
+      function showAlert(type, message) {
+        alertBox.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = message;
+      }
+      function hideAlert() {
+        alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = '';
+        errorList.className = 'small text-muted mt-2 mb-0 ps-3 d-none';
+        errorList.innerHTML = '';
+      }
+      function listErrors(errors) {
+        if (!errors || !errors.length) return;
+        errorList.innerHTML = '';
+        errors.forEach(function (msg) {
+          var li = document.createElement('li');
+          li.textContent = msg;
+          errorList.appendChild(li);
+        });
+        errorList.className = 'small text-muted mt-2 mb-0 ps-3';
+      }
+
+      /* Minimal CSV split for the on-screen preview only. */
+      function splitCsv(text) {
+        var rows = [], row = [], field = '', inQuotes = false;
+        text = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+        for (var i = 0; i < text.length; i++) {
+          var ch = text[i];
+          if (inQuotes) {
+            if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; } }
+            else { field += ch; }
+          } else if (ch === '"') { inQuotes = true; }
+          else if (ch === ',') { row.push(field); field = ''; }
+          else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+          else { field += ch; }
+        }
+        row.push(field); rows.push(row);
+        return rows.filter(function (r) { return r.some(function (c) { return String(c).trim() !== ''; }); });
+      }
+
+      function renderPreview(rows) {
+        previewHead.innerHTML = '';
+        previewBody.innerHTML = '';
+        if (rows.length < 2) { previewWrap.classList.add('d-none'); return; }
+
+        rows[0].forEach(function (cell) {
+          var th = document.createElement('th');
+          th.textContent = String(cell).trim();
+          previewHead.appendChild(th);
+        });
+        rows.slice(1, 6).forEach(function (cells) {
+          var tr = document.createElement('tr');
+          rows[0].forEach(function (_, idx) {
+            var td = document.createElement('td');
+            td.textContent = String(cells[idx] === undefined ? '' : cells[idx]).trim();
+            tr.appendChild(td);
+          });
+          previewBody.appendChild(tr);
+        });
+
+        var total = rows.length - 1;
+        previewCnt.textContent = '(' + total + (total === 1 ? ' member' : ' members') +
+                                 ' found' + (total > 5 ? ', showing first 5' : '') + ')';
+        previewWrap.classList.remove('d-none');
+      }
+
+      input.addEventListener('change', function () {
+        hideAlert();
+        previewWrap.classList.add('d-none');
+        var file = input.files && input.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+          showAlert('danger', 'The file is larger than 2 MB.');
+          input.value = '';
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+          try { renderPreview(splitCsv(String(reader.result))); }
+          catch (err) { previewWrap.classList.add('d-none'); }
+        };
+        reader.readAsText(file);
+      });
+
+      templateLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        var csv = 'admissionNumber,name,place,batch,email\n' +
+                  'HA2021045,Tariq Mahmood,Kozhikode,2021,tariq@example.com\n' +
+                  'HA2021046,Ayisha Nasrin,Malappuram,2021,ayisha@example.com\n';
+        var url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'members-template.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideAlert();
+
+        var file = input.files && input.files[0];
+        if (!file) { showAlert('danger', 'Please choose a CSV file.'); return; }
+
+        var body = new FormData();
+        body.append('csvFile', file);
+
+        submitBtn.disabled = true;
+        var originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Importing...';
+
+        try {
+          var res = await fetch('/admin/members/import', { method: 'POST', body: body });
+          var result = await res.json().catch(function () { return {}; });
+
+          if (res.ok && result.success) {
+            showAlert('success', result.message || 'Members imported successfully.');
+            listErrors(result.errors);
+            form.reset();
+            previewWrap.classList.add('d-none');
+            setTimeout(function () { window.location.reload(); }, 1800);
+          } else {
+            showAlert('danger', result.message || 'Could not import the file, please try again.');
+            listErrors(result.errors);
+          }
+        } catch (err) {
+          showAlert('danger', 'Could not import the file, please try again.');
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
