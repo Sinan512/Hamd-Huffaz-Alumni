@@ -744,30 +744,19 @@
     </div>
 
 
-    <div class="sidebar-menu">
+    <div class="sidebar-menu" id="sidebarMenu">
       <div class="sidebar-section-title">Main Menu</div>
-      <a class="active" href="#"><i class="bi bi-grid-1x2-fill me-2"></i>Dashboard</a>
+      <a class="active" href="#top"><i class="bi bi-grid-1x2-fill me-2"></i>Dashboard</a>
       <a href="#members-section"><i class="bi bi-people-fill me-2"></i>Members</a>
       <a href="#batches-section"><i class="bi bi-collection-fill me-2"></i>Batches</a>
-      <a href="#leaders-section"><i class="bi bi-person-badge-fill me-2"></i>Leaders</a>
-      
-      <div class="sidebar-section-title mt-3">Events & Content</div>
+      <a href="#batch-leaders-section"><i class="bi bi-person-badge-fill me-2"></i>Leaders</a>
+
+      <div class="sidebar-section-title mt-3">Events &amp; Content</div>
       <a href="#events-section"><i class="bi bi-calendar2-event-fill me-2"></i>Events</a>
-      <a href="#announcements-section"><i class="bi bi-megaphone-fill me-2"></i>Announcements</a>
+      <a href="#registrations-section"><i class="bi bi-check2-square me-2"></i>Registrations</a>
       <a href="#gallery-section"><i class="bi bi-images me-2"></i>Gallery</a>
-
-      <div class="sidebar-section-title mt-3">Administration</div>
-      <a href="#reports-section"><i class="bi bi-bar-chart-line-fill me-2"></i>Reports</a>
-      <a href="#settings-section"><i class="bi bi-gear-fill me-2"></i>Settings</a>
     </div>
 
-    <div class="sidebar-user-card">
-      <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80" class="rounded-circle" width="38" height="38" alt="Admin">
-      <div class="overflow-hidden">
-        <div style="font-size: 13px; font-weight: 700; color: #fff;" class="text-truncate">{{adminName}}</div>
-        <div style="font-size: 11px; color: #64748b;" class="text-truncate">admin@alumni.org</div>
-      </div>
-    </div>
   </aside>
 
   <!-- SIDEBAR OVERLAY (mobile) -->
@@ -775,7 +764,8 @@
 
 
   <!-- MAIN WRAPPER -->
-  <div class="main">
+  <div class="main" id="top">
+
     
     <!-- TOP NAVBAR -->
     <nav class="navbar navbar-expand-lg">
@@ -805,20 +795,35 @@
             <!-- User Profile Dropdown -->
             <div class="dropdown">
               <div class="user-profile-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80" class="user-avatar" alt="User">
+                <img src="{{#if admin.hasAvatar}}/admin/profile/avatar{{else}}https://ui-avatars.com/api/?background=6366f1&color=fff&name={{adminName}}{{/if}}"
+                     class="user-avatar" alt="Admin" id="adminAvatarTop">
                 <div class="d-none d-sm-block text-start me-1">
-                  <div style="font-size: 13px; font-weight: 700; color: #0f172a;">{{adminName}}</div>
+                  <div style="font-size: 13px; font-weight: 700; color: #0f172a;" id="adminNameTop">{{adminName}}</div>
                   <div style="font-size: 10px; font-weight: 600; color: #6366f1;">SUPERADMIN</div>
                 </div>
                 <i class="bi bi-chevron-down small text-muted"></i>
               </div>
-              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2" style="width: 200px;">
-                <li><a class="dropdown-item rounded-3" href="#"><i class="bi bi-person me-2"></i>My Profile</a></li>
-                <li><a class="dropdown-item rounded-3" href="#"><i class="bi bi-shield-lock me-2"></i>Change Password</a></li>
-                <li><a class="dropdown-item rounded-3" href="#"><i class="bi bi-sliders me-2"></i>Account Settings</a></li>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2" style="width: 215px;">
+                <li>
+                  <button type="button" class="dropdown-item rounded-3" data-bs-toggle="modal" data-bs-target="#adminProfileModal">
+                    <i class="bi bi-person me-2"></i>Edit Profile
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="dropdown-item rounded-3" data-bs-toggle="modal" data-bs-target="#adminPasswordModal">
+                    <i class="bi bi-shield-lock me-2"></i>Change Password
+                  </button>
+                </li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item rounded-3 text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                <li>
+                  <form method="post" action="/admin/logout" class="m-0">
+                    <button type="submit" class="dropdown-item rounded-3 text-danger">
+                      <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </button>
+                  </form>
+                </li>
               </ul>
+
             </div>
 
           </div>
@@ -917,7 +922,8 @@
       </div>
 
       <!-- CHARTS SECTION -->
-      <div class="row g-4 mb-4">
+      <div class="row g-4 mb-4" id="batches-section">
+
 
         <!-- Members per Batch Bar Chart -->
         <div class="col-12">
@@ -1041,6 +1047,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
                     <th>Member Profile</th>
                     <th>Batch</th>
                     <th>Joined Date</th>
+                    <th class="text-center">Contact</th>
                     <th class="text-end">Actions</th>
                   </tr>
                 </thead>
@@ -1062,6 +1069,29 @@ onclick="openLeaderDetailsModal(this.dataset)">
                     </td>
                     <td><span class="batch-tag">{{this.batch}}</span></td>
                     <td class="text-muted small fw-medium">{{this.joinedDate}}</td>
+                    <td class="text-center">
+                      <div class="d-flex gap-1 justify-content-center">
+                        {{#if this.waLink}}
+                        <a href="{{this.waLink}}?text=Hello%20{{this.name}}" target="_blank" rel="noopener"
+                           class="btn btn-sm btn-success rounded-2 px-2" title="WhatsApp {{this.whatsapp}}">
+                          <i class="bi bi-whatsapp"></i>
+                        </a>
+                        {{else}}
+                        <button type="button" class="btn btn-sm btn-light border rounded-2 px-2 text-muted" disabled title="No WhatsApp number">
+                          <i class="bi bi-whatsapp"></i>
+                        </button>
+                        {{/if}}
+                        {{#if this.telLink}}
+                        <a href="{{this.telLink}}" class="btn btn-sm btn-primary rounded-2 px-2" title="Call {{this.phone}}">
+                          <i class="bi bi-telephone"></i>
+                        </a>
+                        {{else}}
+                        <button type="button" class="btn btn-sm btn-light border rounded-2 px-2 text-muted" disabled title="No phone number">
+                          <i class="bi bi-telephone"></i>
+                        </button>
+                        {{/if}}
+                      </div>
+                    </td>
                     <td class="text-end">
                       <button type="button" class="btn btn-sm btn-light border rounded-2 px-2 text-primary"
                               title="View / Edit Member" data-member-view="{{this.id}}">
@@ -1076,9 +1106,10 @@ onclick="openLeaderDetailsModal(this.dataset)">
                   {{/each}}
                   {{#unless allMembers}}
                   <tr id="membersEmptyRow">
-                    <td colspan="4" class="text-center text-muted py-4">No members registered yet.</td>
+                    <td colspan="5" class="text-center text-muted py-4">No members registered yet.</td>
                   </tr>
                   {{/unless}}
+
                 </tbody>
               </table>
             </div>
@@ -1210,7 +1241,8 @@ onclick="openLeaderDetailsModal(this.dataset)">
       </div>
 
       <!-- GALLERY -->
-      <div class="card">
+      <div class="card" id="gallery-section">
+
         <div class="card-header">
           <span><i class="bi bi-images text-purple me-2"></i>Gallery</span>
           <button class="btn btn-sm btn-primary rounded-3" data-bs-toggle="modal" data-bs-target="#addGalleryModal">
@@ -3372,11 +3404,12 @@ onclick="openLeaderDetailsModal(this.dataset)">
   }
 
   function row(m, i) {
-    var wa   = waNumber(m.whatsapp);
+    var wa   = waNumber(m.whatsapp || m.phone);
     var tel  = String(m.phone || '').replace(/\s+/g, '');
     var waBtn = wa
-      ? '<a href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener" class="btn btn-sm btn-success rounded-2 px-2" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>'
+      ? '<a href="https://wa.me/' + esc(wa) + '?text=' + encodeURIComponent('Hello ' + (m.name || '')) + '" target="_blank" rel="noopener" class="btn btn-sm btn-success rounded-2 px-2" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>'
       : '<button class="btn btn-sm btn-light border rounded-2 px-2 text-muted" disabled title="No WhatsApp number"><i class="bi bi-whatsapp"></i></button>';
+
     var telBtn = tel
       ? '<a href="tel:' + esc(tel) + '" class="btn btn-sm btn-primary rounded-2 px-2" title="Call ' + esc(tel) + '"><i class="bi bi-telephone"></i></a>'
       : '<button class="btn btn-sm btn-light border rounded-2 px-2 text-muted" disabled title="No phone number"><i class="bi bi-telephone"></i></button>';
@@ -3747,6 +3780,23 @@ onclick="openLeaderDetailsModal(this.dataset)">
     if (batchEl) batchEl.textContent = member.batch || '';
     var delBtn = row.querySelector('[data-member-delete]');
     if (delBtn) delBtn.setAttribute('data-member-name', member.name || '');
+
+    /* Keep the WhatsApp / call buttons in sync with the edited numbers. */
+    var contactCell = row.children[3];
+    if (contactCell) {
+      var digits = String(member.whatsapp || member.phone || '').replace(/[^0-9]/g, '');
+      if (digits.length === 10) digits = '91' + digits;
+      else if (digits.length === 11 && digits.charAt(0) === '0') digits = '91' + digits.slice(1);
+      var tel = String(member.phone || '').replace(/[^0-9+]/g, '');
+      var waHtml = digits
+        ? '<a href="https://wa.me/' + digits + '?text=Hello%20' + encodeURIComponent(member.name || '') + '" target="_blank" rel="noopener" class="btn btn-sm btn-success rounded-2 px-2" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>'
+        : '<button type="button" class="btn btn-sm btn-light border rounded-2 px-2 text-muted" disabled title="No WhatsApp number"><i class="bi bi-whatsapp"></i></button>';
+      var telHtml = tel
+        ? '<a href="tel:' + tel + '" class="btn btn-sm btn-primary rounded-2 px-2" title="Call ' + tel + '"><i class="bi bi-telephone"></i></a>'
+        : '<button type="button" class="btn btn-sm btn-light border rounded-2 px-2 text-muted" disabled title="No phone number"><i class="bi bi-telephone"></i></button>';
+      contactCell.innerHTML = '<div class="d-flex gap-1 justify-content-center">' + waHtml + telHtml + '</div>';
+    }
+
     if (typeof window.refreshMembersTable === 'function') window.refreshMembersTable();
   }
 
@@ -3828,6 +3878,230 @@ onclick="openLeaderDetailsModal(this.dataset)">
   });
 })();
 </script>
+
+<!-- ============ ADMIN PROFILE MODAL ============ -->
+<div class="modal fade" id="adminProfileModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content rounded-4 border-0 shadow-lg" id="adminProfileForm" enctype="multipart/form-data">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-person-gear me-2 text-primary"></i>Edit Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert d-none" id="adminProfileAlert" role="alert"></div>
+        <div class="text-center mb-3">
+          <img id="adminProfilePreview"
+               src="{{#if admin.hasAvatar}}/admin/profile/avatar{{else}}https://ui-avatars.com/api/?background=6366f1&color=fff&name={{adminName}}{{/if}}"
+               alt="Admin avatar" class="rounded-circle border" style="width:88px;height:88px;object-fit:cover;">
+          <div class="mt-2">
+            <label class="btn btn-sm btn-light border rounded-3 mb-0">
+              <i class="bi bi-image me-1"></i>Choose image
+              <input type="file" name="avatar" id="adminAvatarInput" accept="image/*" hidden>
+            </label>
+          </div>
+          <div class="form-text">PNG or JPG, up to 2 MB.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Name</label>
+          <input type="text" class="form-control rounded-3" name="name" maxlength="80" value="{{admin.name}}" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Batch</label>
+          <input type="text" class="form-control rounded-3" name="batch" maxlength="40" value="{{admin.batch}}">
+        </div>
+        <div class="mb-1">
+          <label class="form-label fw-semibold small">Email</label>
+          <input type="email" class="form-control rounded-3" name="email" maxlength="120" value="{{admin.email}}">
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary rounded-3 fw-semibold" id="adminProfileSaveBtn">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ADMIN PASSWORD / USERNAME MODAL ============ -->
+<div class="modal fade" id="adminPasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content rounded-4 border-0 shadow-lg" id="adminPasswordForm">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock me-2 text-primary"></i>Change Credentials</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert d-none" id="adminPasswordAlert" role="alert"></div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Current password</label>
+          <input type="password" class="form-control rounded-3" name="currentPassword" autocomplete="current-password" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Username</label>
+          <input type="text" class="form-control rounded-3" name="username" minlength="3" maxlength="40" value="{{admin.username}}" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">New password <span class="text-muted fw-normal">(leave blank to keep current)</span></label>
+          <input type="password" class="form-control rounded-3" name="newPassword" minlength="8" autocomplete="new-password">
+        </div>
+        <div class="mb-1">
+          <label class="form-label fw-semibold small">Confirm new password</label>
+          <input type="password" class="form-control rounded-3" name="confirmPassword" minlength="8" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary rounded-3 fw-semibold" id="adminPasswordSaveBtn">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+/* ============ SIDEBAR NAVIGATION ============ */
+(function () {
+  var menu = document.getElementById('sidebarMenu');
+  if (!menu) return;
+  var links = Array.prototype.slice.call(menu.querySelectorAll('a[href^="#"]'));
+
+  function setActive(link) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (link) link.classList.add('active');
+  }
+
+  links.forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      var id = link.getAttribute('href').slice(1);
+      var target = document.getElementById(id);
+      if (!target) return;
+      e.preventDefault();
+      setActive(link);
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      /* Close the drawer on mobile */
+      var sidebar = document.querySelector('.sidebar');
+      var overlay = document.getElementById('sidebarOverlay');
+      if (window.innerWidth < 992 && sidebar) {
+        sidebar.classList.remove('show', 'active', 'open');
+        if (overlay) overlay.classList.remove('show', 'active');
+      }
+    });
+  });
+
+  /* Highlight the section currently in view */
+  var sections = links
+    .map(function (l) { return document.getElementById(l.getAttribute('href').slice(1)); })
+    .filter(Boolean);
+
+  if ('IntersectionObserver' in window && sections.length) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var match = links.filter(function (l) {
+          return l.getAttribute('href') === '#' + entry.target.id;
+        })[0];
+        if (match) setActive(match);
+      });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+    sections.forEach(function (s) { observer.observe(s); });
+  }
+})();
+
+/* ============ ADMIN PROFILE + CREDENTIALS ============ */
+(function () {
+  function alertBox(el, type, message) {
+    if (!el) return;
+    el.className = 'alert alert-' + type;
+    el.textContent = message;
+    el.classList.remove('d-none');
+  }
+  function hideAlert(el) { if (el) el.classList.add('d-none'); }
+
+  /* ---- avatar preview ---- */
+  var avatarInput   = document.getElementById('adminAvatarInput');
+  var avatarPreview = document.getElementById('adminProfilePreview');
+  if (avatarInput && avatarPreview) {
+    avatarInput.addEventListener('change', function () {
+      var file = avatarInput.files && avatarInput.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        alertBox(document.getElementById('adminProfileAlert'), 'danger', 'The image is larger than 2 MB.');
+        avatarInput.value = '';
+        return;
+      }
+      avatarPreview.src = URL.createObjectURL(file);
+    });
+  }
+
+  /* ---- profile save ---- */
+  var profileForm = document.getElementById('adminProfileForm');
+  if (profileForm) {
+    profileForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var alertEl = document.getElementById('adminProfileAlert');
+      var btn     = document.getElementById('adminProfileSaveBtn');
+      hideAlert(alertEl);
+      btn.disabled = true;
+      var label = btn.textContent;
+      btn.textContent = 'Saving...';
+      try {
+        var res  = await fetch('/admin/profile', { method: 'POST', body: new FormData(profileForm) });
+        var data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Could not save the profile.');
+        alertBox(alertEl, 'success', 'Profile updated.');
+        setTimeout(function () { window.location.reload(); }, 900);
+      } catch (err) {
+        alertBox(alertEl, 'danger', err.message || 'Could not save the profile.');
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    });
+  }
+
+  /* ---- username / password save ---- */
+  var passwordForm = document.getElementById('adminPasswordForm');
+  if (passwordForm) {
+    passwordForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var alertEl = document.getElementById('adminPasswordAlert');
+      var btn     = document.getElementById('adminPasswordSaveBtn');
+      hideAlert(alertEl);
+
+      var fd      = new FormData(passwordForm);
+      var payload = {
+        currentPassword: fd.get('currentPassword') || '',
+        username:        String(fd.get('username') || '').trim(),
+        newPassword:     fd.get('newPassword') || '',
+        confirmPassword: fd.get('confirmPassword') || ''
+      };
+
+      if (payload.newPassword && payload.newPassword !== payload.confirmPassword) {
+        alertBox(alertEl, 'danger', 'The new passwords do not match.');
+        return;
+      }
+
+      btn.disabled = true;
+      var label = btn.textContent;
+      btn.textContent = 'Updating...';
+      try {
+        var res = await fetch('/admin/credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        var data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Could not update the credentials.');
+        alertBox(alertEl, 'success', 'Credentials updated. Please sign in again.');
+        setTimeout(function () { window.location.href = '/admin/login'; }, 1200);
+      } catch (err) {
+        alertBox(alertEl, 'danger', err.message || 'Could not update the credentials.');
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    });
+  }
+})();
+</script>
 </body>
+
 
 </html>

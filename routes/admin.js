@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var multer  = require('multer');
+var crypto  = require('crypto');
 
 var mongoose    = require('mongoose');
 var MemberDetails = require('../models/MemberDetails');
@@ -8,6 +9,7 @@ var BatchDetails  = require('../models/BatchDetails');
 var BatchLeader   = require('../models/BatchLeader');
 var EventDetails  = require('../models/EventDetails');
 var Gallery       = require('../models/Gallery');
+var AdminSecret   = require('../models/AdminSecret');
 const connectDB   = require('../config/db');
 
 /* Multer: store uploaded files in memory as Buffer. */
@@ -21,6 +23,287 @@ var upload = multer({
     cb(null, true);
   }
 });
+
+/* ================================================================== */
+/* ADMIN AUTHENTICATION                                                */
+/* Credentials live in the "ADMIN_SECRETS" collection.                 */
+/* Passwords are stored as sha256(salt + password) – never plain text. */
+/* Sessions live in "SESSIONS" (see app.js) and are valid for 7 days.  */
+/* ================================================================== */
+
+var SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+function makeSalt() {
+  return crypto.randomBytes(16).toString('hex');
+}
+
+function sha256(salt, password) {
+  return crypto.createHash('sha256').update(String(salt) + String(password)).digest('hex');
+}
+
+function safeEqual(a, b) {
+  var bufA = Buffer.from(String(a));
+  var bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+/* Create the first admin from ADMIN_USERNAME / ADMIN_PASSWORD in .env
+   the very first time the admin area is opened. */
+async function ensureSeedAdmin() {
+  var count = await AdminSecret.countDocuments();
+  if (count > 0) return null;
+
+  var username = (process.env.ADMIN_USERNAME || '').trim().toLowerCase();
+  var password = (process.env.ADMIN_PASSWORD || '').trim();
+  if (!username || !password) {
+    console.error('No admin account exists and ADMIN_USERNAME / ADMIN_PASSWORD are not set in the environment.');
+    return null;
+  }
+
+  var salt = makeSalt();
+  var admin = await AdminSecret.create({
+    username:     username,
+    salt:         salt,
+    passwordHash: sha256(salt, password),
+    displayName:  (process.env.ADMIN_NAME || 'Super Admin').trim(),
+    email:        (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
+    batch:        (process.env.ADMIN_BATCH || '').trim()
+  });
+  console.log('Seeded initial admin account "' + username + '" into ADMIN_SECRETS.');
+  return admin;
+}
+
+/* Serialise an admin document for the views. */
+function serialiseAdmin(doc) {
+  if (!doc) return null;
+  return {
+    id:          String(doc._id),
+    username:    doc.username || '',
+    displayName: doc.displayName || 'Super Admin',
+    batch:       doc.batch || '',
+    email:       doc.email || '',
+    hasAvatar:   !!(doc.avatar && doc.avatar.contentType)
+  };
+}
+
+function wantsJson(req) {
+  if (req.xhr) return true;
+  var accept = req.headers.accept || '';
+  return accept.indexOf('application/json') !== -1 || req.method !== 'GET';
+}
+
+/* Gate for every admin page / API below this middleware. */
+async function requireAdmin(req, res, next) {
+  try {
+    await connectDB();
+    if (req.session && req.session.adminId) {
+      var admin = await AdminSecret.findById(req.session.adminId);
+      if (admin) {
+        /* Keep the session fresh: every request extends it to 7 more days. */
+        req.session.cookie.maxAge = SEVEN_DAYS_MS;
+        req.admin = admin;
+        res.locals.admin = serialiseAdmin(admin);
+        return next();
+      }
+      /* Credential row was deleted – drop the stale session. */
+      req.session.adminId = null;
+    }
+  } catch (error) {
+    console.error('Admin auth check failed:', error.message);
+  }
+
+  if (wantsJson(req)) {
+    return res.status(401).json({ success: false, message: 'Your session expired. Please sign in again.' });
+  }
+  return res.redirect('/admin/login');
+}
+
+/* ------------------------------------------------------------------ */
+/* GET /admin/login                                                    */
+/* ------------------------------------------------------------------ */
+router.get('/login', async function (req, res) {
+  await connectDB();
+  try { await ensureSeedAdmin(); } catch (e) { console.error('Admin seed failed:', e.message); }
+
+  if (req.session && req.session.adminId) {
+    return res.redirect('/admin');
+  }
+  return res.render('admin-login', { layout: false, title: 'Admin Sign In', username: '' });
+});
+
+/* ------------------------------------------------------------------ */
+/* POST /admin/login                                                   */
+/* ------------------------------------------------------------------ */
+router.post('/login', async function (req, res) {
+  await connectDB();
+  var username = (req.body.username || '').trim().toLowerCase();
+  var password = (req.body.password || '').trim();
+
+  function fail(message) {
+    return res.status(401).render('admin-login', {
+      layout: false, title: 'Admin Sign In', error: message, username: username
+    });
+  }
+
+  if (!username || !password) {
+    return fail('Please enter both username and password.');
+  }
+
+  try {
+    await ensureSeedAdmin();
+    var admin = await AdminSecret.findOne({ username: username });
+    if (!admin) return fail('Incorrect username or password.');
+    if (!safeEqual(sha256(admin.salt, password), admin.passwordHash)) {
+      return fail('Incorrect username or password.');
+    }
+
+    admin.lastLoginAt = new Date();
+    await admin.save();
+
+    var adminId = String(admin._id);
+    /* Regenerate the session id first (prevents session fixation). */
+    return req.session.regenerate(function (regenErr) {
+      if (regenErr) {
+        console.error('Admin session regenerate failed:', regenErr.message);
+        return fail('Could not start your session. Please try again.');
+      }
+      req.session.adminId       = adminId;
+      req.session.adminUsername = username;
+      req.session.loginAt       = new Date();
+      req.session.cookie.maxAge = SEVEN_DAYS_MS;
+      return req.session.save(function (saveErr) {
+        if (saveErr) {
+          console.error('Admin session save failed:', saveErr.message);
+          return fail('Could not start your session. Please try again.');
+        }
+        return res.redirect('/admin');
+      });
+    });
+  } catch (error) {
+    console.error('Admin login failed:', error.message);
+    return fail('Something went wrong. Please try again.');
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* POST|GET /admin/logout – destroy the SESSIONS document + cookie     */
+/* ------------------------------------------------------------------ */
+function doLogout(req, res) {
+  if (!req.session) return res.redirect('/admin/login');
+  return req.session.destroy(function (err) {
+    if (err) console.error('Admin logout failed:', err.message);
+    res.clearCookie('hamd.sid', { path: '/' });
+    return res.redirect('/admin/login');
+  });
+}
+router.post('/logout', doLogout);
+router.get('/logout', doLogout);
+
+/* Everything below requires a signed-in admin. */
+router.use(requireAdmin);
+
+/* ------------------------------------------------------------------ */
+/* GET /admin/profile/avatar – admin picture                            */
+/* ------------------------------------------------------------------ */
+router.get('/profile/avatar', function (req, res) {
+  var admin = req.admin;
+  if (!admin || !admin.avatar || !admin.avatar.data) {
+    return res.status(404).end();
+  }
+  res.set('Content-Type', admin.avatar.contentType || 'image/jpeg');
+  res.set('Cache-Control', 'no-store');
+  return res.send(admin.avatar.data);
+});
+
+/* ------------------------------------------------------------------ */
+/* POST /admin/profile – edit image / name / batch / email              */
+/* ------------------------------------------------------------------ */
+router.post('/profile', upload.single('avatar'), async function (req, res) {
+  try {
+    var admin = req.admin;
+    var displayName = (req.body.displayName || '').trim();
+    var batch = (req.body.batch || '').trim();
+    var email = (req.body.email || '').trim().toLowerCase();
+
+    if (!displayName) {
+      return res.status(400).json({ success: false, message: 'Name is required.' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    admin.displayName = displayName;
+    admin.batch = batch;
+    admin.email = email;
+
+    if (req.file && req.file.buffer) {
+      admin.avatar = { data: req.file.buffer, contentType: req.file.mimetype };
+    } else if (String(req.body.removeAvatar || '') === '1') {
+      admin.avatar = undefined;
+    }
+
+    await admin.save();
+    return res.json({ success: true, message: 'Profile updated.', admin: serialiseAdmin(admin) });
+  } catch (error) {
+    console.error('Admin profile update failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not update the profile. Please try again.' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* POST /admin/credentials – change username and/or password            */
+/* ------------------------------------------------------------------ */
+router.post('/credentials', async function (req, res) {
+  try {
+    var admin = req.admin;
+    var currentPassword = (req.body.currentPassword || '').trim();
+    var newUsername     = (req.body.newUsername || '').trim().toLowerCase();
+    var newPassword     = (req.body.newPassword || '').trim();
+    var confirmPassword = (req.body.confirmPassword || '').trim();
+
+    if (!currentPassword) {
+      return res.status(400).json({ success: false, message: 'Please enter your current password.' });
+    }
+    if (!safeEqual(sha256(admin.salt, currentPassword), admin.passwordHash)) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
+    }
+    if (!newUsername && !newPassword) {
+      return res.status(400).json({ success: false, message: 'Enter a new username or a new password.' });
+    }
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        return res.status(400).json({ success: false, message: 'New password must be at least 6 characters.' });
+      }
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ success: false, message: 'New password and confirmation do not match.' });
+      }
+    }
+    if (newUsername && newUsername !== admin.username) {
+      var clash = await AdminSecret.findOne({ username: newUsername, _id: { $ne: admin._id } }).lean();
+      if (clash) {
+        return res.status(409).json({ success: false, message: 'That username is already taken.' });
+      }
+      admin.username = newUsername;
+      req.session.adminUsername = newUsername;
+    }
+    if (newPassword) {
+      admin.salt = makeSalt();
+      admin.passwordHash = sha256(admin.salt, newPassword);
+    }
+
+    await admin.save();
+    return res.json({
+      success: true,
+      message: 'Credentials updated. Use them the next time you sign in.',
+      admin: serialiseAdmin(admin)
+    });
+  } catch (error) {
+    console.error('Admin credential update failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not update credentials. Please try again.' });
+  }
+});
+
 
 /* ------------------------------------------------------------------ */
 /* HELPER: badge colour based on category                              */
@@ -201,7 +484,9 @@ router.get('/', async function (req, res, next) {
   res.render('admin', {
     layout: false,
     title:     'Alumni Admin Dashboard',
-    adminName: 'Super Admin',
+    admin:     serialiseAdmin(req.admin),
+    adminName: (req.admin && req.admin.displayName) || 'Super Admin',
+
     stats: {
       totalAlumni:    totalAlumni.toLocaleString('en-US'),
       alumniGrowth:   '+12.4%',
@@ -1166,12 +1451,18 @@ async function getAllMembers() {
   try {
     var docs = await MemberDetails.find({}).sort({ createdAt: -1, _id: -1 }).lean();
     return docs.map(function (doc) {
+      var phone = String(doc.phone || '').trim();
+      var wa    = whatsappDigits(doc.whatsapp || doc.phone);
       return {
         id:         String(doc._id),
         name:       doc.name       || '',
         email:      doc.email      || '',
         batch:      batchYear(doc.batch),
-        joinedDate: formatJoinedDate(doc.createdAt)
+        joinedDate: formatJoinedDate(doc.createdAt),
+        phone:      phone,
+        telLink:    phone ? 'tel:' + phone.replace(/[^0-9+]/g, '') : '',
+        whatsapp:   doc.whatsapp || '',
+        waLink:     wa ? 'https://wa.me/' + wa : ''
       };
     });
   } catch (error) {
@@ -1179,6 +1470,17 @@ async function getAllMembers() {
     return [];
   }
 }
+
+/* Normalise a phone number into the digits wa.me expects (India default). */
+function whatsappDigits(raw) {
+  var d = String(raw || '').replace(/[^0-9]/g, '');
+  if (!d) return '';
+  if (d.length === 10) d = '91' + d;
+  else if (d.length === 11 && d.charAt(0) === '0') d = '91' + d.slice(1);
+  else if (d.length === 12 && d.slice(0, 2) === '91') d = d;
+  return d;
+}
+
 
 async function liveMemberCountsByYear() {
   var counts = {};
