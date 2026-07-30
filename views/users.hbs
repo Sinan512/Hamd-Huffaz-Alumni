@@ -667,12 +667,20 @@
               {{/if}}
 
               {{#if this.registration}}
-              <button type="button"
-                class="btn-register"
-                id="reg-btn-{{this.id}}"
-                onclick="openRegisterConfirm('{{this.id}}', '{{this.title}}')">
-                <i class="bi bi-check-circle me-1"></i>Register
-              </button>
+                {{#if this.isRegistered}}
+                <button type="button"
+                  class="btn-registered"
+                  id="reg-btn-{{this.id}}">
+                  <i class="bi bi-check-circle-fill me-1"></i>Registered
+                </button>
+                {{else}}
+                <button type="button"
+                  class="btn-register"
+                  id="reg-btn-{{this.id}}"
+                  onclick="openRegisterConfirm('{{this.id}}', '{{this.title}}')">
+                  <i class="bi bi-check-circle me-1"></i>Register
+                </button>
+                {{/if}}
               {{/if}}
             </div>
 
@@ -1295,24 +1303,40 @@
 
 
   /* ============================================================ */
+  /* SHARED FETCH HELPERS                                          */
+  /* ============================================================ */
+  /* Reads a response as JSON, but never throws when the server
+     replied with HTML (404 / 500 page) — so the UI can show a real
+     message instead of a misleading "network error". */
+  function readJsonResponse(res) {
+    return res.text().then(function (text) {
+      var data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+      return { ok: res.ok, status: res.status, data: data };
+    });
+  }
+
+  function serverMessage(result, fallback) {
+    if (result && result.status === 401) {
+      return 'Your session has expired. Please log in again.';
+    }
+    if (result && result.data && result.data.message) {
+      return result.data.message;
+    }
+    if (result && result.status === 404) {
+      return 'The server could not find this action (404). Please refresh the page and try again.';
+    }
+    if (result && result.status) {
+      return fallback + ' (server responded ' + result.status + ')';
+    }
+    return fallback;
+  }
+
+  /* ============================================================ */
   /* EVENT REGISTRATION                                            */
   /* ============================================================ */
   var _pendingRegEventId    = null;
   var _pendingRegEventTitle = null;
-
-  // Get registration state key per user
-  var REG_STORAGE_KEY = 'alumni_registrations_{{#if user}}{{user.admissionNumber}}{{/if}}';
-
-  function getRegistrations() {
-    try {
-      return JSON.parse(localStorage.getItem(REG_STORAGE_KEY) || '{}');
-    } catch (e) { return {}; }
-  }
-
-  function saveRegistrations(obj) {
-    try { localStorage.setItem(REG_STORAGE_KEY, JSON.stringify(obj)); } catch (e) {}
-  }
-
 
   function openRegisterConfirm(eventId, eventTitle) {
     var btn = document.getElementById('reg-btn-' + eventId);
@@ -1324,6 +1348,10 @@
     var titleEl = document.getElementById('regConfirmEventTitle');
     if (titleEl) titleEl.textContent = eventTitle;
 
+    var modalEl = document.getElementById('registerConfirmModal');
+    if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
   }
 
   function markRegistered(btn) {
@@ -1335,23 +1363,45 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     var confirmBtn = document.getElementById('regConfirmYesBtn');
-    if (confirmBtn) {
-      confirmBtn.addEventListener('click', function () {
-        
-          if (!_pendingRegEventId) return;
+    if (!confirmBtn) return;
 
-fetch('/user/register-event/' + _pendingRegEventId, {
-  method: 'POST'
-})
-.then(function(res) {
-  if (!res.ok) throw new Error();
-  location.reload();
-})
-.catch(function() {
-  alert('Registration failed');
-});
+    confirmBtn.addEventListener('click', function () {
+      if (!_pendingRegEventId) return;
+
+      var eventId  = _pendingRegEventId;
+      var origHtml = confirmBtn.innerHTML;
+      confirmBtn.disabled  = true;
+      confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering…';
+
+      fetch('/users/user/register-event/' + encodeURIComponent(eventId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'same-origin'
+      })
+      .then(readJsonResponse)
+      .then(function (result) {
+        if (result.ok && result.data && result.data.success) {
+          var btn = document.getElementById('reg-btn-' + eventId);
+          if (btn) markRegistered(btn);
+
+          var modalEl = document.getElementById('registerConfirmModal');
+          if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+            window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+          }
+          _pendingRegEventId = null;
+          alert(result.data.message || 'Registered successfully.');
+        } else {
+          alert(serverMessage(result, 'Could not register for this event. Please try again.'));
+        }
+      })
+      .catch(function () {
+        alert('Could not reach the server. Please try again.');
+      })
+      .finally(function () {
+        confirmBtn.disabled  = false;
+        confirmBtn.innerHTML = origHtml;
       });
-    }
+    });
   });
 
 
@@ -1413,23 +1463,22 @@ fetch('/user/register-event/' + _pendingRegEventId, {
     var fd   = new FormData(form);
     fd.forEach(function (val, key) { data[key] = val; });
 
-    fetch('/user/profile', {
+    fetch('/users/user/profile', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify(data)
     })
-    .then(function (res) {
-      return res.json().then(function (d) { return { ok: res.ok, data: d }; });
-    })
+    .then(readJsonResponse)
     .then(function (result) {
       if (result.ok && result.data && result.data.success) {
         showAlert('success', result.data.message || 'Profile saved successfully.');
       } else {
-        showAlert('danger', (result.data && result.data.message) || 'Could not save profile. Please try again.');
+        showAlert('danger', serverMessage(result, 'Could not save profile. Please try again.'));
       }
     })
     .catch(function () {
-      showAlert('danger', 'Network error. Please check your connection and try again.');
+      showAlert('danger', 'Could not reach the server. Please check your connection and try again.');
     })
     .finally(function () {
       btn.disabled  = false;
@@ -1467,24 +1516,23 @@ fetch('/user/register-event/' + _pendingRegEventId, {
     btn.textContent = 'Updating…';
     alertEl.className = 'alert d-none';
 
-    fetch('/user/change-password', {
+    fetch('/users/user/change-password', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify({ currentPassword: curr, newPassword: newPw })
     })
-    .then(function (res) {
-      return res.json().then(function (d) { return { ok: res.ok, data: d }; });
-    })
+    .then(readJsonResponse)
     .then(function (result) {
       if (result.ok && result.data && result.data.success) {
         showAlert('success', result.data.message || 'Password updated successfully.');
         form.reset();
       } else {
-        showAlert('danger', (result.data && result.data.message) || 'Could not update password.');
+        showAlert('danger', serverMessage(result, 'Could not update password.'));
       }
     })
     .catch(function () {
-      showAlert('danger', 'Network error. Please try again.');
+      showAlert('danger', 'Could not reach the server. Please try again.');
     })
     .finally(function () {
       btn.disabled    = false;
