@@ -1348,30 +1348,19 @@
     var confirmBtn = document.getElementById('regConfirmYesBtn');
     if (confirmBtn) {
       confirmBtn.addEventListener('click', function () {
-        if (!_pendingRegEventId) return;
+        
+          if (!_pendingRegEventId) return;
 
-        var btn = document.getElementById('reg-btn-' + _pendingRegEventId);
-
-        // Persist locally
-        var regs = getRegistrations();
-        regs[_pendingRegEventId] = true;
-        saveRegistrations(regs);
-
-        // POST to backend (non-blocking — best effort)
-        fetch('/user/register-event/' + _pendingRegEventId, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventTitle: _pendingRegEventTitle })
-        }).catch(function () { /* silently ignore if route not yet available */ });
-
-        if (btn) markRegistered(btn);
-
-        bootstrap.Modal.getInstance(
-          document.getElementById('registerConfirmModal')
-        ).hide();
-
-        _pendingRegEventId    = null;
-        _pendingRegEventTitle = null;
+fetch('/user/register-event/' + _pendingRegEventId, {
+  method: 'POST'
+})
+.then(function(res) {
+  if (!res.ok) throw new Error();
+  location.reload();
+})
+.catch(function() {
+  alert('Registration failed');
+});
       });
     }
   });
