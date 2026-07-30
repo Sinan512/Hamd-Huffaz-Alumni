@@ -431,6 +431,13 @@ router.patch('/leaders/:id/credentials', async function (req, res) {
 });
 
 /* ================================================================== */
+/* HELPER: default password for a member  ->  <admissionNumber>@123     */
+/* ================================================================== */
+function generateMemberPassword(admissionNumber) {
+  return String(admissionNumber || '').trim() + '@123';
+}
+
+/* ================================================================== */
 /* POST /admin/members                                                  */
 /* ================================================================== */
 router.post('/members', async function (req, res) {
@@ -458,10 +465,16 @@ router.post('/members', async function (req, res) {
       return res.status(409).json({ success: false, message: 'This member is already added.' });
     }
 
-    var member = await MemberDetails.create({ admissionNumber, name, place, batch, email });
+    var password = generateMemberPassword(admissionNumber);
+    var member = await MemberDetails.create({ admissionNumber, name, place, batch, email, password: password });
     await linkMemberToBatch(member);
 
-    return res.status(201).json({ success: true, message: 'Member added successfully.', member: member });
+    return res.status(201).json({
+      success: true,
+      message: 'Member added successfully. Login password: ' + password,
+      password: password,
+      member: member
+    });
   } catch (error) {
     if (error && error.code === 11000) {
       return res.status(409).json({ success: false, message: 'This member is already added.' });
@@ -487,12 +500,27 @@ var csvUpload = multer({
   }
 });
 
+function detectDelimiter(text) {
+  var firstLine = String(text).split('\n')[0] || '';
+  var counts = { ',': 0, ';': 0, '\t': 0 };
+  var inQuotes = false;
+  for (var i = 0; i < firstLine.length; i++) {
+    var ch = firstLine[i];
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (!inQuotes && counts[ch] !== undefined) counts[ch]++;
+  }
+  var best = ',';
+  Object.keys(counts).forEach(function (d) { if (counts[d] > counts[best]) best = d; });
+  return counts[best] > 0 ? best : ',';
+}
+
 function parseCsv(text) {
   var rows = [];
   var row = [];
   var field = '';
   var inQuotes = false;
   text = String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  var delimiter = detectDelimiter(text);
 
   for (var i = 0; i < text.length; i++) {
     var ch = text[i];
@@ -503,7 +531,7 @@ function parseCsv(text) {
       } else { field += ch; }
     } else if (ch === '"') {
       inQuotes = true;
-    } else if (ch === ',') {
+    } else if (ch === delimiter) {
       row.push(field); field = '';
     } else if (ch === '\n') {
       row.push(field); field = '';
@@ -547,15 +575,24 @@ function normaliseHeader(cell) {
 /* ================================================================== */
 router.post('/members/import', function (req, res) {
   csvUpload.single('csvFile')(req, res, async function (uploadError) {
-    if (uploadError) {
-      return res.status(400).json({ success: false, message: uploadError.message || 'Could not read the CSV file.' });
-    }
-    if (!req.file || !req.file.buffer || !req.file.buffer.length) {
-      return res.status(400).json({ success: false, message: 'Please choose a CSV file.' });
-    }
-
-    await connectDB();
+    /* Everything below answers with JSON, never an HTML error page. */
     try {
+      if (uploadError) {
+        var uploadMessage = uploadError.message || 'Could not read the CSV file.';
+        if (uploadError.code === 'LIMIT_FILE_SIZE') uploadMessage = 'The file is larger than 2 MB.';
+        return res.status(400).json({ success: false, message: uploadMessage });
+      }
+      if (!req.file || !req.file.buffer || !req.file.buffer.length) {
+        return res.status(400).json({ success: false, message: 'Please choose a CSV file.' });
+      }
+
+      try {
+        await connectDB();
+      } catch (dbError) {
+        console.error('CSV import DB connection failed:', dbError.message);
+        return res.status(503).json({ success: false, message: 'Database is not reachable right now. Please try again in a moment.' });
+      }
+
       var rows = parseCsv(req.file.buffer.toString('utf8'));
       if (rows.length < 2) {
         return res.status(400).json({ success: false, message: 'The CSV needs a header row and at least one member row.' });
@@ -568,7 +605,9 @@ router.post('/members/import', function (req, res) {
         return res.status(400).json({
           success: false,
           message: 'Missing column(s): ' + missing.join(', ') +
-                   '. Expected header: admissionNumber, name, place, batch, email.'
+                   '. Expected header: admissionNumber, name, place, batch, email. ' +
+                   'Header row read from your file: ' +
+                   rows[0].map(function (c) { return String(c).trim(); }).join(' | ')
         });
       }
 
@@ -614,7 +653,10 @@ router.post('/members/import', function (req, res) {
             skipped++; errors.push('Row ' + line + ': ' + name + ' is already added.'); continue;
           }
 
-          var member = await MemberDetails.create({ admissionNumber, name, place, batch, email });
+          var member = await MemberDetails.create({
+            admissionNumber, name, place, batch, email,
+            password: generateMemberPassword(admissionNumber)
+          });
           await linkMemberToBatch(member);
           added++;
         } catch (rowError) {
@@ -630,7 +672,8 @@ router.post('/members/import', function (req, res) {
       var message = added
         ? added + (added === 1 ? ' member' : ' members') + ' imported successfully' +
           (skipped ? ', ' + skipped + ' skipped.' : '.')
-        : 'No members were imported. Please check the file and try again.';
+        : 'No members were imported' +
+          (errors.length ? ' \u2014 ' + errors[0] : '. Please check the file and try again.');
 
       return res.status(added ? 201 : 400).json({
         success: added > 0,
@@ -640,8 +683,11 @@ router.post('/members/import', function (req, res) {
         errors: errors.slice(0, 20)
       });
     } catch (error) {
-      console.error('CSV import failed:', error.message);
-      return res.status(500).json({ success: false, message: 'Could not import the CSV file. Please try again.' });
+      console.error('CSV import failed:', error && error.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Could not import the CSV file: ' + ((error && error.message) || 'unexpected error') + '.'
+      });
     }
   });
 });

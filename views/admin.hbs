@@ -2134,7 +2134,8 @@ onclick="openLeaderDetailsModal(this.dataset)">
           var result = await res.json().catch(function () { return {}; });
 
           if (res.ok) {
-            showAlert('success', result.message || 'Member added successfully.');
+            showAlert('success', result.message ||
+              ('Member added successfully.' + (result.password ? ' Login password: ' + result.password : '')));
             form.reset();
             setTimeout(function () {
               hideAlert();
@@ -2193,16 +2194,31 @@ onclick="openLeaderDetailsModal(this.dataset)">
       }
 
       /* Minimal CSV split for the on-screen preview only. */
+      function detectDelimiter(text) {
+        var firstLine = text.split('\n')[0] || '';
+        var counts = { ',': 0, ';': 0, '\t': 0 };
+        var q = false;
+        for (var i = 0; i < firstLine.length; i++) {
+          var c = firstLine[i];
+          if (c === '"') { q = !q; continue; }
+          if (!q && counts[c] !== undefined) counts[c]++;
+        }
+        var best = ',';
+        Object.keys(counts).forEach(function (d) { if (counts[d] > counts[best]) best = d; });
+        return counts[best] > 0 ? best : ',';
+      }
+
       function splitCsv(text) {
         var rows = [], row = [], field = '', inQuotes = false;
         text = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+        var delimiter = detectDelimiter(text);
         for (var i = 0; i < text.length; i++) {
           var ch = text[i];
           if (inQuotes) {
             if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; } }
             else { field += ch; }
           } else if (ch === '"') { inQuotes = true; }
-          else if (ch === ',') { row.push(field); field = ''; }
+          else if (ch === delimiter) { row.push(field); field = ''; }
           else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
           else { field += ch; }
         }
@@ -2285,7 +2301,16 @@ onclick="openLeaderDetailsModal(this.dataset)">
 
         try {
           var res = await fetch('/admin/members/import', { method: 'POST', body: body });
-          var result = await res.json().catch(function () { return {}; });
+          var raw = await res.text();
+          var result = {};
+          var parsed = true;
+          try { result = raw ? JSON.parse(raw) : {}; }
+          catch (parseErr) { parsed = false; }
+
+          if (!parsed) {
+            showAlert('danger', 'Import failed (' + res.status + '). The server did not return a valid response.');
+            return;
+          }
 
           if (res.ok && result.success) {
             showAlert('success', result.message || 'Members imported successfully.');
@@ -2298,7 +2323,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
             listErrors(result.errors);
           }
         } catch (err) {
-          showAlert('danger', 'Could not import the file, please try again.');
+          showAlert('danger', 'Could not import the file: ' + ((err && err.message) || 'network error') + '.');
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
