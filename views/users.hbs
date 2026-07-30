@@ -1313,14 +1313,6 @@
     try { localStorage.setItem(REG_STORAGE_KEY, JSON.stringify(obj)); } catch (e) {}
   }
 
-  // Apply persisted registration state on page load
-  (function () {
-    var regs = getRegistrations();
-    Object.keys(regs).forEach(function (eventId) {
-      var btn = document.getElementById('reg-btn-' + eventId);
-      if (btn && regs[eventId]) markRegistered(btn);
-    });
-  })();
 
   function openRegisterConfirm(eventId, eventTitle) {
     var btn = document.getElementById('reg-btn-' + eventId);
@@ -1332,9 +1324,6 @@
     var titleEl = document.getElementById('regConfirmEventTitle');
     if (titleEl) titleEl.textContent = eventTitle;
 
-    bootstrap.Modal.getOrCreateInstance(
-      document.getElementById('registerConfirmModal')
-    ).show();
   }
 
   function markRegistered(btn) {
