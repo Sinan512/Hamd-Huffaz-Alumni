@@ -745,9 +745,19 @@ router.patch('/leaders/:id/credentials', async function (req, res) {
       return res.status(400).json({ success: false, message: 'Password is required.' });
     }
 
+    /* Store sha256(salt + password) – never plain text. */
+    var leaderSalt = makeSalt();
     var leader = await BatchLeader.findByIdAndUpdate(
       req.params.id,
-      { $set: { admissionNumber: admissionNumber, password: password } },
+      {
+        $set: {
+          admissionNumber: admissionNumber,
+          salt: leaderSalt,
+          passwordHash: sha256(leaderSalt, password),
+          password: '',
+          passwordUpdatedAt: new Date()
+        }
+      },
       { new: true }
     );
     if (!leader) {
