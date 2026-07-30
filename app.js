@@ -15,8 +15,12 @@ var leadersRouter = require('./routes/leaders');
 
 var app = express();
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (optional — home page works without it)
+if (process.env.MONGODB_URI) {
+  connectDB();
+} else {
+  console.warn('MONGODB_URI not set — running without database (home page only).');
+}
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -35,32 +39,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 var SEVEN_DAYS_MS  = 7 * 24 * 60 * 60 * 1000;
 var SEVEN_DAYS_SEC = 7 * 24 * 60 * 60;
 
-if (!process.env.SESSION_SECRET) {
-  console.error('FATAL: SESSION_SECRET is not set. Add it to your environment variables.');
-}
-if (!process.env.MONGODB_URI) {
-  console.error('FATAL: MONGODB_URI is not set. Add it to your environment variables.');
-}
-
 var isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 
-// Required so the "secure" cookie works behind the Vercel proxy
+// Required so the "secure" cookie works behind a proxy
 app.set('trust proxy', 1);
 
-app.use(session({
+var sessionConfig = {
   name: 'hamd.sid',
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
   saveUninitialized: false,
-  rolling: true, // every request refreshes the 7 day window
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    collectionName: 'SESSIONS',
-    ttl: SEVEN_DAYS_SEC,   // MongoDB TTL index removes expired sessions
-    touchAfter: 24 * 3600, // only rewrite the doc once a day (unless changed)
-    autoRemove: 'native',
-    stringify: false
-  }),
+  rolling: true,
   cookie: {
     maxAge: SEVEN_DAYS_MS,
     httpOnly: true,
@@ -68,13 +57,31 @@ app.use(session({
     secure: isProduction,
     path: '/'
   }
-}));
+};
+
+if (process.env.MONGODB_URI) {
+  sessionConfig.store = MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'SESSIONS',
+    ttl: SEVEN_DAYS_SEC,
+    touchAfter: 24 * 3600,
+    autoRemove: 'native',
+    stringify: false
+  });
+}
+
+app.use(session(sessionConfig));
 
 // Make login state available to every view
 app.use(function (req, res, next) {
   res.locals.isLoggedIn = !!(req.session && req.session.memberId);
   res.locals.memberName = (req.session && req.session.memberName) || null;
   next();
+});
+
+// Home page — renders views/home.hbs (self-contained HTML, no layout wrapper)
+app.get('/', function(req, res) {
+  res.render('home', { layout: false });
 });
 
 app.use('/admin', adminRouter);
