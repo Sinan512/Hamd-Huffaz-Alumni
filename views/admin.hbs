@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}} - Alumni Admin Portal</title>
+  <link rel="icon" type="image/x-icon" href="/logo/favicon.ico">
+  <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png">
 
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,28 +78,17 @@
     }
 
     .sidebar .brand {
-      padding: 24px 28px;
-      font-size: 20px;
-      font-weight: 800;
-      color: #ffffff;
-      letter-spacing: -0.5px;
+      padding: 20px 24px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .sidebar .brand-icon {
-      width: 40px;
+    .sidebar .brand-logo img {
       height: 40px;
-      background: var(--primary-gradient);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 20px;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      max-width: 150px;
+      object-fit: contain;
     }
 
     .sidebar-menu {
@@ -907,12 +898,8 @@
   <!-- SIDEBAR NAVIGATION -->
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="brand-icon">
-        <i class="bi bi-mortarboard-fill"></i>
-      </div>
-      <div>
-        <span>Alumni</span><span style="color: #6366f1;">Space</span>
-        <div style="font-size: 10px; font-weight: 500; color: #64748b; margin-top: -2px;">MANAGEMENT SYSTEM</div>
+      <div class="brand-logo">
+        <img src="/logo/hamd-full-dark.png" alt="HAMD Logo">
       </div>
       <button type="button" class="sidebar-close-btn ms-auto" id="sidebarCloseBtn" aria-label="Close navigation">
         <i class="bi bi-x-lg"></i>

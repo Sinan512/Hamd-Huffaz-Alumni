@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}} - Member Dashboard</title>
+  <link rel="icon" type="image/x-icon" href="/logo/favicon.ico">
+  <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png">
 
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,6 +92,12 @@
       letter-spacing: 1px;
       margin-top: -2px;
     }
+
+    /* Theme-aware logo switching */
+    .logo-light-mode { display: block; }
+    .logo-dark-mode  { display: none;  }
+    [data-bs-theme="dark"] .logo-light-mode { display: none;  }
+    [data-bs-theme="dark"] .logo-dark-mode  { display: block; }
 
     .nav-icon-btn {
       width: 40px; height: 40px;
@@ -469,9 +477,11 @@
     <div class="boxed d-flex align-items-center justify-content-between flex-wrap gap-2">
 
       <!-- Brand -->
-      <div>
-        <div class="brand-title">Alumni<span>Portal</span></div>
-        <div class="brand-sub">Member Dashboard</div>
+      <div style="display:flex; align-items:center;">
+        <img src="/logo/hamd-full-light.png" alt="HAMD Logo" class="logo-light-mode"
+             style="height:40px; max-width:160px; object-fit:contain;">
+        <img src="/logo/hamd-full-dark.png"  alt="HAMD Logo" class="logo-dark-mode"
+             style="height:40px; max-width:160px; object-fit:contain;">
       </div>
 
       <!-- Right actions -->
