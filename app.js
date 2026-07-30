@@ -4,6 +4,8 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var session = require('express-session');
+var MongoStore = require('connect-mongo');
 
 var connectDB = require('./config/db');
 
@@ -25,6 +27,55 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+/* ================================================================== */
+/* SESSIONS  –  stored in MongoDB "SESSIONS" collection, 7 day validity */
+/* ================================================================== */
+
+var SEVEN_DAYS_MS  = 7 * 24 * 60 * 60 * 1000;
+var SEVEN_DAYS_SEC = 7 * 24 * 60 * 60;
+
+if (!process.env.SESSION_SECRET) {
+  console.error('FATAL: SESSION_SECRET is not set. Add it to your environment variables.');
+}
+if (!process.env.MONGODB_URI) {
+  console.error('FATAL: MONGODB_URI is not set. Add it to your environment variables.');
+}
+
+var isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
+
+// Required so the "secure" cookie works behind the Vercel proxy
+app.set('trust proxy', 1);
+
+app.use(session({
+  name: 'hamd.sid',
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  rolling: true, // every request refreshes the 7 day window
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'SESSIONS',
+    ttl: SEVEN_DAYS_SEC,   // MongoDB TTL index removes expired sessions
+    touchAfter: 24 * 3600, // only rewrite the doc once a day (unless changed)
+    autoRemove: 'native',
+    stringify: false
+  }),
+  cookie: {
+    maxAge: SEVEN_DAYS_MS,
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProduction,
+    path: '/'
+  }
+}));
+
+// Make login state available to every view
+app.use(function (req, res, next) {
+  res.locals.isLoggedIn = !!(req.session && req.session.memberId);
+  res.locals.memberName = (req.session && req.session.memberName) || null;
+  next();
+});
 
 app.use('/admin', adminRouter);
 app.use('/users', usersRouter);

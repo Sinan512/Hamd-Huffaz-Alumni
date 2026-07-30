@@ -159,9 +159,30 @@ function buildUserContext(doc) {
 /* AUTH GUARD                                                           */
 /* ================================================================== */
 
+var SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/* Session is valid only while the SESSIONS document exists (7 day TTL)
+   and it carries a memberId. */
+function isLoggedIn(req) {
+  return !!(req.session && req.session.memberId);
+}
+
 function requireAuth(req, res, next) {
-  if (req.session && req.session.memberId) return next();
+  if (isLoggedIn(req)) return next();
   return res.status(401).json({ success: false, message: 'Please log in first.' });
+}
+
+/* Fully clear the session document in MongoDB + the browser cookie */
+function clearSession(req, res, done) {
+  if (!req.session) {
+    res.clearCookie('hamd.sid', { path: '/' });
+    return done();
+  }
+  req.session.destroy(function (err) {
+    if (err) console.error('Session destroy failed:', err.message);
+    res.clearCookie('hamd.sid', { path: '/' });
+    return done();
+  });
 }
 
 /* ================================================================== */
@@ -171,8 +192,8 @@ function requireAuth(req, res, next) {
 router.get('/', async function (req, res, next) {
   await connectDB();
 
-  /* Not logged in → show login view */
-  if (!req.session || !req.session.memberId) {
+  /* Not logged in (no valid SESSIONS document) → show login view */
+  if (!isLoggedIn(req)) {
     return res.render('users', {
       layout: false,
       title:  'Alumni Member Portal',
@@ -186,9 +207,14 @@ router.get('/', async function (req, res, next) {
 
     /* Session has a stale id (member deleted) */
     if (!member) {
-      req.session.destroy(function () {});
-      return res.redirect('/');
+      return clearSession(req, res, function () {
+        return res.redirect('/users');
+      });
     }
+
+    /* Keep the session fresh: every visit extends validity to 7 more days */
+    req.session.lastSeenAt = new Date();
+    req.session.cookie.maxAge = SEVEN_DAYS_MS;
 
     var results = await Promise.all([getGalleryImages(), getAllEvents()]);
 
@@ -249,10 +275,37 @@ router.post('/login', async function (req, res, next) {
       return loginError('Incorrect password. Please try again.');
     }
 
-    req.session.memberId   = String(member._id);
-    req.session.memberName = member.name;
+    /* Regenerate the session id first (prevents session fixation), then
+       write the session details into the MongoDB "SESSIONS" collection. */
+    return req.session.regenerate(function (regenErr) {
+      if (regenErr) {
+        console.error('Session regenerate failed:', regenErr.message);
+        return next(regenErr);
+      }
 
-    return res.redirect('/');
+      var now = new Date();
+
+      req.session.memberId        = String(member._id);
+      req.session.memberName      = member.name;
+      req.session.admissionNumber = member.admissionNumber || '';
+      req.session.batch           = member.batch || '';
+      req.session.loginAt         = now;
+      req.session.lastSeenAt      = now;
+      req.session.expiresAt       = new Date(now.getTime() + SEVEN_DAYS_MS);
+
+      /* 7 day validity for both the cookie and the stored session */
+      req.session.cookie.maxAge = SEVEN_DAYS_MS;
+
+      /* Persist before redirecting so the SESSIONS document exists
+         by the time the browser makes the next request. */
+      return req.session.save(function (saveErr) {
+        if (saveErr) {
+          console.error('Session save failed:', saveErr.message);
+          return next(saveErr);
+        }
+        return res.redirect('/users');
+      });
+    });
   } catch (err) {
     console.error('Login failed:', err.message);
     return next(err);
@@ -263,10 +316,20 @@ router.post('/login', async function (req, res, next) {
 /* GET /logout                                                          */
 /* ================================================================== */
 
-router.get('/logout', function (req, res, next) {
-  req.session.destroy(function (err) {
-    if (err) console.error('Session destroy failed:', err.message);
-    return res.redirect('/');
+router.get('/logout', function (req, res) {
+  /* Removes the document from the SESSIONS collection and clears the cookie */
+  return clearSession(req, res, function () {
+    return res.redirect('/users');
+  });
+});
+
+/* POST /logout – same behaviour for form/fetch based logout */
+router.post('/logout', function (req, res) {
+  return clearSession(req, res, function () {
+    if (req.xhr || (req.headers.accept || '').indexOf('json') !== -1) {
+      return res.json({ success: true, message: 'Logged out.' });
+    }
+    return res.redirect('/users');
   });
 });
 
