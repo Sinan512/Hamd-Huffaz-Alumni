@@ -530,6 +530,181 @@ router.post('/members', async function (req, res) {
 });
 
 /* ================================================================== */
+/* Editable member fields (everything stored in MEMBER_DETAILS except  */
+/* system fields and event registrations).                             */
+/* ================================================================== */
+var MEMBER_TEXT_FIELDS = [
+  'admissionNumber', 'name', 'place', 'batch', 'email', 'password',
+  'address', 'phone', 'whatsapp',
+  'admYear', 'leaveYear', 'eduQual', 'religiousDegree', 'higherEdu',
+  'currentStatus', 'workLocation', 'jobRole', 'college', 'course',
+  'skills', 'languages', 'orgRoles',
+  'earningMembers', 'hasDependents', 'dependentsWho', 'parentsDeceased',
+  'chronicIll', 'chronicIllDetails',
+  'fatherName', 'motherName',
+  'ownHouse', 'married'
+];
+var MEMBER_NUMBER_FIELDS = ['familyCount', 'childrenCount'];
+var MEMBER_YESNO_FIELDS = ['higherEdu', 'hasDependents', 'parentsDeceased', 'chronicIll', 'ownHouse', 'married'];
+
+function serialiseMember(doc) {
+  var out = { _id: String(doc._id) };
+  MEMBER_TEXT_FIELDS.forEach(function (key) { out[key] = doc[key] == null ? '' : String(doc[key]); });
+  MEMBER_NUMBER_FIELDS.forEach(function (key) {
+    out[key] = (doc[key] === null || doc[key] === undefined || doc[key] === '') ? '' : Number(doc[key]);
+  });
+  out.createdAt = doc.createdAt ? new Date(doc.createdAt).toISOString() : null;
+  out.updatedAt = doc.updatedAt ? new Date(doc.updatedAt).toISOString() : null;
+  out.registeredEvents = Array.isArray(doc.registeredEvents) ? doc.registeredEvents.length : 0;
+  return out;
+}
+
+/* ================================================================== */
+/* GET /admin/members/:id  – full member document (admin view)          */
+/* ================================================================== */
+router.get('/members/:id', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid member id.' });
+    }
+    var doc = await MemberDetails.findById(req.params.id).lean();
+    if (!doc) return res.status(404).json({ success: false, message: 'Member not found.' });
+    return res.json({ success: true, member: serialiseMember(doc) });
+  } catch (error) {
+    console.error('Member lookup failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load the member.' });
+  }
+});
+
+/* ================================================================== */
+/* PUT /admin/members/:id  – update member details                      */
+/* ================================================================== */
+router.put('/members/:id', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid member id.' });
+    }
+    var member = await MemberDetails.findById(req.params.id);
+    if (!member) return res.status(404).json({ success: false, message: 'Member not found.' });
+
+    var body = req.body || {};
+    var update = {};
+
+    MEMBER_TEXT_FIELDS.forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(body, key)) return;
+      var value = String(body[key] == null ? '' : body[key]).trim();
+      if (key === 'email') value = value.toLowerCase();
+      if (MEMBER_YESNO_FIELDS.indexOf(key) !== -1 && ['yes', 'no', ''].indexOf(value) === -1) {
+        value = '';
+      }
+      update[key] = value;
+    });
+
+    MEMBER_NUMBER_FIELDS.forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(body, key)) return;
+      var raw = String(body[key] == null ? '' : body[key]).trim();
+      if (raw === '') { update[key] = null; return; }
+      var num = Number(raw);
+      if (!isFinite(num) || num < 0) { update[key] = null; return; }
+      update[key] = num;
+    });
+
+    var admissionNumber = update.admissionNumber !== undefined ? update.admissionNumber : member.admissionNumber;
+    var name  = update.name  !== undefined ? update.name  : member.name;
+    var batch = update.batch !== undefined ? update.batch : member.batch;
+    var email = update.email !== undefined ? update.email : member.email;
+
+    if (!admissionNumber || !name || !batch || !email) {
+      return res.status(400).json({ success: false, message: 'Admission number, name, batch and email are required.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    var duplicate = await MemberDetails.findOne({
+      _id: { $ne: member._id },
+      admissionNumber: new RegExp('^' + escapeRegex(admissionNumber) + '$', 'i'),
+      name:  new RegExp('^' + escapeRegex(name) + '$', 'i'),
+      batch: batch
+    }).lean();
+    if (duplicate) {
+      return res.status(409).json({ success: false, message: 'Another member with the same admission number, name and batch already exists.' });
+    }
+
+    var previousBatch = batchYear(member.batch);
+
+    Object.keys(update).forEach(function (key) { member[key] = update[key]; });
+    await member.save();
+
+    var newBatch = batchYear(member.batch);
+    if (previousBatch !== newBatch) {
+      await unlinkMemberFromBatch(member._id, previousBatch);
+      await linkMemberToBatch(member);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Member details updated successfully.',
+      member: serialiseMember(member.toObject())
+    });
+  } catch (error) {
+    if (error && error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Another member with the same admission number, name and batch already exists.' });
+    }
+    console.error('Update member failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not update the member. Please try again.' });
+  }
+});
+
+/* ================================================================== */
+/* DELETE /admin/members/:id                                            */
+/* Removes the member from MEMBER_DETAILS, BATCH_DETAILS, BATCH_LEADERS */
+/* and any active login session in the SESSIONS collection.             */
+/* ================================================================== */
+router.delete('/members/:id', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid member id.' });
+    }
+    var member = await MemberDetails.findById(req.params.id).lean();
+    if (!member) return res.status(404).json({ success: false, message: 'Member not found.' });
+
+    var memberId = String(member._id);
+
+    /* 1. Remove the member document itself */
+    await MemberDetails.deleteOne({ _id: member._id });
+
+    /* 2. Detach from every batch that references it */
+    await unlinkMemberFromBatch(member._id, batchYear(member.batch));
+
+    /* 3. Remove any batch-leader assignment */
+    var leadersRemoved = 0;
+    try {
+      var leaderResult = await BatchLeader.deleteMany({ memberId: member._id });
+      leadersRemoved = (leaderResult && leaderResult.deletedCount) || 0;
+    } catch (leaderError) {
+      console.error('Removing batch leader record failed:', leaderError.message);
+    }
+
+    /* 4. Drop login sessions belonging to this member */
+    var sessionsRemoved = await removeMemberSessions(memberId);
+
+    return res.json({
+      success: true,
+      message: 'Member "' + (member.name || 'Unnamed') + '" was permanently deleted.',
+      leadersRemoved: leadersRemoved,
+      sessionsRemoved: sessionsRemoved
+    });
+  } catch (error) {
+    console.error('Delete member failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not delete the member. Please try again.' });
+  }
+});
+
+/* ================================================================== */
 /* CSV IMPORT: multer instance + tiny RFC4180-ish parser                */
 /* ================================================================== */
 var csvUpload = multer({
@@ -758,6 +933,48 @@ async function linkMemberToBatch(member) {
     if (batch) { batch.memberCount = batch.memberIds.length; await batch.save(); }
   } catch (error) {
     console.error('Linking member to batch failed:', error.message);
+  }
+}
+
+/* Remove a member id from BATCH_DETAILS and refresh the stored count.  */
+async function unlinkMemberFromBatch(memberId, year) {
+  try {
+    var filter = /^\d{4}$/.test(String(year || '')) ? { year: String(year) } : { memberIds: memberId };
+    await BatchDetails.updateMany(filter, { $pull: { memberIds: memberId } });
+    /* Safety net: the member may be listed under another batch document. */
+    await BatchDetails.updateMany({ memberIds: memberId }, { $pull: { memberIds: memberId } });
+
+    var batches = await BatchDetails.find({});
+    for (var i = 0; i < batches.length; i++) {
+      var doc = batches[i];
+      var count = Array.isArray(doc.memberIds) ? doc.memberIds.length : 0;
+      if (doc.memberCount !== count) { doc.memberCount = count; await doc.save(); }
+    }
+  } catch (error) {
+    console.error('Unlinking member from batch failed:', error.message);
+  }
+}
+
+/* Delete every express-session document that belongs to this member.   */
+async function removeMemberSessions(memberId) {
+  try {
+    var db = mongoose.connection && mongoose.connection.db;
+    if (!db) return 0;
+    var sessions = db.collection('SESSIONS');
+    var removed = 0;
+
+    /* Sessions may be stored as objects (stringify:false) or as a JSON
+       string, so match both shapes.                                     */
+    var objectMatch = await sessions.deleteMany({ 'session.memberId': memberId });
+    removed += (objectMatch && objectMatch.deletedCount) || 0;
+
+    var stringMatch = await sessions.deleteMany({ session: { $regex: memberId } });
+    removed += (stringMatch && stringMatch.deletedCount) || 0;
+
+    return removed;
+  } catch (error) {
+    console.error('Removing member sessions failed:', error.message);
+    return 0;
   }
 }
 

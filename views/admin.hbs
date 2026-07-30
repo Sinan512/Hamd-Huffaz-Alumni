@@ -1046,7 +1046,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
                 </thead>
                 <tbody id="membersTableBody">
                   {{#each allMembers}}
-                  <tr data-batch="{{this.batch}}" data-name="{{this.name}}" data-email="{{this.email}}">
+                  <tr data-batch="{{this.batch}}" data-name="{{this.name}}" data-email="{{this.email}}" data-member-id="{{this.id}}">
                     <td>
                       <div class="d-flex align-items-center gap-3">
                         <div class="member-avatar-wrapper">
@@ -1063,11 +1063,13 @@ onclick="openLeaderDetailsModal(this.dataset)">
                     <td><span class="batch-tag">{{this.batch}}</span></td>
                     <td class="text-muted small fw-medium">{{this.joinedDate}}</td>
                     <td class="text-end">
-                      <button class="btn btn-sm btn-light border rounded-2 px-2" title="View Profile">
+                      <button type="button" class="btn btn-sm btn-light border rounded-2 px-2 text-primary"
+                              title="View / Edit Member" data-member-view="{{this.id}}">
                         <i class="bi bi-eye"></i>
                       </button>
-                      <button class="btn btn-sm btn-light border rounded-2 px-2 text-primary" title="Edit Member">
-                        <i class="bi bi-pencil"></i>
+                      <button type="button" class="btn btn-sm btn-light border rounded-2 px-2 text-danger"
+                              title="Delete Member" data-member-delete="{{this.id}}" data-member-name="{{this.name}}">
+                        <i class="bi bi-trash"></i>
                       </button>
                     </td>
                   </tr>
@@ -1893,6 +1895,12 @@ onclick="openLeaderDetailsModal(this.dataset)">
 
       /* Initial render */
       render();
+
+      /* Allow other scripts (member delete) to refresh the table */
+      window.refreshMembersTable = function () {
+        allRows = Array.from(tbody.querySelectorAll('tr[data-batch]'));
+        render();
+      };
     })();
   </script>
 
@@ -3413,6 +3421,411 @@ onclick="openLeaderDetailsModal(this.dataset)">
   selectEl.addEventListener('change', load);
   if (refreshEl) refreshEl.addEventListener('click', load);
   load();
+})();
+</script>
+
+<!-- ==================== MEMBER DETAILS (VIEW / EDIT) ==================== -->
+<div class="modal fade" id="memberDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-2">
+        <div>
+          <h5 class="modal-title fw-bold mb-0" id="memberDetailsTitle">Member Details</h5>
+          <div class="text-muted small" id="memberDetailsSubtitle">Full record from MEMBER_DETAILS</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body pt-2">
+        <div id="memberDetailsLoading" class="text-center py-5">
+          <span class="spinner-border spinner-border-sm text-secondary me-2"></span>
+          <span class="text-muted small">Loading member…</span>
+        </div>
+        <div id="memberDetailsError" class="alert alert-danger rounded-3 py-2 px-3 small d-none mb-0"></div>
+        <div id="memberDetailsAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+
+        <form id="memberDetailsForm" class="d-none">
+          <div class="row g-3" id="memberDetailsFields"></div>
+        </form>
+      </div>
+
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-outline-primary rounded-3 d-none" id="memberEditToggleBtn">
+          <i class="bi bi-pencil me-1"></i>Edit
+        </button>
+        <button type="button" class="btn btn-light border rounded-3 d-none" id="memberCancelEditBtn">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-3 d-none" id="memberSaveBtn">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DELETE MEMBER CONFIRMATION ==================== -->
+<div class="modal fade" id="deleteMemberModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-2">
+        <h5 class="modal-title fw-bold text-danger mb-0"><i class="bi bi-exclamation-octagon-fill me-2"></i>Delete member</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-0">
+        <p class="small mb-2">
+          You are about to permanently delete <strong id="deleteMemberName"></strong>. This will remove the member from:
+        </p>
+        <ul class="small text-muted mb-3">
+          <li>the MEMBER_DETAILS collection</li>
+          <li>their batch in BATCH_DETAILS (member count is recalculated)</li>
+          <li>any batch-leader assignment</li>
+          <li>all active login sessions</li>
+        </ul>
+        <p class="small mb-2">Type the member's name <strong id="deleteMemberEcho"></strong> below to confirm. This cannot be undone.</p>
+        <input type="text" class="form-control rounded-3" id="deleteMemberConfirmInput" placeholder="Type the member name" autocomplete="off">
+        <div id="deleteMemberAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3"></div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger rounded-3" id="deleteMemberConfirmBtn" disabled>
+          <i class="bi bi-trash me-1"></i>Delete permanently
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var FIELDS = [
+    { group: 'Core details' },
+    { key: 'admissionNumber', label: 'Admission Number', col: 6 },
+    { key: 'name',            label: 'Name',             col: 6 },
+    { key: 'place',           label: 'Place',            col: 6 },
+    { key: 'batch',           label: 'Batch',            col: 6 },
+    { key: 'email',           label: 'Email',            col: 6, type: 'email' },
+    { key: 'password',        label: 'Password',         col: 6, secret: true },
+
+    { group: 'Contact' },
+    { key: 'address',  label: 'Address',  col: 12, textarea: true },
+    { key: 'phone',    label: 'Phone',    col: 6 },
+    { key: 'whatsapp', label: 'WhatsApp', col: 6 },
+
+    { group: 'Education' },
+    { key: 'admYear',         label: 'Year of Admission',         col: 6 },
+    { key: 'leaveYear',       label: 'Year of Leaving',           col: 6 },
+    { key: 'eduQual',         label: 'Educational Qualification', col: 6 },
+    { key: 'religiousDegree', label: 'Religious / General Degree',col: 6 },
+    { key: 'higherEdu',       label: 'Higher Education',          col: 6, yesno: true },
+
+    { group: 'Job / Study' },
+    { key: 'currentStatus', label: 'Current Status', col: 6 },
+    { key: 'workLocation',  label: 'Work Location',  col: 6 },
+    { key: 'jobRole',       label: 'Job Role',       col: 6 },
+    { key: 'college',       label: 'College',        col: 6 },
+    { key: 'course',        label: 'Course',         col: 6 },
+
+    { group: 'Skills & roles' },
+    { key: 'skills',    label: 'Creative Skills',     col: 12 },
+    { key: 'languages', label: 'Languages Known',     col: 6 },
+    { key: 'orgRoles',  label: 'Organizational Roles',col: 6 },
+
+    { group: 'Family' },
+    { key: 'familyCount',       label: 'Family Members',         col: 6, number: true },
+    { key: 'earningMembers',    label: 'Earning Members',        col: 6 },
+    { key: 'hasDependents',     label: 'Has Dependents',         col: 6, yesno: true },
+    { key: 'dependentsWho',     label: 'Dependents (who)',       col: 6 },
+    { key: 'parentsDeceased',   label: 'Parents Deceased',       col: 6, yesno: true },
+    { key: 'chronicIll',        label: 'Chronic Illness',        col: 6, yesno: true },
+    { key: 'chronicIllDetails', label: 'Chronic Illness Details',col: 12 },
+    { key: 'fatherName',        label: "Father's Name",          col: 6 },
+    { key: 'motherName',        label: "Mother's Name",          col: 6 },
+
+    { group: 'Other' },
+    { key: 'ownHouse',      label: 'Own House',      col: 6, yesno: true },
+    { key: 'married',       label: 'Married',        col: 6, yesno: true },
+    { key: 'childrenCount', label: 'Children',       col: 6, number: true }
+  ];
+
+  var modalEl      = document.getElementById('memberDetailsModal');
+  var deleteEl     = document.getElementById('deleteMemberModal');
+  if (!modalEl || !deleteEl) return;
+
+  var loadingEl    = document.getElementById('memberDetailsLoading');
+  var errorEl      = document.getElementById('memberDetailsError');
+  var alertEl      = document.getElementById('memberDetailsAlert');
+  var formEl       = document.getElementById('memberDetailsForm');
+  var fieldsEl     = document.getElementById('memberDetailsFields');
+  var titleEl      = document.getElementById('memberDetailsTitle');
+  var subtitleEl   = document.getElementById('memberDetailsSubtitle');
+  var editBtn      = document.getElementById('memberEditToggleBtn');
+  var cancelBtn    = document.getElementById('memberCancelEditBtn');
+  var saveBtn      = document.getElementById('memberSaveBtn');
+
+  var currentMember = null;
+  var editing = false;
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function showAlert(type, message) {
+    alertEl.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-3';
+    alertEl.textContent = message;
+  }
+  function hideAlert() {
+    alertEl.className = 'alert d-none rounded-3 py-2 px-3 small mb-3';
+    alertEl.textContent = '';
+  }
+
+  function displayValue(field, member) {
+    var raw = member[field.key];
+    if (raw === '' || raw === null || raw === undefined) return '—';
+    return String(raw);
+  }
+
+  function renderFields() {
+    var html = '';
+    FIELDS.forEach(function (field) {
+      if (field.group) {
+        html += '<div class="col-12 mt-4 mb-0">' +
+                  '<div class="text-uppercase fw-bold text-muted" style="font-size:11px;letter-spacing:.06em;">' +
+                    esc(field.group) +
+                  '</div><hr class="mt-1 mb-0"></div>';
+        return;
+      }
+
+      var value = currentMember ? currentMember[field.key] : '';
+      var col   = 'col-md-' + (field.col || 6) + ' col-12';
+      html += '<div class="' + col + '">';
+      html += '<label class="form-label small fw-semibold text-muted mb-1">' + esc(field.label) + '</label>';
+
+      if (!editing) {
+        var shown = displayValue(field, currentMember || {});
+        if (field.secret) {
+          html += '<div class="d-flex align-items-center gap-2">' +
+                    '<div class="fw-medium text-dark small text-break" data-secret-value="1" data-real="' + esc(shown) + '">' +
+                      (shown === '—' ? '—' : '••••••••') +
+                    '</div>' +
+                    (shown === '—' ? '' :
+                      '<button type="button" class="btn btn-sm btn-light border rounded-2 py-0 px-2" data-toggle-secret="1" title="Show / hide password">' +
+                        '<i class="bi bi-eye"></i></button>') +
+                  '</div>';
+        } else {
+          html += '<div class="fw-medium text-dark small text-break">' + esc(shown) + '</div>';
+        }
+      } else if (field.yesno) {
+        html += '<select class="form-select form-select-sm rounded-3" name="' + field.key + '">' +
+                  '<option value=""' + (value === '' ? ' selected' : '') + '>Not specified</option>' +
+                  '<option value="yes"' + (value === 'yes' ? ' selected' : '') + '>Yes</option>' +
+                  '<option value="no"'  + (value === 'no'  ? ' selected' : '') + '>No</option>' +
+                '</select>';
+      } else if (field.textarea) {
+        html += '<textarea class="form-control form-control-sm rounded-3" rows="2" name="' + field.key + '">' + esc(value) + '</textarea>';
+      } else {
+        var type = field.number ? 'number' : (field.type || 'text');
+        html += '<input class="form-control form-control-sm rounded-3" type="' + type + '" name="' + field.key + '" value="' + esc(value) + '"' +
+                (field.number ? ' min="0"' : '') + '>';
+      }
+
+      html += '</div>';
+    });
+
+    fieldsEl.innerHTML = html;
+  }
+
+  fieldsEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-toggle-secret]');
+    if (!btn) return;
+    var holder = btn.parentElement.querySelector('[data-secret-value]');
+    if (!holder) return;
+    var real = holder.getAttribute('data-real');
+    var hidden = holder.textContent.indexOf('•') !== -1;
+    holder.textContent = hidden ? real : '••••••••';
+    btn.innerHTML = hidden ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+  });
+
+  function setMode(isEditing) {
+    editing = isEditing;
+    renderFields();
+    editBtn.classList.toggle('d-none', isEditing);
+    cancelBtn.classList.toggle('d-none', !isEditing);
+    saveBtn.classList.toggle('d-none', !isEditing);
+  }
+
+  async function openMember(memberId) {
+    currentMember = null;
+    editing = false;
+    hideAlert();
+    errorEl.classList.add('d-none');
+    formEl.classList.add('d-none');
+    loadingEl.classList.remove('d-none');
+    editBtn.classList.add('d-none');
+    cancelBtn.classList.add('d-none');
+    saveBtn.classList.add('d-none');
+    titleEl.textContent = 'Member Details';
+    subtitleEl.textContent = 'Full record from MEMBER_DETAILS';
+
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+    try {
+      var res = await fetch('/admin/members/' + encodeURIComponent(memberId), { credentials: 'same-origin' });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok || !data.success) throw new Error(data.message || 'Could not load the member.');
+
+      currentMember = data.member;
+      titleEl.textContent = currentMember.name || 'Member Details';
+      subtitleEl.textContent = 'Admission ' + (currentMember.admissionNumber || '—') + ' · Batch ' + (currentMember.batch || '—');
+      loadingEl.classList.add('d-none');
+      formEl.classList.remove('d-none');
+      setMode(false);
+      editBtn.classList.remove('d-none');
+    } catch (err) {
+      loadingEl.classList.add('d-none');
+      errorEl.textContent = err.message || 'Could not load the member.';
+      errorEl.classList.remove('d-none');
+    }
+  }
+
+  editBtn.addEventListener('click', function () { hideAlert(); setMode(true); });
+  cancelBtn.addEventListener('click', function () { hideAlert(); setMode(false); });
+
+  saveBtn.addEventListener('click', async function () {
+    if (!currentMember) return;
+    hideAlert();
+
+    var payload = {};
+    FIELDS.forEach(function (field) {
+      if (field.group) return;
+      var input = formEl.querySelector('[name="' + field.key + '"]');
+      if (input) payload[field.key] = input.value;
+    });
+
+    saveBtn.disabled = true;
+    var original = saveBtn.textContent;
+    saveBtn.textContent = 'Saving…';
+
+    try {
+      var res = await fetch('/admin/members/' + encodeURIComponent(currentMember._id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok || !data.success) throw new Error(data.message || 'Could not update the member.');
+
+      currentMember = data.member;
+      titleEl.textContent = currentMember.name || 'Member Details';
+      subtitleEl.textContent = 'Admission ' + (currentMember.admissionNumber || '—') + ' · Batch ' + (currentMember.batch || '—');
+      setMode(false);
+      showAlert('success', data.message || 'Member details updated successfully.');
+      updateRow(currentMember);
+    } catch (err) {
+      showAlert('danger', err.message || 'Could not update the member.');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = original;
+    }
+  });
+
+  function findRow(memberId) {
+    return document.querySelector('#membersTableBody tr[data-member-id="' + memberId + '"]');
+  }
+
+  function updateRow(member) {
+    var row = findRow(member._id);
+    if (!row) return;
+    row.setAttribute('data-batch', member.batch || '');
+    row.setAttribute('data-name', member.name || '');
+    row.setAttribute('data-email', member.email || '');
+    var nameEl  = row.querySelector('.fw-bold.text-dark');
+    var mailEl  = row.querySelector('.text-muted.small');
+    var batchEl = row.querySelector('.batch-tag');
+    if (nameEl)  nameEl.textContent  = member.name  || '';
+    if (mailEl)  mailEl.textContent  = member.email || '';
+    if (batchEl) batchEl.textContent = member.batch || '';
+    var delBtn = row.querySelector('[data-member-delete]');
+    if (delBtn) delBtn.setAttribute('data-member-name', member.name || '');
+    if (typeof window.refreshMembersTable === 'function') window.refreshMembersTable();
+  }
+
+  /* ---------------- delete flow ---------------- */
+  var deleteNameEl    = document.getElementById('deleteMemberName');
+  var deleteEchoEl    = document.getElementById('deleteMemberEcho');
+  var deleteInput     = document.getElementById('deleteMemberConfirmInput');
+  var deleteConfirmBtn= document.getElementById('deleteMemberConfirmBtn');
+  var deleteAlertEl   = document.getElementById('deleteMemberAlert');
+  var pendingDelete   = null;
+
+  function showDeleteAlert(type, message) {
+    deleteAlertEl.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-0 mt-3';
+    deleteAlertEl.textContent = message;
+  }
+  function hideDeleteAlert() {
+    deleteAlertEl.className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3';
+    deleteAlertEl.textContent = '';
+  }
+
+  function openDelete(memberId, memberName) {
+    pendingDelete = { id: memberId, name: memberName || '' };
+    hideDeleteAlert();
+    deleteInput.value = '';
+    deleteConfirmBtn.disabled = true;
+    deleteNameEl.textContent = pendingDelete.name || 'this member';
+    deleteEchoEl.textContent = '"' + (pendingDelete.name || '') + '"';
+    bootstrap.Modal.getOrCreateInstance(deleteEl).show();
+    setTimeout(function () { deleteInput.focus(); }, 300);
+  }
+
+  deleteInput.addEventListener('input', function () {
+    var expected = (pendingDelete && pendingDelete.name ? pendingDelete.name : '').trim().toLowerCase();
+    deleteConfirmBtn.disabled = !expected || deleteInput.value.trim().toLowerCase() !== expected;
+  });
+
+  deleteConfirmBtn.addEventListener('click', async function () {
+    if (!pendingDelete) return;
+    hideDeleteAlert();
+    deleteConfirmBtn.disabled = true;
+    var original = deleteConfirmBtn.innerHTML;
+    deleteConfirmBtn.innerHTML = 'Deleting…';
+
+    try {
+      var res = await fetch('/admin/members/' + encodeURIComponent(pendingDelete.id), {
+        method: 'DELETE',
+        credentials: 'same-origin'
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok || !data.success) throw new Error(data.message || 'Could not delete the member.');
+
+      var row = findRow(pendingDelete.id);
+      if (row) row.remove();
+      if (typeof window.refreshMembersTable === 'function') window.refreshMembersTable();
+
+      bootstrap.Modal.getOrCreateInstance(deleteEl).hide();
+      pendingDelete = null;
+    } catch (err) {
+      showDeleteAlert('danger', err.message || 'Could not delete the member.');
+      deleteConfirmBtn.disabled = false;
+    } finally {
+      deleteConfirmBtn.innerHTML = original;
+    }
+  });
+
+  /* ---------------- row action delegation ---------------- */
+  document.addEventListener('click', function (e) {
+    var viewBtn = e.target.closest('[data-member-view]');
+    if (viewBtn) {
+      e.preventDefault();
+      openMember(viewBtn.getAttribute('data-member-view'));
+      return;
+    }
+    var delBtn = e.target.closest('[data-member-delete]');
+    if (delBtn) {
+      e.preventDefault();
+      openDelete(delBtn.getAttribute('data-member-delete'), delBtn.getAttribute('data-member-name'));
+    }
+  });
 })();
 </script>
 </body>
