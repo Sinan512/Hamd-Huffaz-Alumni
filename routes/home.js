@@ -6,3 +6,5 @@ router.get('/', function (req, res) {
     layout: false
   });
 });
+
+module.exports = router;
