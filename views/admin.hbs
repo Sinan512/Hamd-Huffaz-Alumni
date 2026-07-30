@@ -724,6 +724,182 @@
     [data-bs-theme="dark"] .btn-outline-secondary { color: #cbd5e1; border-color: var(--card-border); }
     [data-bs-theme="dark"] .list-group-item { background-color: transparent; color: var(--text-main); border-color: var(--card-border); }
 
+    /* ---- Dark mode: custom table ---- */
+    [data-bs-theme="dark"] .custom-table th {
+      background: #1a2235;
+      color: #94a3b8;
+      border-bottom-color: var(--card-border);
+    }
+    [data-bs-theme="dark"] .custom-table td {
+      color: #cbd5e1;
+      border-bottom-color: rgba(148, 163, 184, 0.1);
+    }
+    [data-bs-theme="dark"] .custom-table tbody tr:hover {
+      background-color: #1a2235;
+    }
+
+    /* ---- Dark mode: batch tag ---- */
+    [data-bs-theme="dark"] .batch-tag {
+      background: #1e293b;
+      color: #94a3b8;
+    }
+
+    /* ---- Dark mode: event items ---- */
+    [data-bs-theme="dark"] .event-item {
+      border-bottom-color: rgba(148, 163, 184, 0.1);
+    }
+    [data-bs-theme="dark"] .event-item:hover {
+      background: #1a2235;
+    }
+    [data-bs-theme="dark"] .event-date-box {
+      background: #1e293b;
+    }
+    [data-bs-theme="dark"] .event-date-day {
+      color: #e2e8f0;
+    }
+
+    /* ---- Dark mode: quick action buttons ---- */
+    [data-bs-theme="dark"] .quick-action-btn {
+      background: #1e293b;
+      border-color: var(--card-border);
+      color: #cbd5e1;
+    }
+    [data-bs-theme="dark"] .quick-action-btn:hover {
+      background: var(--primary-gradient);
+      color: #ffffff;
+      border-color: transparent;
+    }
+
+    /* ---- Dark mode: gallery ---- */
+    [data-bs-theme="dark"] .gallery-tile {
+      border-color: var(--card-border);
+      background: #1a2235;
+    }
+    [data-bs-theme="dark"] .gallery-caption {
+      color: #94a3b8;
+    }
+
+    /* ---- Dark mode: activity feed ---- */
+    [data-bs-theme="dark"] .activity-feed::before {
+      background: rgba(148, 163, 184, 0.2);
+    }
+    [data-bs-theme="dark"] .activity-icon {
+      box-shadow: 0 0 0 4px #151c2c;
+    }
+
+    /* ---- Dark mode: member avatars ---- */
+    [data-bs-theme="dark"] .member-avatar,
+    [data-bs-theme="dark"] .status-dot {
+      border-color: #151c2c;
+    }
+    [data-bs-theme="dark"] .member-avatar-icon {
+      border-color: #151c2c;
+      background: #1e2a45;
+      color: #818cf8;
+    }
+
+    /* ---- Dark mode: nav badge dot ---- */
+    [data-bs-theme="dark"] .nav-icon-btn .badge-dot {
+      border-color: #111827;
+    }
+
+    /* ---- Dark mode: Bootstrap bg-light / text-dark ---- */
+    [data-bs-theme="dark"] .text-dark,
+    [data-bs-theme="dark"] .fw-bold.text-dark {
+      color: #e2e8f0 !important;
+    }
+    [data-bs-theme="dark"] .bg-light:not(.badge) {
+      background-color: #1e293b !important;
+      color: #cbd5e1 !important;
+    }
+    [data-bs-theme="dark"] .badge.bg-light {
+      background-color: #1e293b !important;
+      color: #94a3b8 !important;
+    }
+    [data-bs-theme="dark"] .table-light,
+    [data-bs-theme="dark"] thead.table-light th {
+      background-color: #1a2235 !important;
+      color: #94a3b8 !important;
+      border-color: var(--card-border) !important;
+    }
+
+    /* ---- Dark mode: soft-color backgrounds ---- */
+    [data-bs-theme="dark"] .bg-indigo-soft { background: #1e2a45 !important; }
+    [data-bs-theme="dark"] .bg-emerald-soft { background: #0f2e24 !important; }
+    [data-bs-theme="dark"] .bg-amber-soft { background: #2e1f00 !important; }
+    [data-bs-theme="dark"] .bg-purple-soft { background: #1e1040 !important; }
+
+    /* ---- Dark mode: status badges ---- */
+    [data-bs-theme="dark"] .badge-active { background: #0f2e24; color: #34d399; }
+    [data-bs-theme="dark"] .badge-verified { background: #0f1f40; color: #60a5fa; }
+    [data-bs-theme="dark"] .badge-pending { background: #2e1f00; color: #fbbf24; }
+    [data-bs-theme="dark"] .trend-up { background: #0f2e24; color: #34d399; }
+
+    /* ---- Dark mode: dropdown items ---- */
+    [data-bs-theme="dark"] .dropdown-item {
+      color: #cbd5e1;
+    }
+    [data-bs-theme="dark"] .dropdown-item:hover,
+    [data-bs-theme="dark"] .dropdown-item:focus {
+      background-color: #1e293b;
+      color: #f1f5f9;
+    }
+    [data-bs-theme="dark"] .dropdown-divider {
+      border-color: var(--card-border);
+    }
+
+    /* ---- Dark mode: form helpers ---- */
+    [data-bs-theme="dark"] .form-label { color: #cbd5e1; }
+    [data-bs-theme="dark"] .form-text  { color: #64748b; }
+    [data-bs-theme="dark"] .bg-light-subtle {
+      background-color: #1a2235 !important;
+    }
+    [data-bs-theme="dark"] code {
+      color: #818cf8;
+      background-color: #1e293b;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    /* ---- Dark mode: pagination & outline buttons ---- */
+    [data-bs-theme="dark"] .btn-outline-secondary {
+      background-color: transparent;
+      color: #94a3b8;
+      border-color: var(--card-border);
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary:hover {
+      background-color: #1e293b;
+      color: #e2e8f0;
+    }
+
+    /* ---- Dark mode: table-hover in registrations section ---- */
+    [data-bs-theme="dark"] .table-hover > tbody > tr:hover > * {
+      background-color: #1a2235;
+      color: #cbd5e1;
+    }
+    [data-bs-theme="dark"] .table th,
+    [data-bs-theme="dark"] .table td {
+      border-color: rgba(148, 163, 184, 0.12);
+    }
+
+    /* ---- Dark mode: borders ---- */
+    [data-bs-theme="dark"] .border {
+      border-color: var(--card-border) !important;
+    }
+    [data-bs-theme="dark"] .border-top { border-top-color: var(--card-border) !important; }
+    [data-bs-theme="dark"] .border-bottom { border-bottom-color: var(--card-border) !important; }
+
+    /* ---- Dark mode: pagination bar border ---- */
+    [data-bs-theme="dark"] #membersPaginationBar {
+      border-top-color: var(--card-border) !important;
+    }
+
+    /* ---- Dark mode: stat card decorative elements ---- */
+    [data-bs-theme="dark"] .stat-indigo .stat-icon-wrapper { background: rgba(99, 102, 241, 0.18); }
+    [data-bs-theme="dark"] .stat-emerald .stat-icon-wrapper { background: rgba(16, 185, 129, 0.18); }
+    [data-bs-theme="dark"] .stat-purple .stat-icon-wrapper { background: rgba(139, 92, 246, 0.18); }
+    [data-bs-theme="dark"] .stat-amber .stat-icon-wrapper { background: rgba(245, 158, 11, 0.18); }
+
   </style>
 </head>
 <body>
@@ -3903,7 +4079,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold small">Name</label>
-          <input type="text" class="form-control rounded-3" name="name" maxlength="80" value="{{admin.name}}" required>
+          <input type="text" class="form-control rounded-3" name="displayName" maxlength="80" value="{{admin.displayName}}" required>
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold small">Batch</label>
