@@ -287,6 +287,51 @@ router.get('/events/:id', async function (req, res) {
 });
 
 /* ================================================================== */
+/* GET  /admin/events/:id/registrations – members registered for event */
+/* ================================================================== */
+router.get('/events/:id/registrations', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid event id.' });
+    }
+
+    var event = await EventDetails.findById(req.params.id, { title: 1 }).lean();
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found.' });
+    }
+
+    var docs = await MemberDetails
+      .find({ registeredEvents: req.params.id },
+            { name: 1, place: 1, batch: 1, phone: 1, whatsapp: 1, admissionNumber: 1 })
+      .sort({ batch: 1, name: 1 })
+      .lean();
+
+    var members = docs.map(function (m) {
+      return {
+        id:              String(m._id),
+        name:            m.name || '',
+        place:           m.place || '',
+        batch:           m.batch || '',
+        admissionNumber: m.admissionNumber || '',
+        phone:           m.phone || '',
+        whatsapp:        m.whatsapp || m.phone || ''
+      };
+    });
+
+    return res.json({
+      success: true,
+      event:   { id: String(event._id), title: event.title || '' },
+      count:   members.length,
+      members: members
+    });
+  } catch (error) {
+    console.error('Event registrations lookup failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load registered members.' });
+  }
+});
+
+/* ================================================================== */
 /* POST /admin/events  – create event (multipart for image upload)     */
 /* ================================================================== */
 router.post('/events', upload.single('eventImage'), async function (req, res) {
