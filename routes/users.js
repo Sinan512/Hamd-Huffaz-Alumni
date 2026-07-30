@@ -216,15 +216,22 @@ router.get('/', async function (req, res, next) {
     req.session.lastSeenAt = new Date();
     req.session.cookie.maxAge = SEVEN_DAYS_MS;
 
-    var results = await Promise.all([getGalleryImages(), getAllEvents()]);
+    var galleryImages = await getGalleryImages();
+var events = await getAllEvents();
 
-    return res.render('users', {
-      layout:        false,
-      title:         'Alumni Member Portal',
-      user:          buildUserContext(member),
-      galleryImages: results[0],
-      events:        results[1]
-    });
+events.forEach(function (event) {
+  event.isRegistered = (member.registeredEvents || []).some(function (id) {
+    return id.toString() === event.id;
+  });
+});
+
+return res.render('users', {
+  layout: false,
+  title: 'Alumni Member Portal',
+  user: buildUserContext(member),
+  galleryImages: galleryImages,
+  events: events
+});
   } catch (err) {
     console.error('Dashboard load failed:', err.message);
     return next(err);
