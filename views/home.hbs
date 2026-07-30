@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAMD Alumni Portal – Huffaz Alumni Malik Deenar</title>
+  <meta name="description" content="Official Alumni Management Portal of Huffaz Alumni Malik Deenar Parappalli Markaz. Connecting graduates, celebrating legacy, and serving the Ummah together." />
+  <meta name="keywords" content="HAMD, Huffaz Alumni, Malik Deenar, Parappalli, Markaz, Alumni Portal, Islamic Institution" />
+  <meta property="og:title" content="HAMD Alumni Portal" />
+  <meta property="og:description" content="Official Alumni Management Portal of Huffaz Alumni Malik Deenar Parappalli Markaz." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/logo/favicon.ico" />
+  <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <style>
+    /* ============================================================
+       CSS CUSTOM PROPERTIES
+    ============================================================ */
+    :root {
+      --blue-50:  #eff6ff;
+      --blue-100: #dbeafe;
+      --blue-200: #bfdbfe;
+      --blue-400: #60a5fa;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --blue-800: #1e40af;
+      --blue-900: #1e3a8a;
+      --navy:     #0f172a;
+      --navy-mid: #1e293b;
+      --slate:    #334155;
+      --muted:    #64748b;
+      --light:    #f8fafc;
+      --white:    #ffffff;
+
+      --grad-primary: linear-gradient(135deg, #1d4ed8 0%, #2563eb 40%, #3b82f6 100%);
+      --grad-hero:    linear-gradient(160deg, #0f172a 0%, #1e3a8a 50%, #1e40af 100%);
+      --grad-aurora:  linear-gradient(120deg, #0f172a, #1e3a8a, #2563eb, #1e40af, #0f172a);
+
+      --glass-bg:     rgba(255,255,255,0.07);
+      --glass-border: rgba(255,255,255,0.13);
+      --glass-shadow: 0 8px 32px rgba(0,0,0,0.25);
+
+      --glass-light-bg:     rgba(255,255,255,0.65);
+      --glass-light-border: rgba(255,255,255,0.85);
+      --glass-light-shadow: 0 4px 24px rgba(37,99,235,0.10);
+
+      --radius-sm: 12px;
+      --radius:    20px;
+      --radius-lg: 32px;
+      --radius-xl: 48px;
+
+      --transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+      --font: 'Outfit', sans-serif;
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--light);
+      color: var(--navy);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: var(--blue-200); color: var(--blue-900); }
+
+    img { max-width: 100%; height: auto; }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ============================================================
+       LOADING SCREEN
+    ============================================================ */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #loading-screen.hidden { opacity: 0; visibility: hidden; }
+    #loading-screen img { width: 80px; animation: pulse-logo 1.4s ease-in-out infinite; }
+    .loader-ring {
+      width: 56px; height: 56px;
+      border: 3px solid rgba(255,255,255,0.12);
+      border-top-color: var(--blue-400);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    .loader-text {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.78rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse-logo {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.06); opacity: 0.8; }
+    }
+
+    /* ============================================================
+       BACK TO TOP
+    ============================================================ */
+    #back-top {
+      position: fixed;
+      bottom: 32px; right: 32px;
+      z-index: 800;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--grad-primary);
+      color: #fff;
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+      cursor: pointer;
+      opacity: 0; visibility: hidden;
+      transform: translateY(12px);
+      transition: var(--transition);
+    }
+    #back-top.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+    #back-top:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(37,99,235,0.5); }
+
+    /* ============================================================
+       NAVBAR
+    ============================================================ */
+    #main-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 700;
+      padding: 16px 0;
+      transition: var(--transition);
+    }
+    #main-nav.scrolled {
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(37,99,235,0.10);
+      box-shadow: 0 2px 24px rgba(37,99,235,0.07);
+      padding: 10px 0;
+    }
+    .nav-brand img { height: 36px; transition: var(--transition); }
+    .nav-link-item {
+      color: rgba(255,255,255,0.85);
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 8px;
+      transition: var(--transition);
+      letter-spacing: 0.01em;
+    }
+    #main-nav.scrolled .nav-link-item { color: var(--slate); }
+    .nav-link-item:hover {
+      color: var(--blue-500);
+      background: rgba(37,99,235,0.08);
+    }
+    .nav-profile-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      border: 1.5px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1rem;
+    }
+    #main-nav.scrolled .nav-profile-btn {
+      background: rgba(37,99,235,0.08);
+      border-color: rgba(37,99,235,0.18);
+      color: var(--blue-600);
+    }
+    .nav-profile-btn:hover { transform: scale(1.07); }
+    .profile-dropdown {
+      position: absolute;
+      right: 0; top: calc(100% + 10px);
+      min-width: 180px;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(37,99,235,0.12);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 12px 40px rgba(15,23,42,0.14);
+      padding: 8px;
+      display: none;
+      z-index: 100;
+    }
+    .profile-dropdown.show { display: block; animation: dropdown-in 0.2s ease; }
+    @keyframes dropdown-in {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .profile-dropdown a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--slate);
+      font-size: 0.87rem;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    .profile-dropdown a:hover { background: var(--blue-50); color: var(--blue-700); }
+    .nav-hamburger {
+      background: none; border: none;
+      color: #fff; font-size: 1.4rem; cursor: pointer;
+      transition: var(--transition);
+      display: none;
+    }
+    #main-nav.scrolled .nav-hamburger { color: var(--navy); }
+    .mobile-nav {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding: 16px 0 8px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin-top: 8px;
+    }
+    #main-nav.scrolled .mobile-nav { border-top-color: rgba(37,99,235,0.10); }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav .nav-link-item { padding: 10px 16px; }
+
+    @media (max-width: 991px) {
+      .nav-hamburger { display: block; }
+      .desktop-nav { display: none !important; }
+    }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    #hero {
+      min-height: 100vh;
+      position: relative;
+      display: flex; align-items: center;
+      overflow: hidden;
+      background: var(--navy);
+    }
+    .hero-aurora {
+      position: absolute; inset: 0;
+      background: var(--grad-aurora);
+      background-size: 400% 400%;
+      animation: aurora-shift 18s ease infinite;
+      opacity: 0.8;
+    }
+    @keyframes aurora-shift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .hero-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.28;
+      animation: blob-float 12s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .hero-blob-1 {
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, #3b82f6, #1d4ed8);
+      top: -120px; right: -80px;
+      animation-delay: 0s;
+    }
+    .hero-blob-2 {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, #60a5fa, #2563eb);
+      bottom: -60px; left: -80px;
+      animation-delay: -4s;
+    }
+    .hero-blob-3 {
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, #93c5fd, #3b82f6);
+      top: 40%; left: 40%;
+      animation-delay: -8s;
+    }
+    @keyframes blob-float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      33%  { transform: translateY(-30px) scale(1.05); }
+      66%  { transform: translateY(20px) scale(0.96); }
+    }
+    #particles-canvas {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      opacity: 0.45;
+    }
+    .hero-content-box {
+      position: relative; z-index: 2;
+      text-align: center;
+      padding: 56px 48px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+      max-width: 720px; margin: 0 auto;
+    }
+    .hero-logo { height: 88px; margin-bottom: 32px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(96,165,250,0.15);
+      border: 1px solid rgba(96,165,250,0.3);
+      border-radius: 100px;
+      padding: 6px 18px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--blue-200);
+      margin-bottom: 20px;
+    }
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.12;
+      margin-bottom: 18px;
+      letter-spacing: -0.02em;
+    }
+    .hero-title span {
+      background: linear-gradient(90deg, #93c5fd, #60a5fa, #bfdbfe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-subtitle {
+      font-size: clamp(0.95rem, 2vw, 1.15rem);
+      color: rgba(255,255,255,0.62);
+      line-height: 1.7;
+      max-width: 520px; margin: 0 auto 36px;
+    }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-hero-primary {
+      padding: 14px 36px;
+      background: var(--grad-primary);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-family: var(--font);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(37,99,235,0.5);
+      transition: var(--transition);
+      position: relative; overflow: hidden;
+    }
+    .btn-hero-primary::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent);
+      opacity: 0;
+      transition: var(--transition);
+    }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(37,99,235,0.6); }
+    .btn-hero-primary:hover::after { opacity: 1; }
+    .btn-hero-outline {
+      padding: 14px 36px;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 100px;
+      font-family: var(--font);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: var(--transition);
+    }
+    .btn-hero-outline:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .scroll-indicator {
+      position: absolute; bottom: 36px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .scroll-indicator span {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.38);
+    }
+    .scroll-mouse {
+      width: 24px; height: 38px;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 100px;
+      display: flex; justify-content: center;
+      padding-top: 6px;
+    }
+    .scroll-dot {
+      width: 4px; height: 8px;
+      background: rgba(255,255,255,0.55);
+      border-radius: 100px;
+      animation: scroll-bounce 2s ease-in-out infinite;
+    }
+    @keyframes scroll-bounce {
+      0%, 100% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(10px); opacity: 0.3; }
+    }
+
+    @media (max-width: 576px) {
+      .hero-content-box { padding: 36px 24px; border-radius: var(--radius-lg); }
+      .hero-logo { height: 64px; }
+    }
+
+    /* ============================================================
+       SECTION HELPERS
+    ============================================================ */
+    .section-pad { padding: 100px 0; }
+    .section-pad-sm { padding: 72px 0; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      border-radius: 100px;
+      padding: 5px 16px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue-700);
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+    }
+    .section-sub {
+      font-size: 1.02rem;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 540px;
+    }
+    .dark-section .section-title { color: #fff; }
+    .dark-section .section-label {
+      background: rgba(96,165,250,0.12);
+      border-color: rgba(96,165,250,0.25);
+      color: var(--blue-200);
+    }
+    .dark-section .section-sub { color: rgba(255,255,255,0.55); }
+
+    /* Glass card light */
+    .glass-card {
+      background: var(--glass-light-bg);
+      border: 1px solid var(--glass-light-border);
+      border-radius: var(--radius);
+      box-shadow: var(--glass-light-shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: var(--transition);
+    }
+    .glass-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(37,99,235,0.15);
+    }
+    /* Glass card dark */
+    .glass-card-dark {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      box-shadow: var(--glass-shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: var(--transition);
+    }
+    .glass-card-dark:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+
+    /* Reveal animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.65s cubic-bezier(0.4,0,0.2,1), transform 0.65s cubic-bezier(0.4,0,0.2,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-left  { opacity: 0; transform: translateX(-32px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right { opacity: 0; transform: translateX(32px);  transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+    .reveal-scale { opacity: 0; transform: scale(0.9); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .reveal-scale.visible { opacity: 1; transform: scale(1); }
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+    .delay-5 { transition-delay: 0.5s; }
+    .delay-6 { transition-delay: 0.6s; }
+
+    /* Buttons */
+    .btn-primary-hamd {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 30px;
+      background: var(--grad-primary);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(37,99,235,0.35);
+      transition: var(--transition);
+    }
+    .btn-primary-hamd:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,99,235,0.5); color: #fff; }
+    .btn-outline-hamd {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px;
+      background: transparent;
+      color: var(--blue-600);
+      border: 1.5px solid var(--blue-300);
+      border-radius: 100px;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-outline-hamd:hover {
+      background: var(--blue-50); transform: translateY(-2px); color: var(--blue-700);
+    }
+    .btn-outline-white {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 100px;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: var(--transition);
+    }
+    .btn-outline-white:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+    /* ============================================================
+       ABOUT SECTION
+    ============================================================ */
+    #about { background: var(--white); }
+    .about-icon-wrap {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      color: var(--blue-600);
+      flex-shrink: 0;
+      margin-bottom: 16px;
+    }
+    .about-card { padding: 32px; }
+    .about-card h4 {
+      font-size: 1.08rem; font-weight: 700;
+      color: var(--navy); margin-bottom: 10px;
+    }
+    .about-card p { font-size: 0.91rem; color: var(--muted); line-height: 1.75; }
+    .timeline {
+      position: relative;
+      padding-left: 28px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px; top: 8px; bottom: 8px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--blue-500), var(--blue-200));
+      border-radius: 4px;
+    }
+    .timeline-item { position: relative; margin-bottom: 32px; }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -25px; top: 6px;
+      width: 12px; height: 12px;
+      background: var(--blue-500);
+      border: 3px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px var(--blue-200);
+    }
+    .timeline-year {
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--blue-500); margin-bottom: 4px;
+    }
+    .timeline-title { font-size: 0.97rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .timeline-desc { font-size: 0.87rem; color: var(--muted); line-height: 1.65; }
+
+    /* ============================================================
+       STATISTICS
+    ============================================================ */
+    #stats {
+      background: var(--navy);
+      position: relative;
+      overflow: hidden;
+    }
+    .stats-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+    .stats-blob-1 { width: 400px; height: 400px; background: var(--blue-600); top: -100px; right: -80px; }
+    .stats-blob-2 { width: 320px; height: 320px; background: var(--blue-400); bottom: -80px; left: -60px; }
+    .stat-card {
+      padding: 36px 28px;
+      text-align: center;
+      position: relative; z-index: 1;
+    }
+    .stat-icon {
+      font-size: 1.8rem;
+      color: var(--blue-400);
+      margin-bottom: 16px;
+    }
+    .stat-number {
+      font-size: clamp(2.2rem, 4vw, 3.2rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff, var(--blue-200));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 0.88rem; color: rgba(255,255,255,0.5); font-weight: 500; letter-spacing: 0.04em; }
+
+    /* ============================================================
+       COMMITTEE
+    ============================================================ */
+    #committee { background: var(--light); }
+    .committee-card { padding: 32px 24px; text-align: center; }
+    .committee-avatar {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 16px;
+      border: 3px solid var(--blue-100);
+      box-shadow: 0 4px 20px rgba(37,99,235,0.15);
+    }
+    .avatar-placeholder {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 1.8rem;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.3);
+    }
+    .committee-role {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--blue-500); margin-bottom: 6px;
+    }
+    .committee-name { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .committee-place { font-size: 0.83rem; color: var(--muted); }
+
+    /* ============================================================
+       GALLERY
+    ============================================================ */
+    #gallery { background: var(--white); }
+    .gallery-grid {
+      columns: 3;
+      column-gap: 16px;
+    }
+    @media (max-width: 768px) { .gallery-grid { columns: 2; } }
+    @media (max-width: 480px) { .gallery-grid { columns: 1; } }
+    .gallery-item {
+      break-inside: avoid;
+      margin-bottom: 16px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+    .gallery-item img {
+      width: 100%; display: block;
+      transition: transform 0.5s ease;
+    }
+    .gallery-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(30,58,138,0.7), rgba(37,99,235,0.6));
+      opacity: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .gallery-overlay i { font-size: 2rem; color: #fff; }
+    .gallery-item:hover img { transform: scale(1.07); }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+    /* Gallery Modal */
+    .gallery-modal {
+      display: none;
+      position: fixed; inset: 0;
+      z-index: 2000;
+      background: rgba(15,23,42,0.9);
+      backdrop-filter: blur(16px);
+      align-items: center; justify-content: center;
+    }
+    .gallery-modal.open { display: flex; }
+    .gallery-modal img {
+      max-width: 90vw; max-height: 85vh;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+    .modal-close-btn {
+      position: absolute; top: 20px; right: 24px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .modal-close-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* ============================================================
+       EVENTS
+    ============================================================ */
+    #events { background: var(--light); }
+    .events-carousel { overflow: hidden; }
+    .events-track {
+      display: flex;
+      gap: 24px;
+      transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+    }
+    .event-card {
+      min-width: 320px;
+      max-width: 320px;
+      flex-shrink: 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 4px 24px rgba(37,99,235,0.08);
+      border: 1px solid rgba(37,99,235,0.07);
+      transition: var(--transition);
+    }
+    .event-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(37,99,235,0.16); }
+    .event-img-wrap {
+      position: relative;
+      height: 180px;
+      overflow: hidden;
+    }
+    .event-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .event-card:hover .event-img-wrap img { transform: scale(1.06); }
+    .event-date-badge {
+      position: absolute; top: 12px; left: 12px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 6px 12px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+    .event-date-badge .day { font-size: 1.3rem; font-weight: 800; color: var(--blue-700); line-height: 1; }
+    .event-date-badge .month { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+    .event-body { padding: 20px; }
+    .event-tag {
+      display: inline-block;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--blue-600);
+      background: var(--blue-50);
+      border-radius: 6px;
+      padding: 3px 10px;
+      margin-bottom: 8px;
+    }
+    .event-title { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .event-location { font-size: 0.82rem; color: var(--muted); display: flex; align-items: center; gap: 5px; margin-bottom: 16px; }
+    .carousel-controls { display: flex; gap: 10px; }
+    .carousel-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--blue-200);
+      background: #fff;
+      color: var(--blue-600);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: var(--transition);
+      box-shadow: 0 2px 10px rgba(37,99,235,0.1);
+    }
+    .carousel-btn:hover { background: var(--blue-600); color: #fff; border-color: var(--blue-600); }
+
+    /* ============================================================
+       NEWS
+    ============================================================ */
+    #news { background: var(--white); }
+    .news-card {
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid rgba(37,99,235,0.07);
+      box-shadow: 0 4px 20px rgba(37,99,235,0.07);
+      transition: var(--transition);
+      height: 100%;
+    }
+    .news-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(37,99,235,0.14); }
+    .news-img {
+      height: 200px; overflow: hidden;
+    }
+    .news-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .news-card:hover .news-img img { transform: scale(1.06); }
+    .news-body { padding: 24px; }
+    .news-category {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--blue-600); margin-bottom: 8px;
+    }
+    .news-title { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 10px; line-height: 1.45; }
+    .news-desc { font-size: 0.87rem; color: var(--muted); line-height: 1.7; margin-bottom: 16px; }
+    .news-meta { display: flex; align-items: center; gap: 10px; }
+    .news-date { font-size: 0.78rem; color: var(--muted); }
+    .news-read {
+      font-size: 0.82rem; font-weight: 600;
+      color: var(--blue-600);
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-left: auto;
+      transition: var(--transition);
+    }
+    .news-read:hover { color: var(--blue-800); gap: 8px; }
+
+    /* ============================================================
+       DONATION
+    ============================================================ */
+    #donate {
+      background: var(--navy);
+      position: relative;
+      overflow: hidden;
+    }
+    .donate-bg {
+      position: absolute; inset: 0;
+      background: var(--grad-aurora);
+      background-size: 300% 300%;
+      animation: aurora-shift 20s ease infinite;
+      opacity: 0.6;
+    }
+    .donate-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.2;
+      pointer-events: none;
+    }
+    .donate-blob-1 { width: 500px; height: 500px; background: var(--blue-500); top: -150px; right: -100px; }
+    .donate-blob-2 { width: 350px; height: 350px; background: var(--blue-300); bottom: -100px; left: -60px; }
+    .donate-card {
+      position: relative; z-index: 1;
+      padding: 56px 48px;
+      max-width: 820px; margin: 0 auto;
+    }
+    .donate-card h2 {
+      font-size: clamp(1.7rem, 3.5vw, 2.6rem);
+      font-weight: 800; color: #fff;
+      margin-bottom: 16px; line-height: 1.2;
+    }
+    .donate-card p { color: rgba(255,255,255,0.6); line-height: 1.75; margin-bottom: 32px; }
+    .donate-features { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 36px; }
+    .donate-feature {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.87rem; color: rgba(255,255,255,0.75);
+    }
+    .donate-feature i { color: var(--blue-400); font-size: 1rem; }
+    .donate-methods {
+      display: flex; gap: 16px; flex-wrap: wrap; margin-top: 28px;
+    }
+    .donate-method {
+      flex: 1; min-width: 160px;
+      padding: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+    .donate-method i { font-size: 1.6rem; color: var(--blue-300); margin-bottom: 8px; display: block; }
+    .donate-method .method-title { font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .donate-method .method-detail { font-size: 0.74rem; color: rgba(255,255,255,0.45); }
+    .qr-placeholder {
+      width: 100px; height: 100px;
+      background: rgba(255,255,255,0.1);
+      border: 2px dashed rgba(255,255,255,0.25);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; color: rgba(255,255,255,0.35);
+      text-align: center; padding: 8px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 576px) { .donate-card { padding: 36px 24px; } }
+
+    /* ============================================================
+       TESTIMONIALS
+    ============================================================ */
+    #testimonials { background: var(--light); }
+    .testi-track-wrapper { overflow: hidden; }
+    .testi-track {
+      display: flex;
+      gap: 24px;
+      animation: auto-slide 40s linear infinite;
+      width: max-content;
+    }
+    .testi-track:hover { animation-play-state: paused; }
+    @keyframes auto-slide {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .testi-card {
+      min-width: 300px; max-width: 300px;
+      padding: 28px;
+      flex-shrink: 0;
+    }
+    .testi-stars { color: #f59e0b; font-size: 0.8rem; margin-bottom: 14px; }
+    .testi-text {
+      font-size: 0.9rem; color: var(--slate);
+      line-height: 1.75; margin-bottom: 20px;
+      font-style: italic;
+    }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .testi-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.95rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .testi-name { font-size: 0.88rem; font-weight: 700; color: var(--navy); }
+    .testi-batch { font-size: 0.75rem; color: var(--muted); }
+
+    /* ============================================================
+       CONTACT
+    ============================================================ */
+    #contact { background: var(--white); }
+    .contact-info-item {
+      display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px;
+    }
+    .contact-info-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: var(--blue-600);
+      flex-shrink: 0;
+    }
+    .contact-info-label { font-size: 0.73rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .contact-info-value { font-size: 0.92rem; color: var(--navy); font-weight: 500; }
+    .social-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .social-link {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: var(--blue-600);
+      transition: var(--transition);
+    }
+    .social-link:hover { background: var(--blue-600); color: #fff; transform: translateY(-3px); }
+    .map-placeholder {
+      width: 100%; height: 240px;
+      background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+      border-radius: var(--radius-sm);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+      color: var(--blue-400); font-size: 2rem;
+      border: 1px solid var(--blue-200);
+      margin-top: 24px;
+    }
+    .map-placeholder span { font-size: 0.85rem; color: var(--muted); }
+    .contact-form { }
+    .form-group { margin-bottom: 18px; }
+    .form-label-hamd {
+      font-size: 0.8rem; font-weight: 600;
+      color: var(--slate); margin-bottom: 6px;
+      display: block; letter-spacing: 0.03em;
+    }
+    .form-control-hamd {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--light);
+      border: 1.5px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 0.9rem;
+      color: var(--navy);
+      outline: none;
+      transition: var(--transition);
+    }
+    .form-control-hamd:focus {
+      border-color: var(--blue-400);
+      box-shadow: 0 0 0 3px rgba(96,165,250,0.18);
+      background: #fff;
+    }
+    textarea.form-control-hamd { resize: vertical; min-height: 120px; }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    #footer {
+      background: var(--navy);
+      color: rgba(255,255,255,0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    .footer-top { padding: 72px 0 48px; }
+    .footer-logo { height: 52px; margin-bottom: 16px; }
+    .footer-tagline { font-size: 0.88rem; line-height: 1.7; max-width: 260px; margin-bottom: 24px; color: rgba(255,255,255,0.45); }
+    .footer-social { display: flex; gap: 8px; }
+    .footer-social-link {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; color: rgba(255,255,255,0.5);
+      transition: var(--transition);
+    }
+    .footer-social-link:hover { background: var(--blue-600); color: #fff; border-color: var(--blue-600); }
+    .footer-heading {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,255,255,0.35); margin-bottom: 20px;
+    }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 10px; }
+    .footer-links a {
+      font-size: 0.87rem; color: rgba(255,255,255,0.5);
+      transition: var(--transition);
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .footer-links a:hover { color: var(--blue-300); padding-left: 4px; }
+    .footer-divider { border-color: rgba(255,255,255,0.08); margin: 0; }
+    .footer-bottom {
+      padding: 20px 0;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .footer-bottom-text { font-size: 0.8rem; color: rgba(255,255,255,0.35); }
+    .footer-bottom-links { display: flex; gap: 16px; }
+    .footer-bottom-links a {
+      font-size: 0.78rem; color: rgba(255,255,255,0.35);
+      transition: var(--transition);
+    }
+    .footer-bottom-links a:hover { color: var(--blue-300); }
+
+    /* ============================================================
+       MISC UTILITIES
+    ============================================================ */
+    .gradient-text {
+      background: var(--grad-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .divider-line {
+      height: 1px; background: rgba(37,99,235,0.1);
+      border: none; margin: 0;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===================== LOADING SCREEN ===================== -->
+  <div id="loading-screen" role="status" aria-label="Loading HAMD Alumni Portal">
+    <img src="/logo/hamd-icon.png" alt="HAMD Logo" />
+    <div class="loader-ring"></div>
+    <p class="loader-text">Loading Portal</p>
+  </div>
+
+  <!-- ===================== BACK TO TOP ===================== -->
+  <button id="back-top" aria-label="Scroll to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <i class="bi bi-arrow-up"></i>
+  </button>
+
+  <!-- ===================== NAVBAR ===================== -->
+  <nav id="main-nav" aria-label="Main navigation">
+    <div class="container">
+      <div class="d-flex align-items-center justify-content-between">
+        <!-- Logo -->
+        <a href="#hero" class="nav-brand" aria-label="HAMD Alumni Portal Home">
+          <img src="/logo/hamd-navbar.png" alt="HAMD" />
+        </a>
+
+        <!-- Desktop Nav -->
+        <div class="desktop-nav d-flex align-items-center gap-1">
+          <a href="#hero"        class="nav-link-item">Home</a>
+          <a href="#about"       class="nav-link-item">About</a>
+          <a href="#committee"   class="nav-link-item">Committee</a>
+          <a href="#gallery"     class="nav-link-item">Gallery</a>
+          <a href="#events"      class="nav-link-item">Events</a>
+          <a href="#news"        class="nav-link-item">News</a>
+          <a href="#contact"     class="nav-link-item">Contact</a>
+
+          <!-- Profile dropdown -->
+          <div class="position-relative ms-2">
+            <button class="nav-profile-btn" id="profile-btn" aria-haspopup="true" aria-expanded="false" aria-label="Login menu">
+              <i class="bi bi-person-circle"></i>
+            </button>
+            <div class="profile-dropdown" id="profile-dropdown" role="menu">
+              <a href="/login/member" role="menuitem">
+                <i class="bi bi-person" style="color:var(--blue-500)"></i> Member Login
+              </a>
+              <a href="/login/admin" role="menuitem">
+                <i class="bi bi-shield-lock" style="color:var(--blue-700)"></i> Admin Login
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hamburger -->
+        <div class="d-flex align-items-center gap-3 d-lg-none">
+          <div class="position-relative">
+            <button class="nav-profile-btn" id="profile-btn-mobile" aria-label="Login menu">
+              <i class="bi bi-person-circle"></i>
+            </button>
+            <div class="profile-dropdown" id="profile-dropdown-mobile" role="menu">
+              <a href="/login/member" role="menuitem"><i class="bi bi-person" style="color:var(--blue-500)"></i> Member Login</a>
+              <a href="/login/admin"  role="menuitem"><i class="bi bi-shield-lock" style="color:var(--blue-700)"></i> Admin Login</a>
+            </div>
+          </div>
+          <button class="nav-hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+            <i class="bi bi-list" id="hamburger-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Nav -->
+      <div class="mobile-nav" id="mobile-nav" role="navigation" aria-label="Mobile navigation">
+        <a href="#hero"      class="nav-link-item" onclick="closeMobileNav()">Home</a>
+        <a href="#about"     class="nav-link-item" onclick="closeMobileNav()">About</a>
+        <a href="#committee" class="nav-link-item" onclick="closeMobileNav()">Committee</a>
+        <a href="#gallery"   class="nav-link-item" onclick="closeMobileNav()">Gallery</a>
+        <a href="#events"    class="nav-link-item" onclick="closeMobileNav()">Events</a>
+        <a href="#news"      class="nav-link-item" onclick="closeMobileNav()">News</a>
+        <a href="#contact"   class="nav-link-item" onclick="closeMobileNav()">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <section id="hero" aria-label="Hero section">
+    <div class="hero-aurora"></div>
+    <div class="hero-blob hero-blob-1"></div>
+    <div class="hero-blob hero-blob-2"></div>
+    <div class="hero-blob hero-blob-3"></div>
+    <canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+    <div class="container position-relative" style="z-index:2;">
+      <div class="hero-content-box reveal">
+        <img src="/logo/hamd-full-light.png" alt="Huffaz Alumni Malik Deenar" class="hero-logo" />
+        <div class="hero-badge">
+          <i class="bi bi-star-fill" style="font-size:0.6rem"></i>
+          Huffaz Alumni Malik Deenar · Parappalli Markaz
+        </div>
+        <h1 class="hero-title">
+          Welcome to<br><span>HAMD Alumni Portal</span>
+        </h1>
+        <p class="hero-subtitle">
+          Connecting graduates across the world, celebrating our heritage, and continuing the legacy of knowledge and Da'wa rooted in Parappalli Markaz.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-hero-primary" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">
+            <i class="bi bi-compass"></i> Explore
+          </button>
+          <button class="btn-hero-outline" onclick="document.getElementById('donate').scrollIntoView({behavior:'smooth'})">
+            <i class="bi bi-heart"></i> Donate
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div class="scroll-indicator" aria-hidden="true">
+      <div class="scroll-mouse"><div class="scroll-dot"></div></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section id="about" class="section-pad">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <!-- Left: Text -->
+        <div class="col-lg-5 reveal-left">
+          <div class="section-label"><i class="bi bi-info-circle"></i> About HAMD</div>
+          <h2 class="section-title mb-4">
+            A Legacy Built on<br><span class="gradient-text">Knowledge & Devotion</span>
+          </h2>
+          <p class="section-sub mb-4">
+            Huffaz Alumni Malik Deenar (HAMD) is the alumni association of graduates from Parappalli Markaz — an institution that has shaped thousands of Huffaz who now serve communities across Kerala, India, and beyond.
+          </p>
+          <p style="font-size:0.9rem;color:var(--muted);line-height:1.8;margin-bottom:28px;">
+            Our mission is to remain connected, support ongoing Da'wa efforts, uplift one another professionally and spiritually, and honour the teachings instilled in us during our years at the Markaz.
+          </p>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-year">1982</div>
+              <div class="timeline-title">Founding of Parappalli Markaz</div>
+              <div class="timeline-desc">Established by visionary scholars to nurture Huffaz and Islamic scholars in northern Kerala.</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-year">2005</div>
+              <div class="timeline-title">HAMD Alumni Association Formed</div>
+              <div class="timeline-desc">Graduates came together to formalise a community for mutual support, Da'wa, and charitable work.</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-year">2015</div>
+              <div class="timeline-title">International Expansion</div>
+              <div class="timeline-desc">HAMD chapters established in Gulf countries, connecting alumni working abroad.</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-year">2024</div>
+              <div class="timeline-title">HAMD Digital Portal Launched</div>
+              <div class="timeline-desc">Centralised alumni management system to digitise records, events, and community engagement.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Cards -->
+        <div class="col-lg-7">
+          <div class="row g-4">
+            <div class="col-sm-6 reveal delay-1">
+              <div class="glass-card about-card">
+                <div class="about-icon-wrap"><i class="bi bi-eye"></i></div>
+                <h4>Our Vision</h4>
+                <p>To be the foremost alumni network of Islamic scholarship in Kerala — a global community united by faith, knowledge, and service to the Ummah.</p>
+              </div>
+            </div>
+            <div class="col-sm-6 reveal delay-2">
+              <div class="glass-card about-card">
+                <div class="about-icon-wrap"><i class="bi bi-bullseye"></i></div>
+                <h4>Our Mission</h4>
+                <p>To strengthen the bonds between graduates, facilitate Da'wa activities, support charitable initiatives, and honour the teachings of Parappalli Markaz.</p>
+              </div>
+            </div>
+            <div class="col-sm-6 reveal delay-3">
+              <div class="glass-card about-card">
+                <div class="about-icon-wrap"><i class="bi bi-list-check"></i></div>
+                <h4>Core Objectives</h4>
+                <p>Alumni registration, event organisation, scholarship grants, community welfare, and digital connection for all graduates worldwide.</p>
+              </div>
+            </div>
+            <div class="col-sm-6 reveal delay-4">
+              <div class="glass-card about-card">
+                <div class="about-icon-wrap"><i class="bi bi-people"></i></div>
+                <h4>Community Values</h4>
+                <p>Brotherhood, accountability, lifelong learning, compassion for the less fortunate, and steadfast adherence to Islamic principles.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== STATISTICS ===================== -->
+  <section id="stats" class="section-pad">
+    <div class="stats-blob stats-blob-1"></div>
+    <div class="stats-blob stats-blob-2"></div>
+    <div class="container">
+      <div class="text-center mb-5 dark-section reveal">
+        <div class="section-label"><i class="bi bi-bar-chart"></i> By the Numbers</div>
+        <h2 class="section-title">HAMD in Figures</h2>
+      </div>
+      <div class="row g-4 justify-content-center">
+        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-1">
+          <div class="glass-card-dark stat-card">
+            <div class="stat-icon"><i class="bi bi-mortarboard"></i></div>
+            <div class="stat-number" data-target="1200" data-suffix="+">0</div>
+            <div class="stat-label">Registered Alumni</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-2">
+          <div class="glass-card-dark stat-card">
+            <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
+            <div class="stat-number" data-target="40" data-suffix="+">0</div>
+            <div class="stat-label">Batches</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-3">
+          <div class="glass-card-dark stat-card">
+            <div class="stat-icon"><i class="bi bi-megaphone"></i></div>
+            <div class="stat-number" data-target="250" data-suffix="+">0</div>
+            <div class="stat-label">Da'wa Activities</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-4">
+          <div class="glass-card-dark stat-card">
+            <div class="stat-icon"><i class="bi bi-globe2"></i></div>
+            <div class="stat-number" data-target="18" data-suffix="+">0</div>
+            <div class="stat-label">Countries</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-5">
+          <div class="glass-card-dark stat-card">
+            <div class="stat-icon"><i class="bi bi-hand-thumbs-up"></i></div>
+            <div class="stat-number" data-target="300" data-suffix="+">0</div>
+            <div class="stat-label">Volunteers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <style>
+      .col-lg-2dot4 { flex: 0 0 auto; width: 20%; }
+      @media (max-width: 991px) { .col-lg-2dot4 { width: auto; } }
+    </style>
+  </section>
+
+  <!-- ===================== COMMITTEE ===================== -->
+  <section id="committee" class="section-pad">
+    <div class="container">
+      <div class="text-center mb-5 reveal">
+        <div class="section-label"><i class="bi bi-people-fill"></i> Leadership</div>
+        <h2 class="section-title">Executive Committee</h2>
+        <p class="section-sub mx-auto mt-3">Dedicated alumni serving the community through leadership, guidance, and vision.</p>
+      </div>
+      <div class="row g-4">
+        <!-- President -->
+        <div class="col-sm-6 col-lg-4 reveal delay-1">
+          <div class="glass-card committee-card">
+            <div class="avatar-placeholder">AM</div>
+            <div class="committee-role">President</div>
+            <div class="committee-name">Abdur Rahman Mankada</div>
+            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Malappuram, Kerala</div>
+          </div>
+        </div>
+        <!-- Vice President -->
+        <div class="col-sm-6 col-lg-4 reveal delay-2">
+          <div class="glass-card committee-card">
+            <div class="avatar-placeholder">MN</div>
+            <div class="committee-role">Vice President</div>
+            <div class="committee-name">Muhammad Naseef</div>
+            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Kozhikode, Kerala</div>
+          </div>
+        </div>
+        <!-- Secretary -->
+        <div class="col-sm-6 col-lg-4 reveal delay-3">
+          <div class="glass-card committee-card">
+            <div class="avatar-placeholder">SI</div>
+            <div class="committee-role">General Secretary</div>
+            <div class="committee-name">Sirajuddeen Irfani</div>
+            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Parappalli, Kerala</div>
+          </div>
+        </div>
+        <!-- Treasurer -->
+        <div class="col-sm-6 col-lg-4 reveal delay-4">
+          <div class="glass-card committee-card">
+            <div class="avatar-placeholder">FA</div>
+            <div class="committee-role">Treasurer</div>
+            <div class="committee-name">Faisal Arafath</div>
+            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Thrissur, Kerala</div>
+          </div>
+        </div>
+        <!-- Executive -->
+        <div class="col-sm-6 col-lg-4 reveal delay-5">
+          <div class="glass-card committee-card">
+            <div class="avatar-placeholder">HK</div>
+            <div class="committee-role">Executive Member</div>
+            <div class="committee-name">Hamza Kareem</div>
+            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Sharjah, UAE</div>
+          </div>
+        </div>
+        <!-- Executive -->
+        <div class="col-sm-6 col-lg-4 reveal delay-6">
+          <div class="glass-card committee-card">
+            <div class="avatar-placeholder">ZP</div>
+            <div class="committee-role">Executive Member</div>
+            <div class="committee-name">Zaid Puthanpurakkal</div>
+            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Kannur, Kerala</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== GALLERY ===================== -->
+  <section id="gallery" class="section-pad">
+    <div class="container">
+      <div class="text-center mb-5 reveal">
+        <div class="section-label"><i class="bi bi-images"></i> Gallery</div>
+        <h2 class="section-title">Moments & Memories</h2>
+        <p class="section-sub mx-auto mt-3">Glimpses from our gatherings, programmes, and milestones over the years.</p>
+      </div>
+      <div class="gallery-grid reveal">
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 1">
+          <img src="https://picsum.photos/seed/hamd1/600/400" alt="HAMD Annual Gathering 2023" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 2">
+          <img src="https://picsum.photos/seed/hamd2/600/700" alt="Dua Ceremony at Markaz" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 3">
+          <img src="https://picsum.photos/seed/hamd3/600/500" alt="Da'wa Workshop 2022" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 4">
+          <img src="https://picsum.photos/seed/hamd4/600/450" alt="Batch 2019 Reunion" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 5">
+          <img src="https://picsum.photos/seed/hamd5/600/600" alt="Quran Recitation Competition" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 6">
+          <img src="https://picsum.photos/seed/hamd6/600/380" alt="Alumni Meet 2024" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 7">
+          <img src="https://picsum.photos/seed/hamd7/600/520" alt="Community Iftar Night" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 8">
+          <img src="https://picsum.photos/seed/hamd8/600/480" alt="Scholarship Distribution" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 9">
+          <img src="https://picsum.photos/seed/hamd9/600/640" alt="Annual Report Launch" loading="lazy" />
+          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery Modal -->
+  <div class="gallery-modal" id="gallery-modal" role="dialog" aria-modal="true" aria-label="Image viewer" onclick="closeGallery()">
+    <button class="modal-close-btn" onclick="closeGallery()" aria-label="Close image viewer">
+      <i class="bi bi-x"></i>
+    </button>
+    <img id="gallery-modal-img" src="" alt="Gallery full view" onclick="event.stopPropagation()" />
+  </div>
+
+  <!-- ===================== EVENTS ===================== -->
+  <section id="events" class="section-pad">
+    <div class="container">
+      <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-5">
+        <div class="reveal">
+          <div class="section-label"><i class="bi bi-calendar-event"></i> Upcoming</div>
+          <h2 class="section-title">Latest Events</h2>
+        </div>
+        <div class="carousel-controls reveal">
+          <button class="carousel-btn" id="events-prev" aria-label="Previous events"><i class="bi bi-chevron-left"></i></button>
+          <button class="carousel-btn" id="events-next" aria-label="Next events"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="events-carousel reveal">
+        <div class="events-track" id="events-track">
+          <!-- Card 1 -->
+          <article class="event-card">
+            <div class="event-img-wrap">
+              <img src="https://picsum.photos/seed/ev1/640/360" alt="Annual HAMD Alumni Meet 2025" loading="lazy" />
+              <div class="event-date-badge"><div class="day">14</div><div class="month">Aug</div></div>
+            </div>
+            <div class="event-body">
+              <div class="event-tag">Annual Meet</div>
+              <div class="event-title">Annual HAMD Alumni Gathering 2025</div>
+              <div class="event-location"><i class="bi bi-geo-alt"></i> Parappalli Markaz, Kozhikode</div>
+              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
+                <i class="bi bi-ticket"></i> Register
+              </a>
+            </div>
+          </article>
+          <!-- Card 2 -->
+          <article class="event-card">
+            <div class="event-img-wrap">
+              <img src="https://picsum.photos/seed/ev2/640/360" alt="Da'wa Workshop" loading="lazy" />
+              <div class="event-date-badge"><div class="day">02</div><div class="month">Sep</div></div>
+            </div>
+            <div class="event-body">
+              <div class="event-tag">Workshop</div>
+              <div class="event-title">Advanced Da'wa Skills Workshop</div>
+              <div class="event-location"><i class="bi bi-geo-alt"></i> HAMD Centre, Malappuram</div>
+              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
+                <i class="bi bi-ticket"></i> Register
+              </a>
+            </div>
+          </article>
+          <!-- Card 3 -->
+          <article class="event-card">
+            <div class="event-img-wrap">
+              <img src="https://picsum.photos/seed/ev3/640/360" alt="Quran Recitation Competition" loading="lazy" />
+              <div class="event-date-badge"><div class="day">20</div><div class="month">Sep</div></div>
+            </div>
+            <div class="event-body">
+              <div class="event-tag">Competition</div>
+              <div class="event-title">Inter-Alumni Quran Recitation Championship</div>
+              <div class="event-location"><i class="bi bi-geo-alt"></i> Town Hall, Thrissur</div>
+              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
+                <i class="bi bi-ticket"></i> Register
+              </a>
+            </div>
+          </article>
+          <!-- Card 4 -->
+          <article class="event-card">
+            <div class="event-img-wrap">
+              <img src="https://picsum.photos/seed/ev4/640/360" alt="Gulf Alumni Iftar" loading="lazy" />
+              <div class="event-date-badge"><div class="day">15</div><div class="month">Oct</div></div>
+            </div>
+            <div class="event-body">
+              <div class="event-tag">Community</div>
+              <div class="event-title">Gulf Chapter Alumni Community Night</div>
+              <div class="event-location"><i class="bi bi-geo-alt"></i> Sharjah, UAE</div>
+              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
+                <i class="bi bi-ticket"></i> Register
+              </a>
+            </div>
+          </article>
+          <!-- Card 5 -->
+          <article class="event-card">
+            <div class="event-img-wrap">
+              <img src="https://picsum.photos/seed/ev5/640/360" alt="Scholarship Awards" loading="lazy" />
+              <div class="event-date-badge"><div class="day">05</div><div class="month">Nov</div></div>
+            </div>
+            <div class="event-body">
+              <div class="event-tag">Awards</div>
+              <div class="event-title">HAMD Scholarship Awards Night 2025</div>
+              <div class="event-location"><i class="bi bi-geo-alt"></i> Parappalli Markaz Hall</div>
+              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
+                <i class="bi bi-ticket"></i> Register
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== NEWS ===================== -->
+  <section id="news" class="section-pad" style="background:var(--light);">
+    <div class="container">
+      <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-5">
+        <div class="reveal">
+          <div class="section-label"><i class="bi bi-newspaper"></i> Updates</div>
+          <h2 class="section-title">Latest News</h2>
+        </div>
+        <a href="#" class="btn-outline-hamd reveal">View All <i class="bi bi-arrow-right"></i></a>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4 reveal delay-1">
+          <div class="news-card">
+            <div class="news-img"><img src="https://picsum.photos/seed/news1/600/300" alt="HAMD scholarship 2025" loading="lazy" /></div>
+            <div class="news-body">
+              <div class="news-category"><i class="bi bi-dot"></i> Scholarship</div>
+              <h3 class="news-title">HAMD Launches ₹50 Lakh Scholarship Fund for Deserving Students</h3>
+              <p class="news-desc">The Executive Committee approved a major scholarship initiative to support academically excellent but financially challenged students from alumni families.</p>
+              <div class="news-meta">
+                <span class="news-date"><i class="bi bi-clock"></i> July 10, 2025</span>
+                <a href="#" class="news-read">Read More <i class="bi bi-arrow-right"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4 reveal delay-2">
+          <div class="news-card">
+            <div class="news-img"><img src="https://picsum.photos/seed/news2/600/300" alt="Da'wa camp 2025" loading="lazy" /></div>
+            <div class="news-body">
+              <div class="news-category"><i class="bi bi-dot"></i> Da'wa</div>
+              <h3 class="news-title">Summer Da'wa Camp Draws 800 Participants Across Three Districts</h3>
+              <p class="news-desc">HAMD volunteers organised a three-week summer camp covering Quran, Islamic studies, and Arabic language for youth in Malappuram, Kozhikode, and Palakkad.</p>
+              <div class="news-meta">
+                <span class="news-date"><i class="bi bi-clock"></i> June 28, 2025</span>
+                <a href="#" class="news-read">Read More <i class="bi bi-arrow-right"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4 reveal delay-3">
+          <div class="news-card">
+            <div class="news-img"><img src="https://picsum.photos/seed/news3/600/300" alt="Alumni portal launch" loading="lazy" /></div>
+            <div class="news-body">
+              <div class="news-category"><i class="bi bi-dot"></i> Technology</div>
+              <h3 class="news-title">HAMD Digital Portal Goes Live — Connecting Alumni Worldwide</h3>
+              <p class="news-desc">The newly launched HAMD Alumni Portal enables graduates to register, access resources, stay updated on events, and connect with the global HAMD community.</p>
+              <div class="news-meta">
+                <span class="news-date"><i class="bi bi-clock"></i> June 5, 2025</span>
+                <a href="#" class="news-read">Read More <i class="bi bi-arrow-right"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DONATION ===================== -->
+  <section id="donate" class="section-pad">
+    <div class="donate-bg"></div>
+    <div class="donate-blob donate-blob-1"></div>
+    <div class="donate-blob donate-blob-2"></div>
+    <div class="container position-relative" style="z-index:1;">
+      <div class="glass-card-dark donate-card reveal">
+        <div class="row align-items-center g-5">
+          <div class="col-lg-7">
+            <div class="section-label dark-section" style="display:inline-flex;background:rgba(96,165,250,0.12);border-color:rgba(96,165,250,0.25);color:var(--blue-200);">
+              <i class="bi bi-heart-pulse"></i> Support HAMD
+            </div>
+            <h2 style="font-size:clamp(1.7rem,3.5vw,2.6rem);font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2;">
+              Your Donation Fuels<br><span style="background:linear-gradient(90deg,#93c5fd,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Knowledge & Service</span>
+            </h2>
+            <p style="color:rgba(255,255,255,0.6);line-height:1.75;margin-bottom:28px;">
+              Every contribution helps us sustain Da'wa activities, fund scholarships for deserving students, organise community events, and maintain the programs that keep our alumni network strong and active.
+            </p>
+            <div class="donate-features">
+              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Scholarship funding</div>
+              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Da'wa programmes</div>
+              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Community welfare</div>
+              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Educational resources</div>
+              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Alumni events</div>
+              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Emergency aid</div>
+            </div>
+            <a href="#contact" class="btn-hero-primary" style="font-size:0.95rem;">
+              <i class="bi bi-heart-fill"></i> Donate Now
+            </a>
+          </div>
+          <div class="col-lg-5">
+            <div class="donate-methods">
+              <div class="donate-method">
+                <div class="qr-placeholder">QR Code<br/>Coming Soon</div>
+                <div class="method-title" style="margin-top:12px;">Scan & Pay</div>
+                <div class="method-detail">UPI / GPay / PhonePe</div>
+              </div>
+              <div class="donate-method" style="display:flex;flex-direction:column;gap:12px;">
+                <div>
+                  <i class="bi bi-bank" style="font-size:1.4rem;color:var(--blue-300);"></i>
+                  <div class="method-title">Bank Transfer</div>
+                  <div class="method-detail">Account: HAMD Alumni Trust</div>
+                  <div class="method-detail">A/C No: XXXX XXXX XXXX</div>
+                  <div class="method-detail">IFSC: HDFC0001234</div>
+                </div>
+                <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;">
+                  <i class="bi bi-whatsapp" style="font-size:1.4rem;color:#25d366;"></i>
+                  <div class="method-title" style="margin-top:4px;">WhatsApp</div>
+                  <div class="method-detail">+91 94000 12345</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TESTIMONIALS ===================== -->
+  <section id="testimonials" class="section-pad-sm" style="background:var(--white);">
+    <div class="container mb-5">
+      <div class="text-center reveal">
+        <div class="section-label"><i class="bi bi-chat-quote"></i> Alumni Voices</div>
+        <h2 class="section-title">What Our Alumni Say</h2>
+      </div>
+    </div>
+    <div class="testi-track-wrapper">
+      <div class="testi-track" aria-label="Alumni testimonials carousel">
+        <!-- Cards duplicated for seamless loop -->
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"HAMD has been a source of barakah in my life. Reconnecting with batch mates and contributing to Da'wa activities together has kept the spirit of the Markaz alive wherever I go."</p>
+          <div class="testi-author"><div class="testi-avatar">AM</div><div><div class="testi-name">Ahmad Musthafa</div><div class="testi-batch">Batch 2010 · Dubai, UAE</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"The scholarship I received through HAMD helped me pursue further studies in Islamic sciences. I am forever grateful to this brotherhood and the committee's dedication."</p>
+          <div class="testi-author"><div class="testi-avatar">SN</div><div><div class="testi-name">Sulaiman Noushad</div><div class="testi-batch">Batch 2014 · Kozhikode</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"The annual gatherings at Parappalli Markaz are something I travel thousands of miles for. The bond we share as HAMD alumni is unlike anything else — it is a brotherhood for life."</p>
+          <div class="testi-author"><div class="testi-avatar">FH</div><div><div class="testi-name">Farhan Hamza</div><div class="testi-batch">Batch 2007 · Riyadh, KSA</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"Serving as a HAMD volunteer opened doors I never imagined. The training, the network, and the sincerity of everyone involved truly reflects the values we learned at the Markaz."</p>
+          <div class="testi-author"><div class="testi-avatar">RI</div><div><div class="testi-name">Riyad Ibrahim</div><div class="testi-batch">Batch 2016 · Kannur</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"The digital portal has made staying connected so much easier. I can access event details, contribute to fundraisers, and keep up with news from all over the world."</p>
+          <div class="testi-author"><div class="testi-avatar">ZA</div><div><div class="testi-name">Zainul Abidin</div><div class="testi-batch">Batch 2019 · Muscat, Oman</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"HAMD's Da'wa camps in our district brought hundreds of young people closer to the Quran. Proud to be part of an alumni body that gives back so selflessly to society."</p>
+          <div class="testi-author"><div class="testi-avatar">NA</div><div><div class="testi-name">Nabil Ashraf</div><div class="testi-batch">Batch 2012 · Malappuram</div></div></div>
+        </div>
+        <!-- Duplicate for loop -->
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"HAMD has been a source of barakah in my life. Reconnecting with batch mates and contributing to Da'wa activities together has kept the spirit of the Markaz alive wherever I go."</p>
+          <div class="testi-author"><div class="testi-avatar">AM</div><div><div class="testi-name">Ahmad Musthafa</div><div class="testi-batch">Batch 2010 · Dubai, UAE</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"The scholarship I received through HAMD helped me pursue further studies in Islamic sciences. I am forever grateful to this brotherhood and the committee's dedication."</p>
+          <div class="testi-author"><div class="testi-avatar">SN</div><div><div class="testi-name">Sulaiman Noushad</div><div class="testi-batch">Batch 2014 · Kozhikode</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"The annual gatherings at Parappalli Markaz are something I travel thousands of miles for. The bond we share as HAMD alumni is unlike anything else — it is a brotherhood for life."</p>
+          <div class="testi-author"><div class="testi-avatar">FH</div><div><div class="testi-name">Farhan Hamza</div><div class="testi-batch">Batch 2007 · Riyadh, KSA</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"Serving as a HAMD volunteer opened doors I never imagined. The training, the network, and the sincerity of everyone involved truly reflects the values we learned at the Markaz."</p>
+          <div class="testi-author"><div class="testi-avatar">RI</div><div><div class="testi-name">Riyad Ibrahim</div><div class="testi-batch">Batch 2016 · Kannur</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"The digital portal has made staying connected so much easier. I can access event details, contribute to fundraisers, and keep up with news from all over the world."</p>
+          <div class="testi-author"><div class="testi-avatar">ZA</div><div><div class="testi-name">Zainul Abidin</div><div class="testi-batch">Batch 2019 · Muscat, Oman</div></div></div>
+        </div>
+        <div class="glass-card testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"HAMD's Da'wa camps in our district brought hundreds of young people closer to the Quran. Proud to be part of an alumni body that gives back so selflessly to society."</p>
+          <div class="testi-author"><div class="testi-avatar">NA</div><div><div class="testi-name">Nabil Ashraf</div><div class="testi-batch">Batch 2012 · Malappuram</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CONTACT ===================== -->
+  <section id="contact" class="section-pad" style="background:var(--light);">
+    <div class="container">
+      <div class="text-center mb-5 reveal">
+        <div class="section-label"><i class="bi bi-envelope"></i> Get in Touch</div>
+        <h2 class="section-title">Contact Us</h2>
+        <p class="section-sub mx-auto mt-3">Reach out for membership inquiries, event collaboration, or anything else on your mind.</p>
+      </div>
+      <div class="row g-5 align-items-start">
+        <!-- Contact Info -->
+        <div class="col-lg-5 reveal-left">
+          <div class="glass-card" style="padding:36px;">
+            <h3 style="font-size:1.15rem;font-weight:700;color:var(--navy);margin-bottom:28px;">Get in Touch</h3>
+            <div class="contact-info-item">
+              <div class="contact-info-icon"><i class="bi bi-geo-alt-fill"></i></div>
+              <div>
+                <div class="contact-info-label">Address</div>
+                <div class="contact-info-value">Parappalli Markaz, Parappalli P.O,<br/>Malappuram District, Kerala – 676 552</div>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon"><i class="bi bi-envelope-fill"></i></div>
+              <div>
+                <div class="contact-info-label">Email</div>
+                <div class="contact-info-value">info@hamd-alumni.org</div>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon"><i class="bi bi-telephone-fill"></i></div>
+              <div>
+                <div class="contact-info-label">Phone</div>
+                <div class="contact-info-value">+91 94000 12345</div>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon"><i class="bi bi-whatsapp"></i></div>
+              <div>
+                <div class="contact-info-label">WhatsApp</div>
+                <div class="contact-info-value">+91 94000 12345</div>
+              </div>
+            </div>
+
+            <div style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(37,99,235,0.1);">
+              <div class="contact-info-label" style="margin-bottom:12px;">Follow Us</div>
+              <div class="social-links">
+                <a href="#" class="social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                <a href="#" class="social-link" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                <a href="#" class="social-link" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                <a href="#" class="social-link" aria-label="Twitter/X"><i class="bi bi-twitter-x"></i></a>
+              </div>
+            </div>
+
+            <div class="map-placeholder" aria-label="Map location placeholder">
+              <i class="bi bi-map"></i>
+              <span>Parappalli Markaz, Malappuram</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="col-lg-7 reveal-right">
+          <div class="glass-card" style="padding:40px;">
+            <h3 style="font-size:1.15rem;font-weight:700;color:var(--navy);margin-bottom:28px;">Send a Message</h3>
+            <form id="contact-form" novalidate>
+              <div class="row g-3">
+                <div class="col-sm-6 form-group">
+                  <label class="form-label-hamd" for="c-name">Full Name</label>
+                  <input type="text" id="c-name" class="form-control-hamd" placeholder="Your full name" required autocomplete="name" />
+                </div>
+                <div class="col-sm-6 form-group">
+                  <label class="form-label-hamd" for="c-email">Email Address</label>
+                  <input type="email" id="c-email" class="form-control-hamd" placeholder="you@example.com" required autocomplete="email" />
+                </div>
+                <div class="col-sm-6 form-group">
+                  <label class="form-label-hamd" for="c-phone">Phone Number</label>
+                  <input type="tel" id="c-phone" class="form-control-hamd" placeholder="+91 00000 00000" autocomplete="tel" />
+                </div>
+                <div class="col-sm-6 form-group">
+                  <label class="form-label-hamd" for="c-subject">Subject</label>
+                  <input type="text" id="c-subject" class="form-control-hamd" placeholder="How can we help?" />
+                </div>
+                <div class="col-12 form-group">
+                  <label class="form-label-hamd" for="c-message">Message</label>
+                  <textarea id="c-message" class="form-control-hamd" placeholder="Write your message here..." required></textarea>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn-primary-hamd w-100" style="justify-content:center;padding:14px;">
+                    <i class="bi bi-send"></i> Send Message
+                  </button>
+                  <p id="form-feedback" style="font-size:0.82rem;margin-top:10px;text-align:center;min-height:20px;color:var(--blue-600);"></p>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer id="footer" aria-label="Site footer">
+    <div class="footer-top">
+      <div class="container">
+        <div class="row g-5">
+          <!-- Brand -->
+          <div class="col-lg-4 col-md-6">
+            <img src="/logo/hamd-full-light.png" alt="HAMD Alumni Portal" class="footer-logo" />
+            <p class="footer-tagline">Huffaz Alumni Malik Deenar — Parappalli Markaz. Connecting graduates, celebrating legacy, and serving the Ummah together since 2005.</p>
+            <div class="footer-social">
+              <a href="#" class="footer-social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+              <a href="#" class="footer-social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+              <a href="#" class="footer-social-link" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+              <a href="#" class="footer-social-link" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+            </div>
+          </div>
+
+          <!-- Quick Links -->
+          <div class="col-6 col-md-3 col-lg-2">
+            <div class="footer-heading">Quick Links</div>
+            <ul class="footer-links">
+              <li><a href="#hero">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="#committee">Committee</a></li>
+              <li><a href="#gallery">Gallery</a></li>
+              <li><a href="#events">Events</a></li>
+              <li><a href="#news">News</a></li>
+            </ul>
+          </div>
+
+          <!-- Useful Links -->
+          <div class="col-6 col-md-3 col-lg-2">
+            <div class="footer-heading">Useful Links</div>
+            <ul class="footer-links">
+              <li><a href="/login/member">Member Login</a></li>
+              <li><a href="/login/admin">Admin Login</a></li>
+              <li><a href="#donate">Donate</a></li>
+              <li><a href="#testimonials">Testimonials</a></li>
+              <li><a href="#contact">Contact</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+            </ul>
+          </div>
+
+          <!-- Contact -->
+          <div class="col-md-6 col-lg-4">
+            <div class="footer-heading">Contact</div>
+            <ul class="footer-links">
+              <li><a href="#"><i class="bi bi-geo-alt"></i> Parappalli Markaz, Malappuram, Kerala</a></li>
+              <li><a href="mailto:info@hamd-alumni.org"><i class="bi bi-envelope"></i> info@hamd-alumni.org</a></li>
+              <li><a href="tel:+919400012345"><i class="bi bi-telephone"></i> +91 94000 12345</a></li>
+              <li><a href="#"><i class="bi bi-whatsapp"></i> +91 94000 12345</a></li>
+            </ul>
+            <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
+              <div style="font-size:0.75rem;color:rgba(255,255,255,0.35);margin-bottom:8px;letter-spacing:0.08em;text-transform:uppercase;">Office Hours</div>
+              <div style="font-size:0.85rem;color:rgba(255,255,255,0.55);">Saturday – Thursday: 9 AM – 6 PM<br/>Friday: Closed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="footer-divider" />
+
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="footer-bottom-text">© 2025 HAMD Alumni Portal — Huffaz Alumni Malik Deenar, Parappalli Markaz. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Use</a>
+          <a href="#">Sitemap</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    /* ============================================================
+       LOADING SCREEN
+    ============================================================ */
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const ls = document.getElementById('loading-screen');
+        if (ls) ls.classList.add('hidden');
+      }, 900);
+    });
+
+    /* ============================================================
+       NAVBAR: scroll glass + hamburger
+    ============================================================ */
+    const mainNav = document.getElementById('main-nav');
+    const backTop = document.getElementById('back-top');
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 60) {
+        mainNav.classList.add('scrolled');
+        backTop.classList.add('visible');
+      } else {
+        mainNav.classList.remove('scrolled');
+        backTop.classList.remove('visible');
+      }
+    }, { passive: true });
+
+    // Hamburger toggle
+    const hamburger = document.getElementById('hamburger');
+    const hamburgerIcon = document.getElementById('hamburger-icon');
+    const mobileNav = document.getElementById('mobile-nav');
+
+    hamburger.addEventListener('click', () => {
+      const isOpen = mobileNav.classList.toggle('open');
+      hamburger.setAttribute('aria-expanded', isOpen);
+      hamburgerIcon.className = isOpen ? 'bi bi-x' : 'bi bi-list';
+    });
+
+    function closeMobileNav() {
+      mobileNav.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+      hamburgerIcon.className = 'bi bi-list';
+    }
+
+    // Profile dropdowns
+    function setupDropdown(btnId, ddId) {
+      const btn = document.getElementById(btnId);
+      const dd  = document.getElementById(ddId);
+      if (!btn || !dd) return;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dd.classList.toggle('show');
+        btn.setAttribute('aria-expanded', dd.classList.contains('show'));
+      });
+    }
+    setupDropdown('profile-btn', 'profile-dropdown');
+    setupDropdown('profile-btn-mobile', 'profile-dropdown-mobile');
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.profile-dropdown.show').forEach(d => d.classList.remove('show'));
+    });
+
+    /* ============================================================
+       PARTICLES CANVAS
+    ============================================================ */
+    (function() {
+      const canvas = document.getElementById('particles-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let w, h, particles;
+
+      function resize() {
+        w = canvas.width  = canvas.offsetWidth;
+        h = canvas.height = canvas.offsetHeight;
+      }
+
+      function makeParticle() {
+        return {
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 2.5 + 0.5,
+          dx: (Math.random() - 0.5) * 0.4,
+          dy: (Math.random() - 0.5) * 0.4,
+          o: Math.random() * 0.5 + 0.2
+        };
+      }
+
+      function init() {
+        resize();
+        particles = Array.from({ length: 90 }, makeParticle);
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(147,197,253,${p.o})`;
+          ctx.fill();
+          p.x += p.dx;
+          p.y += p.dy;
+          if (p.x < 0 || p.x > w) p.dx *= -1;
+          if (p.y < 0 || p.y > h) p.dy *= -1;
+        });
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', () => {
+        resize();
+        particles = Array.from({ length: 90 }, makeParticle);
+      }, { passive: true });
+
+      init();
+      draw();
+    })();
+
+    /* ============================================================
+       INTERSECTION OBSERVER — REVEAL
+    ============================================================ */
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          revealObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale')
+      .forEach(el => revealObs.observe(el));
+
+    /* ============================================================
+       ANIMATED COUNTERS
+    ============================================================ */
+    const counterObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const el = e.target;
+        const target = parseInt(el.dataset.target, 10);
+        const suffix = el.dataset.suffix || '';
+        const duration = 2000;
+        const start = performance.now();
+
+        function tick(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          el.textContent = Math.round(eased * target) + suffix;
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        counterObs.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.stat-number[data-target]')
+      .forEach(el => counterObs.observe(el));
+
+    /* ============================================================
+       EVENTS CAROUSEL
+    ============================================================ */
+    (function() {
+      const track    = document.getElementById('events-track');
+      const prevBtn  = document.getElementById('events-prev');
+      const nextBtn  = document.getElementById('events-next');
+      if (!track) return;
+
+      const cardWidth = 320 + 24; // card + gap
+      let current = 0;
+      const cards = track.querySelectorAll('.event-card');
+      const max   = Math.max(0, cards.length - Math.floor(track.parentElement.offsetWidth / cardWidth));
+
+      function slide(dir) {
+        current = Math.max(0, Math.min(max, current + dir));
+        track.style.transform = `translateX(-${current * cardWidth}px)`;
+      }
+
+      prevBtn && prevBtn.addEventListener('click', () => slide(-1));
+      nextBtn && nextBtn.addEventListener('click', () => slide(1));
+
+      // Auto advance every 5 seconds
+      let autoSlide = setInterval(() => {
+        if (current >= max) current = -1;
+        slide(1);
+      }, 5000);
+
+      track.addEventListener('mouseenter', () => clearInterval(autoSlide));
+      track.addEventListener('mouseleave', () => {
+        autoSlide = setInterval(() => {
+          if (current >= max) current = -1;
+          slide(1);
+        }, 5000);
+      });
+    })();
+
+    /* ============================================================
+       GALLERY MODAL
+    ============================================================ */
+    function openGallery(el) {
+      const img   = el.querySelector('img');
+      const modal = document.getElementById('gallery-modal');
+      const mImg  = document.getElementById('gallery-modal-img');
+      mImg.src = img.src;
+      mImg.alt = img.alt;
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeGallery() {
+      document.getElementById('gallery-modal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeGallery();
+    });
+
+    // Keyboard-accessible gallery items
+    document.querySelectorAll('.gallery-item').forEach(item => {
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openGallery(item);
+        }
+      });
+    });
+
+    /* ============================================================
+       CONTACT FORM
+    ============================================================ */
+    const contactForm    = document.getElementById('contact-form');
+    const formFeedback   = document.getElementById('form-feedback');
+
+    contactForm && contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name  = document.getElementById('c-name').value.trim();
+      const email = document.getElementById('c-email').value.trim();
+      const msg   = document.getElementById('c-message').value.trim();
+
+      if (!name || !email || !msg) {
+        formFeedback.style.color = '#ef4444';
+        formFeedback.textContent = 'Please fill in all required fields.';
+        return;
+      }
+
+      // Simulate submission
+      const btn = contactForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending…';
+      formFeedback.style.color = 'var(--blue-600)';
+      formFeedback.textContent = '';
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send"></i> Send Message';
+        formFeedback.style.color = '#16a34a';
+        formFeedback.textContent = 'Message sent! We will get back to you soon, inshaa Allah.';
+        contactForm.reset();
+        setTimeout(() => { formFeedback.textContent = ''; }, 5000);
+      }, 1800);
+    });
+
+    /* ============================================================
+       SMOOTH ACTIVE NAV HIGHLIGHT
+    ============================================================ */
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link-item');
+
+    const sectionObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          navLinks.forEach(a => {
+            a.style.color = '';
+            if (a.getAttribute('href') === '#' + e.target.id) {
+              a.style.color = 'var(--blue-400)';
+            }
+          });
+        }
+      });
+    }, { threshold: 0.4 });
+
+    sections.forEach(s => sectionObs.observe(s));
+  </script>
+</body>
+</html>
