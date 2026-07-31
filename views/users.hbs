@@ -1129,27 +1129,34 @@
         </div>
 
         <div class="mb-4">
-          <label class="form-label-custom">
-            <span data-en="Married?" data-ml="വിവാഹം കഴിഞ്ഞിട്ടുണ്ടോ?">Married?</span>
-          </label>
-          <div class="radio-group">
-            <label>
-              <input type="radio" name="married" value="yes" {{#if user.married_yes}}checked{{/if}}>
-              <span data-en="Yes" data-ml="ഉണ്ട്">Yes</span>
-            </label>
-            <label>
-              <input type="radio" name="married" value="no" {{#if user.married_no}}checked{{/if}}>
-              <span data-en="No" data-ml="ഇല്ല">No</span>
-            </label>
-          </div>
-        </div>
+  <label class="form-label-custom">
+    <span data-en="Married?" data-ml="വിവാഹം കഴിഞ്ഞിട്ടുണ്ടോ?">Married?</span>
+  </label>
 
-        <div class="mb-4">
-          <label class="form-label-custom" for="ep_childrenCount">
-            <span data-en="Children (count)" data-ml="കുട്ടികൾ (എണ്ണം)">Children (count)</span>
-          </label>
-          <input type="number" class="form-control" id="ep_childrenCount" name="childrenCount" value="{{user.childrenCount}}" min="0" placeholder="0">
-        </div>
+  <div class="radio-group mb-2">
+    <label>
+      <input type="radio" name="married" value="yes"
+        onchange="document.getElementById('childrenCountWrap').style.display='block'"
+        {{#if user.married_yes}}checked{{/if}}>
+      <span data-en="Yes" data-ml="ഉണ്ട്">Yes</span>
+    </label>
+
+    <label>
+      <input type="radio" name="married" value="no"
+        onchange="document.getElementById('childrenCountWrap').style.display='none'"
+        {{#if user.married_no}}checked{{/if}}>
+      <span data-en="No" data-ml="ഇല്ല">No</span>
+    </label>
+  </div>
+
+  <div id="childrenCountWrap" style="display:{{#if user.married_yes}}block{{else}}none{{/if}};">
+    <label class="form-label-custom" for="ep_childrenCount">
+      <span data-en="Children (count)" data-ml="കുട്ടികൾ (എണ്ണം)">Children (count)</span>
+    </label>
+    <input type="number" class="form-control" id="ep_childrenCount"
+      name="childrenCount" value="{{user.childrenCount}}" min="0" placeholder="0">
+  </div>
+</div>
 
         <!-- SAVE BUTTON -->
         <div class="d-grid mt-2 mb-3">
