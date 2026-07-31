@@ -9,6 +9,7 @@ var MongoStore = require('connect-mongo');
 
 var connectDB = require('./config/db');
 
+var homeRouter   = require('./routes/home');
 var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
 var leadersRouter = require('./routes/leaders');
@@ -79,10 +80,8 @@ app.use(function (req, res, next) {
   next();
 });
 
-// Home page — renders views/home.hbs (self-contained HTML, no layout wrapper)
-app.get('/', function(req, res) {
-  res.render('home', { layout: false });
-});
+// Home page + its public image endpoints — see routes/home.js
+app.use('/', homeRouter);
 
 app.use('/admin', adminRouter);
 app.use('/users', usersRouter);

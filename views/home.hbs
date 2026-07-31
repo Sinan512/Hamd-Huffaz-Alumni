@@ -1089,6 +1089,96 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
+
+    /* ============================================================
+       RESPONSIVE / DEVICE FIT  (desktop + tablet + phone)
+    ============================================================ */
+    html { -webkit-text-size-adjust: 100%; }
+    body { overflow-x: hidden; }
+    img, canvas, svg, video { max-width: 100%; }
+
+    .container {
+      width: 100%;
+      padding-left: clamp(16px, 4vw, 32px);
+      padding-right: clamp(16px, 4vw, 32px);
+      padding-left: max(clamp(16px, 4vw, 32px), env(safe-area-inset-left));
+      padding-right: max(clamp(16px, 4vw, 32px), env(safe-area-inset-right));
+    }
+
+    .empty-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+      padding: 40px 0;
+      margin: 0;
+    }
+
+    /* ---- Navbar ---- */
+    #main-nav { padding: clamp(10px, 2vw, 16px) 0; }
+    #main-nav > .container > .d-flex { gap: 12px; min-width: 0; }
+    .nav-brand { flex: 0 0 auto; display: inline-flex; align-items: center; }
+    .nav-brand img { height: clamp(28px, 6vw, 40px); width: auto; }
+    .desktop-nav { min-width: 0; flex-wrap: nowrap; }
+    .nav-link-item { white-space: nowrap; font-size: clamp(0.78rem, 1.1vw, 0.88rem); padding: 6px clamp(8px, 1vw, 14px); }
+    .nav-profile-btn { width: clamp(34px, 8vw, 38px); height: clamp(34px, 8vw, 38px); flex: 0 0 auto; }
+    .mobile-nav { max-height: 70vh; overflow-y: auto; }
+    .profile-dropdown { max-width: calc(100vw - 32px); }
+
+    /* ---- Hero ---- */
+    #hero { min-height: 100svh; padding: clamp(96px, 18vh, 140px) 0 clamp(72px, 12vh, 110px); }
+    .hero-content-box { padding: clamp(28px, 5vw, 56px) clamp(20px, 4vw, 48px); max-width: min(720px, 100%); }
+    .hero-logo { display: block; height: clamp(52px, 14vw, 88px); width: auto; margin: 0 auto clamp(18px, 4vw, 32px); }
+    .hero-badge { font-size: clamp(0.62rem, 2.2vw, 0.78rem); padding: 6px clamp(12px, 3vw, 18px); line-height: 1.4; }
+    .hero-subtitle { margin-bottom: clamp(22px, 5vw, 36px); }
+    .hero-actions > * { flex: 1 1 auto; min-width: 150px; justify-content: center; }
+    .btn-hero-primary, .btn-hero-outline { padding: 13px clamp(20px, 5vw, 36px); font-size: clamp(0.85rem, 2.4vw, 0.95rem); }
+
+    /* ---- Sections ---- */
+    #stats, #donate, #committee, #news, #testimonials, #contact, #footer { overflow-x: clip; }
+    .section-pad { padding: clamp(56px, 9vw, 100px) 0; }
+    .section-pad-sm { padding: clamp(44px, 7vw, 72px) 0; }
+
+    /* ---- Stats ---- */
+    .col-lg-2dot4 { min-width: 0; }
+    .stat-card { padding: clamp(18px, 3vw, 28px) clamp(12px, 2vw, 20px); }
+    .stat-number { font-size: clamp(1.5rem, 6vw, 2.4rem); }
+    .stat-label { font-size: clamp(0.7rem, 2.4vw, 0.85rem); }
+
+    /* ---- Gallery ---- */
+    .gallery-grid { columns: 3; column-gap: clamp(10px, 2vw, 16px); }
+    .gallery-item { margin-bottom: clamp(10px, 2vw, 16px); }
+    @media (max-width: 991px) { .gallery-grid { columns: 2; } }
+    @media (max-width: 520px) { .gallery-grid { columns: 1; } }
+
+    /* ---- Events carousel: swipeable on touch screens ---- */
+    .event-card { min-width: 300px; max-width: 320px; }
+    @media (max-width: 767px) {
+      .events-carousel { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      .events-carousel::-webkit-scrollbar { display: none; }
+      .events-track { transform: none !important; gap: 16px; padding-bottom: 4px; }
+      .event-card { min-width: min(84vw, 320px); max-width: min(84vw, 320px); scroll-snap-align: start; }
+      .carousel-controls { display: none; }
+    }
+
+    /* ---- Testimonials ---- */
+    .testi-card { min-width: min(88vw, 380px); max-width: min(88vw, 380px); }
+
+    /* ---- Donate / contact / footer ---- */
+    .donate-card { padding: clamp(24px, 5vw, 56px); }
+    .qr-placeholder { max-width: 100%; }
+    .footer-top { padding: clamp(48px, 8vw, 72px) 0 clamp(32px, 5vw, 48px); }
+    .footer-logo { display: block; height: clamp(40px, 10vw, 52px); width: auto; }
+    .footer-tagline { max-width: 100%; }
+    .footer-bottom { justify-content: center; text-align: center; }
+    @media (min-width: 768px) { .footer-bottom { justify-content: space-between; text-align: left; } }
+
+    @media (max-width: 575.98px) {
+      #back-top { right: 14px; bottom: 14px; }
+      .section-title { font-size: clamp(1.5rem, 7vw, 2rem); }
+      .glass-card { border-radius: var(--radius-sm); }
+      .testi-card, .event-card { min-width: 86vw; max-width: 86vw; }
+      .footer-bottom-links { justify-content: center; flex-wrap: wrap; }
+    }
   </style>
 </head>
 
@@ -1134,9 +1224,6 @@
               <a href="/login/member" role="menuitem">
                 <i class="bi bi-person" style="color:var(--blue-500)"></i> Member Login
               </a>
-              <a href="/login/admin" role="menuitem">
-                <i class="bi bi-shield-lock" style="color:var(--blue-700)"></i> Admin Login
-              </a>
             </div>
           </div>
         </div>
@@ -1149,7 +1236,6 @@
             </button>
             <div class="profile-dropdown" id="profile-dropdown-mobile" role="menu">
               <a href="/login/member" role="menuitem"><i class="bi bi-person" style="color:var(--blue-500)"></i> Member Login</a>
-              <a href="/login/admin"  role="menuitem"><i class="bi bi-shield-lock" style="color:var(--blue-700)"></i> Admin Login</a>
             </div>
           </div>
           <button class="nav-hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
@@ -1227,60 +1313,28 @@
             Our mission is to remain connected, support ongoing Da'wa efforts, uplift one another professionally and spiritually, and honour the teachings instilled in us during our years at the Markaz.
           </p>
           <div class="timeline">
+            {{#each timeline}}
             <div class="timeline-item">
-              <div class="timeline-year">1982</div>
-              <div class="timeline-title">Founding of Parappalli Markaz</div>
-              <div class="timeline-desc">Established by visionary scholars to nurture Huffaz and Islamic scholars in northern Kerala.</div>
+              <div class="timeline-year">{{this.year}}</div>
+              <div class="timeline-title">{{this.title}}</div>
+              <div class="timeline-desc">{{this.desc}}</div>
             </div>
-            <div class="timeline-item">
-              <div class="timeline-year">2005</div>
-              <div class="timeline-title">HAMD Alumni Association Formed</div>
-              <div class="timeline-desc">Graduates came together to formalise a community for mutual support, Da'wa, and charitable work.</div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-year">2015</div>
-              <div class="timeline-title">International Expansion</div>
-              <div class="timeline-desc">HAMD chapters established in Gulf countries, connecting alumni working abroad.</div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-year">2024</div>
-              <div class="timeline-title">HAMD Digital Portal Launched</div>
-              <div class="timeline-desc">Centralised alumni management system to digitise records, events, and community engagement.</div>
-            </div>
+            {{/each}}
           </div>
         </div>
 
         <!-- Right: Cards -->
         <div class="col-lg-7">
           <div class="row g-4">
-            <div class="col-sm-6 reveal delay-1">
+            {{#each aboutCards}}
+            <div class="col-sm-6 reveal">
               <div class="glass-card about-card">
-                <div class="about-icon-wrap"><i class="bi bi-eye"></i></div>
-                <h4>Our Vision</h4>
-                <p>To be the foremost alumni network of Islamic scholarship in Kerala — a global community united by faith, knowledge, and service to the Ummah.</p>
+                <div class="about-icon-wrap"><i class="bi {{this.icon}}"></i></div>
+                <h4>{{this.title}}</h4>
+                <p>{{this.text}}</p>
               </div>
             </div>
-            <div class="col-sm-6 reveal delay-2">
-              <div class="glass-card about-card">
-                <div class="about-icon-wrap"><i class="bi bi-bullseye"></i></div>
-                <h4>Our Mission</h4>
-                <p>To strengthen the bonds between graduates, facilitate Da'wa activities, support charitable initiatives, and honour the teachings of Parappalli Markaz.</p>
-              </div>
-            </div>
-            <div class="col-sm-6 reveal delay-3">
-              <div class="glass-card about-card">
-                <div class="about-icon-wrap"><i class="bi bi-list-check"></i></div>
-                <h4>Core Objectives</h4>
-                <p>Alumni registration, event organisation, scholarship grants, community welfare, and digital connection for all graduates worldwide.</p>
-              </div>
-            </div>
-            <div class="col-sm-6 reveal delay-4">
-              <div class="glass-card about-card">
-                <div class="about-icon-wrap"><i class="bi bi-people"></i></div>
-                <h4>Community Values</h4>
-                <p>Brotherhood, accountability, lifelong learning, compassion for the less fortunate, and steadfast adherence to Islamic principles.</p>
-              </div>
-            </div>
+            {{/each}}
           </div>
         </div>
       </div>
@@ -1296,42 +1350,16 @@
         <div class="section-label"><i class="bi bi-bar-chart"></i> By the Numbers</div>
         <h2 class="section-title">HAMD in Figures</h2>
       </div>
-      <div class="row g-4 justify-content-center">
-        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-1">
+      <div class="row g-3 g-md-4 justify-content-center">
+        {{#each stats}}
+        <div class="col-6 col-md-4 col-lg-2dot4 reveal">
           <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-mortarboard"></i></div>
-            <div class="stat-number" data-target="1200" data-suffix="+">0</div>
-            <div class="stat-label">Registered Alumni</div>
+            <div class="stat-icon"><i class="bi {{this.icon}}"></i></div>
+            <div class="stat-number" data-target="{{this.target}}" data-suffix="{{this.suffix}}">0</div>
+            <div class="stat-label">{{this.label}}</div>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-2">
-          <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
-            <div class="stat-number" data-target="40" data-suffix="+">0</div>
-            <div class="stat-label">Batches</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-3">
-          <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-megaphone"></i></div>
-            <div class="stat-number" data-target="250" data-suffix="+">0</div>
-            <div class="stat-label">Da'wa Activities</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-4">
-          <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-globe2"></i></div>
-            <div class="stat-number" data-target="18" data-suffix="+">0</div>
-            <div class="stat-label">Countries</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2dot4 reveal delay-5">
-          <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-hand-thumbs-up"></i></div>
-            <div class="stat-number" data-target="300" data-suffix="+">0</div>
-            <div class="stat-label">Volunteers</div>
-          </div>
-        </div>
+        {{/each}}
       </div>
     </div>
     <style>
@@ -1349,60 +1377,16 @@
         <p class="section-sub mx-auto mt-3">Dedicated alumni serving the community through leadership, guidance, and vision.</p>
       </div>
       <div class="row g-4">
-        <!-- President -->
-        <div class="col-sm-6 col-lg-4 reveal delay-1">
+        {{#each committee}}
+        <div class="col-sm-6 col-lg-4 reveal">
           <div class="glass-card committee-card">
-            <div class="avatar-placeholder">AM</div>
-            <div class="committee-role">President</div>
-            <div class="committee-name">Abdur Rahman Mankada</div>
-            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Malappuram, Kerala</div>
+            <div class="avatar-placeholder">{{this.initials}}</div>
+            <div class="committee-role">{{this.role}}</div>
+            <div class="committee-name">{{this.name}}</div>
+            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> {{this.place}}</div>
           </div>
         </div>
-        <!-- Vice President -->
-        <div class="col-sm-6 col-lg-4 reveal delay-2">
-          <div class="glass-card committee-card">
-            <div class="avatar-placeholder">MN</div>
-            <div class="committee-role">Vice President</div>
-            <div class="committee-name">Muhammad Naseef</div>
-            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Kozhikode, Kerala</div>
-          </div>
-        </div>
-        <!-- Secretary -->
-        <div class="col-sm-6 col-lg-4 reveal delay-3">
-          <div class="glass-card committee-card">
-            <div class="avatar-placeholder">SI</div>
-            <div class="committee-role">General Secretary</div>
-            <div class="committee-name">Sirajuddeen Irfani</div>
-            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Parappalli, Kerala</div>
-          </div>
-        </div>
-        <!-- Treasurer -->
-        <div class="col-sm-6 col-lg-4 reveal delay-4">
-          <div class="glass-card committee-card">
-            <div class="avatar-placeholder">FA</div>
-            <div class="committee-role">Treasurer</div>
-            <div class="committee-name">Faisal Arafath</div>
-            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Thrissur, Kerala</div>
-          </div>
-        </div>
-        <!-- Executive -->
-        <div class="col-sm-6 col-lg-4 reveal delay-5">
-          <div class="glass-card committee-card">
-            <div class="avatar-placeholder">HK</div>
-            <div class="committee-role">Executive Member</div>
-            <div class="committee-name">Hamza Kareem</div>
-            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Sharjah, UAE</div>
-          </div>
-        </div>
-        <!-- Executive -->
-        <div class="col-sm-6 col-lg-4 reveal delay-6">
-          <div class="glass-card committee-card">
-            <div class="avatar-placeholder">ZP</div>
-            <div class="committee-role">Executive Member</div>
-            <div class="committee-name">Zaid Puthanpurakkal</div>
-            <div class="committee-place"><i class="bi bi-geo-alt" style="color:var(--blue-400)"></i> Kannur, Kerala</div>
-          </div>
-        </div>
+        {{/each}}
       </div>
     </div>
   </section>
@@ -1415,44 +1399,18 @@
         <h2 class="section-title">Moments & Memories</h2>
         <p class="section-sub mx-auto mt-3">Glimpses from our gatherings, programmes, and milestones over the years.</p>
       </div>
+      {{#if gallery.length}}
       <div class="gallery-grid reveal">
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 1">
-          <img src="https://picsum.photos/seed/hamd1/600/400" alt="HAMD Annual Gathering 2023" loading="lazy" />
+        {{#each gallery}}
+        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="{{this.description}}">
+          <img src="{{this.url}}" alt="{{this.description}}" loading="lazy" />
           <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
         </div>
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 2">
-          <img src="https://picsum.photos/seed/hamd2/600/700" alt="Dua Ceremony at Markaz" loading="lazy" />
-          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
-        </div>
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 3">
-          <img src="https://picsum.photos/seed/hamd3/600/500" alt="Da'wa Workshop 2022" loading="lazy" />
-          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
-        </div>
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 4">
-          <img src="https://picsum.photos/seed/hamd4/600/450" alt="Batch 2019 Reunion" loading="lazy" />
-          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
-        </div>
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 5">
-          <img src="https://picsum.photos/seed/hamd5/600/600" alt="Quran Recitation Competition" loading="lazy" />
-          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
-        </div>
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 6">
-          <img src="https://picsum.photos/seed/hamd6/600/380" alt="Alumni Meet 2024" loading="lazy" />
-          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
-        </div>
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 7">
-          <img src="https://picsum.photos/seed/hamd7/600/520" alt="Community Iftar Night" loading="lazy" />
-          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
-        </div>
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 8">
-          <img src="https://picsum.photos/seed/hamd8/600/480" alt="Scholarship Distribution" loading="lazy" />
-          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
-        </div>
-        <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Gallery image 9">
-          <img src="https://picsum.photos/seed/hamd9/600/640" alt="Annual Report Launch" loading="lazy" />
-          <div class="gallery-overlay"><i class="bi bi-zoom-in"></i></div>
-        </div>
+        {{/each}}
       </div>
+      {{else}}
+      <p class="empty-note">No gallery images have been published yet.</p>
+      {{/if}}
     </div>
   </section>
 
@@ -1477,85 +1435,30 @@
           <button class="carousel-btn" id="events-next" aria-label="Next events"><i class="bi bi-chevron-right"></i></button>
         </div>
       </div>
+      {{#if events.length}}
       <div class="events-carousel reveal">
         <div class="events-track" id="events-track">
-          <!-- Card 1 -->
+          {{#each events}}
           <article class="event-card">
             <div class="event-img-wrap">
-              <img src="https://picsum.photos/seed/ev1/640/360" alt="Annual HAMD Alumni Meet 2025" loading="lazy" />
-              <div class="event-date-badge"><div class="day">14</div><div class="month">Aug</div></div>
+              <img src="{{this.imageUrl}}" alt="{{this.title}}" loading="lazy" />
+              <div class="event-date-badge"><div class="day">{{this.day}}</div><div class="month">{{this.month}}</div></div>
             </div>
             <div class="event-body">
-              <div class="event-tag">Annual Meet</div>
-              <div class="event-title">Annual HAMD Alumni Gathering 2025</div>
-              <div class="event-location"><i class="bi bi-geo-alt"></i> Parappalli Markaz, Kozhikode</div>
-              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
+              <div class="event-tag">{{this.category}}</div>
+              <div class="event-title">{{this.title}}</div>
+              <div class="event-location"><i class="bi bi-geo-alt"></i> {{this.location}}</div>
+              <a href="/users" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
                 <i class="bi bi-ticket"></i> Register
               </a>
             </div>
           </article>
-          <!-- Card 2 -->
-          <article class="event-card">
-            <div class="event-img-wrap">
-              <img src="https://picsum.photos/seed/ev2/640/360" alt="Da'wa Workshop" loading="lazy" />
-              <div class="event-date-badge"><div class="day">02</div><div class="month">Sep</div></div>
-            </div>
-            <div class="event-body">
-              <div class="event-tag">Workshop</div>
-              <div class="event-title">Advanced Da'wa Skills Workshop</div>
-              <div class="event-location"><i class="bi bi-geo-alt"></i> HAMD Centre, Malappuram</div>
-              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
-                <i class="bi bi-ticket"></i> Register
-              </a>
-            </div>
-          </article>
-          <!-- Card 3 -->
-          <article class="event-card">
-            <div class="event-img-wrap">
-              <img src="https://picsum.photos/seed/ev3/640/360" alt="Quran Recitation Competition" loading="lazy" />
-              <div class="event-date-badge"><div class="day">20</div><div class="month">Sep</div></div>
-            </div>
-            <div class="event-body">
-              <div class="event-tag">Competition</div>
-              <div class="event-title">Inter-Alumni Quran Recitation Championship</div>
-              <div class="event-location"><i class="bi bi-geo-alt"></i> Town Hall, Thrissur</div>
-              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
-                <i class="bi bi-ticket"></i> Register
-              </a>
-            </div>
-          </article>
-          <!-- Card 4 -->
-          <article class="event-card">
-            <div class="event-img-wrap">
-              <img src="https://picsum.photos/seed/ev4/640/360" alt="Gulf Alumni Iftar" loading="lazy" />
-              <div class="event-date-badge"><div class="day">15</div><div class="month">Oct</div></div>
-            </div>
-            <div class="event-body">
-              <div class="event-tag">Community</div>
-              <div class="event-title">Gulf Chapter Alumni Community Night</div>
-              <div class="event-location"><i class="bi bi-geo-alt"></i> Sharjah, UAE</div>
-              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
-                <i class="bi bi-ticket"></i> Register
-              </a>
-            </div>
-          </article>
-          <!-- Card 5 -->
-          <article class="event-card">
-            <div class="event-img-wrap">
-              <img src="https://picsum.photos/seed/ev5/640/360" alt="Scholarship Awards" loading="lazy" />
-              <div class="event-date-badge"><div class="day">05</div><div class="month">Nov</div></div>
-            </div>
-            <div class="event-body">
-              <div class="event-tag">Awards</div>
-              <div class="event-title">HAMD Scholarship Awards Night 2025</div>
-              <div class="event-location"><i class="bi bi-geo-alt"></i> Parappalli Markaz Hall</div>
-              <a href="#" class="btn-primary-hamd" style="font-size:0.82rem;padding:10px 22px;">
-                <i class="bi bi-ticket"></i> Register
-              </a>
-            </div>
-          </article>
+          {{/each}}
         </div>
       </div>
+      {{else}}
+      <p class="empty-note">No events have been scheduled yet. Please check back soon.</p>
+      {{/if}}
     </div>
   </section>
 
@@ -1570,48 +1473,22 @@
         <a href="#" class="btn-outline-hamd reveal">View All <i class="bi bi-arrow-right"></i></a>
       </div>
       <div class="row g-4">
-        <div class="col-md-6 col-lg-4 reveal delay-1">
+        {{#each news}}
+        <div class="col-md-6 col-lg-4 reveal">
           <div class="news-card">
-            <div class="news-img"><img src="https://picsum.photos/seed/news1/600/300" alt="HAMD scholarship 2025" loading="lazy" /></div>
+            <div class="news-img"><img src="{{this.image}}" alt="{{this.title}}" loading="lazy" /></div>
             <div class="news-body">
-              <div class="news-category"><i class="bi bi-dot"></i> Scholarship</div>
-              <h3 class="news-title">HAMD Launches ₹50 Lakh Scholarship Fund for Deserving Students</h3>
-              <p class="news-desc">The Executive Committee approved a major scholarship initiative to support academically excellent but financially challenged students from alumni families.</p>
+              <div class="news-category"><i class="bi bi-dot"></i> {{this.category}}</div>
+              <h3 class="news-title">{{this.title}}</h3>
+              <p class="news-desc">{{this.desc}}</p>
               <div class="news-meta">
-                <span class="news-date"><i class="bi bi-clock"></i> July 10, 2025</span>
-                <a href="#" class="news-read">Read More <i class="bi bi-arrow-right"></i></a>
+                <span class="news-date"><i class="bi bi-clock"></i> {{this.date}}</span>
+                <a href="#news" class="news-read">Read More <i class="bi bi-arrow-right"></i></a>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-md-6 col-lg-4 reveal delay-2">
-          <div class="news-card">
-            <div class="news-img"><img src="https://picsum.photos/seed/news2/600/300" alt="Da'wa camp 2025" loading="lazy" /></div>
-            <div class="news-body">
-              <div class="news-category"><i class="bi bi-dot"></i> Da'wa</div>
-              <h3 class="news-title">Summer Da'wa Camp Draws 800 Participants Across Three Districts</h3>
-              <p class="news-desc">HAMD volunteers organised a three-week summer camp covering Quran, Islamic studies, and Arabic language for youth in Malappuram, Kozhikode, and Palakkad.</p>
-              <div class="news-meta">
-                <span class="news-date"><i class="bi bi-clock"></i> June 28, 2025</span>
-                <a href="#" class="news-read">Read More <i class="bi bi-arrow-right"></i></a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6 col-lg-4 reveal delay-3">
-          <div class="news-card">
-            <div class="news-img"><img src="https://picsum.photos/seed/news3/600/300" alt="Alumni portal launch" loading="lazy" /></div>
-            <div class="news-body">
-              <div class="news-category"><i class="bi bi-dot"></i> Technology</div>
-              <h3 class="news-title">HAMD Digital Portal Goes Live — Connecting Alumni Worldwide</h3>
-              <p class="news-desc">The newly launched HAMD Alumni Portal enables graduates to register, access resources, stay updated on events, and connect with the global HAMD community.</p>
-              <div class="news-meta">
-                <span class="news-date"><i class="bi bi-clock"></i> June 5, 2025</span>
-                <a href="#" class="news-read">Read More <i class="bi bi-arrow-right"></i></a>
-              </div>
-            </div>
-          </div>
-        </div>
+        {{/each}}
       </div>
     </div>
   </section>
@@ -1635,12 +1512,9 @@
               Every contribution helps us sustain Da'wa activities, fund scholarships for deserving students, organise community events, and maintain the programs that keep our alumni network strong and active.
             </p>
             <div class="donate-features">
-              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Scholarship funding</div>
-              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Da'wa programmes</div>
-              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Community welfare</div>
-              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Educational resources</div>
-              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Alumni events</div>
-              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> Emergency aid</div>
+              {{#each donate.features}}
+              <div class="donate-feature"><i class="bi bi-check-circle-fill"></i> {{this}}</div>
+              {{/each}}
             </div>
             <a href="#contact" class="btn-hero-primary" style="font-size:0.95rem;">
               <i class="bi bi-heart-fill"></i> Donate Now
@@ -1657,14 +1531,14 @@
                 <div>
                   <i class="bi bi-bank" style="font-size:1.4rem;color:var(--blue-300);"></i>
                   <div class="method-title">Bank Transfer</div>
-                  <div class="method-detail">Account: HAMD Alumni Trust</div>
-                  <div class="method-detail">A/C No: XXXX XXXX XXXX</div>
-                  <div class="method-detail">IFSC: HDFC0001234</div>
+                  <div class="method-detail">Account: {{donate.bank.account}}</div>
+                  <div class="method-detail">A/C No: {{donate.bank.number}}</div>
+                  <div class="method-detail">IFSC: {{donate.bank.ifsc}}</div>
                 </div>
                 <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;">
                   <i class="bi bi-whatsapp" style="font-size:1.4rem;color:#25d366;"></i>
                   <div class="method-title" style="margin-top:4px;">WhatsApp</div>
-                  <div class="method-detail">+91 94000 12345</div>
+                  <div class="method-detail">{{donate.whatsapp}}</div>
                 </div>
               </div>
             </div>
@@ -1684,68 +1558,21 @@
     </div>
     <div class="testi-track-wrapper">
       <div class="testi-track" aria-label="Alumni testimonials carousel">
-        <!-- Cards duplicated for seamless loop -->
+        {{#each testimonials}}
         <div class="glass-card testi-card">
           <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"HAMD has been a source of barakah in my life. Reconnecting with batch mates and contributing to Da'wa activities together has kept the spirit of the Markaz alive wherever I go."</p>
-          <div class="testi-author"><div class="testi-avatar">AM</div><div><div class="testi-name">Ahmad Musthafa</div><div class="testi-batch">Batch 2010 · Dubai, UAE</div></div></div>
+          <p class="testi-text">"{{this.text}}"</p>
+          <div class="testi-author"><div class="testi-avatar">{{this.initials}}</div><div><div class="testi-name">{{this.name}}</div><div class="testi-batch">{{this.batch}}</div></div></div>
         </div>
+        {{/each}}
+        <!-- duplicated for the seamless marquee loop -->
+        {{#each testimonials}}
         <div class="glass-card testi-card">
           <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"The scholarship I received through HAMD helped me pursue further studies in Islamic sciences. I am forever grateful to this brotherhood and the committee's dedication."</p>
-          <div class="testi-author"><div class="testi-avatar">SN</div><div><div class="testi-name">Sulaiman Noushad</div><div class="testi-batch">Batch 2014 · Kozhikode</div></div></div>
+          <p class="testi-text">"{{this.text}}"</p>
+          <div class="testi-author"><div class="testi-avatar">{{this.initials}}</div><div><div class="testi-name">{{this.name}}</div><div class="testi-batch">{{this.batch}}</div></div></div>
         </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"The annual gatherings at Parappalli Markaz are something I travel thousands of miles for. The bond we share as HAMD alumni is unlike anything else — it is a brotherhood for life."</p>
-          <div class="testi-author"><div class="testi-avatar">FH</div><div><div class="testi-name">Farhan Hamza</div><div class="testi-batch">Batch 2007 · Riyadh, KSA</div></div></div>
-        </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"Serving as a HAMD volunteer opened doors I never imagined. The training, the network, and the sincerity of everyone involved truly reflects the values we learned at the Markaz."</p>
-          <div class="testi-author"><div class="testi-avatar">RI</div><div><div class="testi-name">Riyad Ibrahim</div><div class="testi-batch">Batch 2016 · Kannur</div></div></div>
-        </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"The digital portal has made staying connected so much easier. I can access event details, contribute to fundraisers, and keep up with news from all over the world."</p>
-          <div class="testi-author"><div class="testi-avatar">ZA</div><div><div class="testi-name">Zainul Abidin</div><div class="testi-batch">Batch 2019 · Muscat, Oman</div></div></div>
-        </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"HAMD's Da'wa camps in our district brought hundreds of young people closer to the Quran. Proud to be part of an alumni body that gives back so selflessly to society."</p>
-          <div class="testi-author"><div class="testi-avatar">NA</div><div><div class="testi-name">Nabil Ashraf</div><div class="testi-batch">Batch 2012 · Malappuram</div></div></div>
-        </div>
-        <!-- Duplicate for loop -->
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"HAMD has been a source of barakah in my life. Reconnecting with batch mates and contributing to Da'wa activities together has kept the spirit of the Markaz alive wherever I go."</p>
-          <div class="testi-author"><div class="testi-avatar">AM</div><div><div class="testi-name">Ahmad Musthafa</div><div class="testi-batch">Batch 2010 · Dubai, UAE</div></div></div>
-        </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"The scholarship I received through HAMD helped me pursue further studies in Islamic sciences. I am forever grateful to this brotherhood and the committee's dedication."</p>
-          <div class="testi-author"><div class="testi-avatar">SN</div><div><div class="testi-name">Sulaiman Noushad</div><div class="testi-batch">Batch 2014 · Kozhikode</div></div></div>
-        </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"The annual gatherings at Parappalli Markaz are something I travel thousands of miles for. The bond we share as HAMD alumni is unlike anything else — it is a brotherhood for life."</p>
-          <div class="testi-author"><div class="testi-avatar">FH</div><div><div class="testi-name">Farhan Hamza</div><div class="testi-batch">Batch 2007 · Riyadh, KSA</div></div></div>
-        </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"Serving as a HAMD volunteer opened doors I never imagined. The training, the network, and the sincerity of everyone involved truly reflects the values we learned at the Markaz."</p>
-          <div class="testi-author"><div class="testi-avatar">RI</div><div><div class="testi-name">Riyad Ibrahim</div><div class="testi-batch">Batch 2016 · Kannur</div></div></div>
-        </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"The digital portal has made staying connected so much easier. I can access event details, contribute to fundraisers, and keep up with news from all over the world."</p>
-          <div class="testi-author"><div class="testi-avatar">ZA</div><div><div class="testi-name">Zainul Abidin</div><div class="testi-batch">Batch 2019 · Muscat, Oman</div></div></div>
-        </div>
-        <div class="glass-card testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"HAMD's Da'wa camps in our district brought hundreds of young people closer to the Quran. Proud to be part of an alumni body that gives back so selflessly to society."</p>
-          <div class="testi-author"><div class="testi-avatar">NA</div><div><div class="testi-name">Nabil Ashraf</div><div class="testi-batch">Batch 2012 · Malappuram</div></div></div>
-        </div>
+        {{/each}}
       </div>
     </div>
   </section>
@@ -1767,28 +1594,28 @@
               <div class="contact-info-icon"><i class="bi bi-geo-alt-fill"></i></div>
               <div>
                 <div class="contact-info-label">Address</div>
-                <div class="contact-info-value">Parappalli Markaz, Parappalli P.O,<br/>Malappuram District, Kerala – 676 552</div>
+                <div class="contact-info-value">{{{contact.address}}}</div>
               </div>
             </div>
             <div class="contact-info-item">
               <div class="contact-info-icon"><i class="bi bi-envelope-fill"></i></div>
               <div>
                 <div class="contact-info-label">Email</div>
-                <div class="contact-info-value">info@hamd-alumni.org</div>
+                <div class="contact-info-value">{{contact.email}}</div>
               </div>
             </div>
             <div class="contact-info-item">
               <div class="contact-info-icon"><i class="bi bi-telephone-fill"></i></div>
               <div>
                 <div class="contact-info-label">Phone</div>
-                <div class="contact-info-value">+91 94000 12345</div>
+                <div class="contact-info-value">{{contact.phone}}</div>
               </div>
             </div>
             <div class="contact-info-item">
               <div class="contact-info-icon"><i class="bi bi-whatsapp"></i></div>
               <div>
                 <div class="contact-info-label">WhatsApp</div>
-                <div class="contact-info-value">+91 94000 12345</div>
+                <div class="contact-info-value">{{contact.whatsapp}}</div>
               </div>
             </div>
 
@@ -1805,7 +1632,7 @@
 
             <div class="map-placeholder" aria-label="Map location placeholder">
               <i class="bi bi-map"></i>
-              <span>Parappalli Markaz, Malappuram</span>
+              <span>{{contact.mapLabel}}</span>
             </div>
           </div>
         </div>
@@ -1885,7 +1712,6 @@
             <div class="footer-heading">Useful Links</div>
             <ul class="footer-links">
               <li><a href="/login/member">Member Login</a></li>
-              <li><a href="/login/admin">Admin Login</a></li>
               <li><a href="#donate">Donate</a></li>
               <li><a href="#testimonials">Testimonials</a></li>
               <li><a href="#contact">Contact</a></li>
@@ -1904,7 +1730,7 @@
             </ul>
             <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
               <div style="font-size:0.75rem;color:rgba(255,255,255,0.35);margin-bottom:8px;letter-spacing:0.08em;text-transform:uppercase;">Office Hours</div>
-              <div style="font-size:0.85rem;color:rgba(255,255,255,0.55);">Saturday – Thursday: 9 AM – 6 PM<br/>Friday: Closed</div>
+              <div style="font-size:0.85rem;color:rgba(255,255,255,0.55);">{{{contact.officeHours}}}</div>
             </div>
           </div>
         </div>
