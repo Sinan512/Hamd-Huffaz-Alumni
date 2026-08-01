@@ -13,12 +13,19 @@ var homeRouter   = require('./routes/home');
 var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
 var leadersRouter = require('./routes/leaders');
+const { log } = require('console');
 
 var app = express();
 
+
 // Connect to MongoDB (optional — home page works without it)
-if (process.env.MONGODB_URI) {
+if (process.env.MONGODB_ATLAS) {
+  process.env.MONGODB_URI=
+  process.env.USE_LOCAL_DB === "false"
+  ? process.env.MONGODB_LOCAL
+  : process.env.MONGODB_ATLAS;
   connectDB();
+  console.log(process.env.MONGODB_URI+ " DB running");
 } else {
   console.warn('MONGODB_URI not set — running without database (home page only).');
 }

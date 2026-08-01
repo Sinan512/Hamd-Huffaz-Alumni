@@ -336,12 +336,10 @@
     }
 
     .login-brand-icon {
-      width: 60px; height: 60px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      width: 80px; height: 80px;
+      border-radius: 18px;
       display: flex; align-items: center; justify-content: center;
-      color: #fff;
-      font-size: 28px;
+      font-size: 18px;
       margin: 0 auto 16px;
       box-shadow: 0 4px 14px rgba(99,102,241,0.35);
     }
@@ -717,8 +715,7 @@
       <div class="d-flex justify-content-center flex-wrap gap-2 gap-md-3">
         <a href="#">Help &amp; Contact</a><span style="color:var(--border-color);">•</span>
         <a href="#">Privacy Policy</a><span style="color:var(--border-color);">•</span>
-        <a href="#">Terms of Service</a><span style="color:var(--border-color);">•</span>
-        <a href="/admin">Admin Portal</a>
+        <a href="#">Terms of Service</a>
       </div>
     </div>
   </footer>
@@ -1230,7 +1227,12 @@
     <div class="login-card">
       <div class="text-center mb-4">
         <div class="login-brand-icon">
-          <i class="bi bi-mortarboard-fill"></i>
+          <div style="display:flex; align-items:center;">
+        <img src="/logo/hamd-full-light.png" alt="HAMD Logo" class="logo-light-mode"
+             style="height:80px; max-width:80px; object-fit:contain; border-radius: 18px;">
+        <img src="/logo/hamd-full-dark.png"  alt="HAMD Logo" class="logo-dark-mode"
+             style="height:80px; max-width:80px; object-fit:contain; border-radius: 18px;">
+      </div>
         </div>
         <h3 class="mt-0 mb-1">Alumni Portal</h3>
         <p class="sub">Sign in to your member dashboard</p>
