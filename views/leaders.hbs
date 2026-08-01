@@ -14,14 +14,29 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
+  <!-- Apply saved theme before paint (avoids flash) – same behaviour as admin.hbs -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('leaderTheme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-bs-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
   <style>
     :root {
       --font-main: 'Plus Jakarta Sans', sans-serif;
       --bg-body: #f8fafc;
       --text-main: #1e293b;
       --text-muted: #64748b;
+      --card-bg: #ffffff;
       --card-border: rgba(226, 232, 240, 0.9);
       --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+      --table-head-bg: #f8fafc;
       --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     }
 
@@ -46,7 +61,7 @@
     .login-card {
       width: 100%;
       max-width: 430px;
-      background: #fff;
+      background: var(--card-bg);
       border-radius: 20px;
       padding: 36px 32px;
       box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.45);
@@ -101,6 +116,21 @@
       padding: 26px 0 70px;
     }
 
+    .theme-toggle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background .15s ease;
+    }
+    .theme-toggle:hover { background: rgba(255, 255, 255, 0.22); color: #fff; }
+
     .avatar-circle {
       width: 54px;
       height: 54px;
@@ -115,7 +145,7 @@
     }
 
     .stat-card, .table-card {
-      background: #fff;
+      background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       box-shadow: var(--card-shadow);
@@ -131,7 +161,7 @@
       text-transform: uppercase;
       letter-spacing: .4px;
       color: var(--text-muted);
-      background: #f8fafc;
+      background: var(--table-head-bg);
       border-bottom: 1px solid var(--card-border);
       white-space: nowrap;
     }
@@ -146,6 +176,74 @@
     }
     .pull-up { margin-top: -46px; }
     .hidden { display: none !important; }
+
+    /* Tasks */
+    .task-item {
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: var(--card-bg);
+    }
+    .task-title { font-weight: 700; font-size: 15px; }
+    .task-meta { font-size: 12.5px; color: var(--text-muted); }
+    .member-pill {
+      display: inline-block;
+      background: rgba(99, 102, 241, 0.1);
+      color: #4f46e5;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+      margin: 2px 4px 2px 0;
+    }
+    .picker-list {
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 6px;
+    }
+    .picker-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .picker-row:hover { background: rgba(99, 102, 241, 0.07); }
+    .detail-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
+    .detail-value { font-size: 14px; font-weight: 500; word-break: break-word; }
+
+    /* --- DARK MODE THEME --- */
+    [data-bs-theme="dark"] {
+      --bg-body: #0b0f19;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --card-bg: #151c2c;
+      --card-border: rgba(148, 163, 184, 0.16);
+      --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+      --table-head-bg: #111827;
+      color-scheme: dark;
+    }
+    [data-bs-theme="dark"] body { background-color: var(--bg-body); color: var(--text-main); }
+    [data-bs-theme="dark"] .login-card { background: var(--card-bg); color: var(--text-main); }
+    [data-bs-theme="dark"] .form-control {
+      background: #0f172a;
+      border-color: var(--card-border);
+      color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .form-control::placeholder { color: #64748b; }
+    [data-bs-theme="dark"] .form-control:focus { background: #0b1220; border-color: #6366f1; color: #e2e8f0; }
+    [data-bs-theme="dark"] .table { --bs-table-bg: transparent; color: var(--text-main); }
+    [data-bs-theme="dark"] .table tbody td { border-color: var(--card-border); }
+    [data-bs-theme="dark"] .table thead th { color: var(--text-muted); }
+    [data-bs-theme="dark"] .border-bottom { border-color: var(--card-border) !important; }
+    [data-bs-theme="dark"] .modal-content { background: var(--card-bg); color: var(--text-main); }
+    [data-bs-theme="dark"] .btn-light { background: #1e293b; border-color: var(--card-border); color: #cbd5e1; }
+    [data-bs-theme="dark"] .btn-light:hover { background: #263449; color: #fff; }
+    [data-bs-theme="dark"] .picker-row:hover { background: rgba(99, 102, 241, 0.16); }
+    [data-bs-theme="dark"] .text-dark { color: var(--text-main) !important; }
   </style>
 </head>
 <body>
@@ -193,6 +291,9 @@
               Batch <span id="leaderYear">-</span> &middot; Admission No. <span id="leaderAdm">-</span>
             </div>
           </div>
+          <button class="theme-toggle" id="themeToggle" type="button" title="Toggle dark / light mode" aria-label="Toggle dark or light mode">
+            <i class="bi bi-moon-stars" id="themeIcon"></i>
+          </button>
           <button class="btn btn-sm btn-light rounded-pill px-3 fw-semibold" id="logoutBtn">
             <i class="bi bi-box-arrow-right me-1"></i>Logout
           </button>
@@ -214,6 +315,12 @@
             <div class="stat-value" id="statCount">0</div>
           </div>
         </div>
+        <div class="col-6 col-md-4">
+          <div class="stat-card">
+            <div class="stat-label">Tasks</div>
+            <div class="stat-value" id="statTasks">0</div>
+          </div>
+        </div>
       </div>
 
       <div class="table-card">
@@ -232,6 +339,7 @@
                 <th>Place</th>
                 <th>Batch</th>
                 <th>Email</th>
+                <th class="text-end" style="width: 150px;">Actions</th>
               </tr>
             </thead>
             <tbody id="membersBody"></tbody>
@@ -242,9 +350,122 @@
           No members found for this batch.
         </div>
       </div>
+
+      <!-- ================= TASKS ================= -->
+      <div class="table-card mt-4">
+        <div class="d-flex flex-wrap align-items-center gap-2 p-3 border-bottom">
+          <h2 class="h6 fw-bold mb-0 me-auto">Tasks</h2>
+          <button class="btn btn-sm btn-primary rounded-3 fw-semibold" id="newTaskBtn" type="button">
+            <i class="bi bi-plus-lg me-1"></i>New Task
+          </button>
+        </div>
+
+        <div class="p-3">
+          <div id="tasksAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+          <div id="tasksLoading" class="text-center py-4">
+            <span class="spinner-border spinner-border-sm text-secondary me-2"></span>
+            <span class="text-muted small">Loading tasks…</span>
+          </div>
+          <div id="tasksList" class="d-flex flex-column gap-2"></div>
+          <div class="text-center text-muted py-4 hidden" id="tasksEmpty" style="font-size: 14px;">
+            <i class="bi bi-list-check d-block mb-2" style="font-size: 26px;"></i>
+            No tasks yet. Create your first task for this batch.
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- ============ MEMBER DETAILS (READ ONLY) ============ -->
+  <div class="modal fade" id="memberDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-2">
+          <div>
+            <h5 class="modal-title fw-bold mb-0" id="memberDetailsTitle">Member Details</h5>
+            <div class="text-muted small" id="memberDetailsSubtitle">Read only</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-2">
+          <div id="memberDetailsLoading" class="text-center py-5">
+            <span class="spinner-border spinner-border-sm text-secondary me-2"></span>
+            <span class="text-muted small">Loading member…</span>
+          </div>
+          <div id="memberDetailsError" class="alert alert-danger rounded-3 py-2 px-3 small d-none mb-0"></div>
+          <div class="row g-3 d-none" id="memberDetailsFields"></div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CREATE TASK ============ -->
+  <div class="modal fade" id="taskCreateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-2">
+          <h5 class="modal-title fw-bold mb-0">New Task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="taskCreateForm">
+          <div class="modal-body pt-2">
+            <div id="taskCreateError" class="alert alert-danger rounded-3 py-2 px-3 small d-none"></div>
+            <div class="mb-3">
+              <label class="form-label" for="taskTitle">Task Title</label>
+              <input class="form-control" id="taskTitle" type="text" maxlength="160" placeholder="e.g. Collect batch fund" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="taskDueDate">Due Date</label>
+              <input class="form-control" id="taskDueDate" type="date">
+            </div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <label class="form-label mb-0 me-auto">Assign Members</label>
+              <button class="btn btn-sm btn-light border rounded-3" type="button" data-picker-all="create">Select all</button>
+              <button class="btn btn-sm btn-light border rounded-3" type="button" data-picker-none="create">Clear</button>
+            </div>
+            <div class="picker-list" id="taskCreatePicker"></div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary rounded-3 fw-semibold" id="taskCreateSubmit">Save Task</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MANAGE TASK MEMBERS ============ -->
+  <div class="modal fade" id="taskMembersModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-2">
+          <div>
+            <h5 class="modal-title fw-bold mb-0">Task Members</h5>
+            <div class="text-muted small" id="taskMembersSubtitle">Tick or untick, then save</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-2">
+          <div id="taskMembersError" class="alert alert-danger rounded-3 py-2 px-3 small d-none"></div>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="text-muted small me-auto" id="taskMembersCount">0 selected</span>
+            <button class="btn btn-sm btn-light border rounded-3" type="button" data-picker-all="edit">Select all</button>
+            <button class="btn btn-sm btn-light border rounded-3" type="button" data-picker-none="edit">Clear</button>
+          </div>
+          <div class="picker-list" id="taskEditPicker"></div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary rounded-3 fw-semibold" id="taskMembersSave">Save Members</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     (function () {
       var loginView = document.getElementById('loginView');
@@ -257,7 +478,35 @@
       var emptyState = document.getElementById('emptyState');
       var searchInput = document.getElementById('searchInput');
       var allMembers = [];
+      var allTasks = [];
 
+      /* ---------------- theme ---------------- */
+      var themeToggle = document.getElementById('themeToggle');
+      var themeIcon = document.getElementById('themeIcon');
+
+      function currentTheme() {
+        return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
+      }
+
+      function paintThemeIcon() {
+        if (!themeIcon) return;
+        themeIcon.className = currentTheme() === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+      }
+
+      function setTheme(theme) {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        try { localStorage.setItem('leaderTheme', theme); } catch (e) {}
+        paintThemeIcon();
+      }
+
+      paintThemeIcon();
+      if (themeToggle) {
+        themeToggle.addEventListener('click', function () {
+          setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+        });
+      }
+
+      /* ---------------- helpers ---------------- */
       function showError(msg) {
         loginError.textContent = msg;
         loginError.classList.remove('hidden');
@@ -266,11 +515,42 @@
       function esc(value) {
         return String(value == null ? '' : value)
           .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       }
 
+      function waNumber(raw) {
+        var d = String(raw || '').replace(/[^0-9]/g, '');
+        if (!d) return '';
+        if (d.length === 10) d = '91' + d;
+        if (d.length === 11 && d.charAt(0) === '0') d = '91' + d.slice(1);
+        return d;
+      }
+
+      function fmtDate(value) {
+        if (!value) return '—';
+        var d = new Date(value);
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+
+      /* ---------------- members table ---------------- */
       function renderMembers(list) {
         membersBody.innerHTML = list.map(function (m, i) {
+          var wa = waNumber(m.whatsapp || m.phone);
+          var tel = String(m.phone || m.whatsapp || '').replace(/\s+/g, '');
+
+          var waBtn = wa
+            ? '<a href="https://wa.me/' + esc(wa) + '?text=' + encodeURIComponent('Hello ' + (m.name || '')) +
+              '" target="_blank" rel="noopener" class="btn btn-sm btn-success rounded-2 px-2" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>'
+            : '<button class="btn btn-sm btn-light border rounded-2 px-2 text-muted" disabled title="No WhatsApp number"><i class="bi bi-whatsapp"></i></button>';
+
+          var telBtn = tel
+            ? '<a href="tel:' + esc(tel) + '" class="btn btn-sm btn-primary rounded-2 px-2" title="Call ' + esc(tel) + '"><i class="bi bi-telephone"></i></a>'
+            : '<button class="btn btn-sm btn-light border rounded-2 px-2 text-muted" disabled title="No phone number"><i class="bi bi-telephone"></i></button>';
+
+          var viewBtn = '<button class="btn btn-sm btn-light border rounded-2 px-2" data-view-member="' +
+            esc(m.admissionNumber) + '" title="View details"><i class="bi bi-eye"></i></button>';
+
           return '<tr>' +
             '<td class="text-muted">' + (i + 1) + '</td>' +
             '<td><span class="badge-soft">' + esc(m.admissionNumber || '—') + '</span></td>' +
@@ -278,6 +558,7 @@
             '<td>' + esc(m.place) + '</td>' +
             '<td>' + esc(m.batch) + '</td>' +
             '<td class="text-muted">' + esc(m.email) + '</td>' +
+            '<td class="text-end"><div class="d-inline-flex gap-1">' + viewBtn + waBtn + telBtn + '</div></td>' +
             '</tr>';
         }).join('');
         emptyState.classList.toggle('hidden', list.length > 0);
@@ -292,6 +573,313 @@
         }));
       });
 
+      /* ---------------- member details modal ---------------- */
+      var memberModalEl = document.getElementById('memberDetailsModal');
+      var memberModal = memberModalEl ? new bootstrap.Modal(memberModalEl) : null;
+      var mdLoading = document.getElementById('memberDetailsLoading');
+      var mdError = document.getElementById('memberDetailsError');
+      var mdFields = document.getElementById('memberDetailsFields');
+      var mdTitle = document.getElementById('memberDetailsTitle');
+      var mdSubtitle = document.getElementById('memberDetailsSubtitle');
+
+      var DETAIL_FIELDS = [
+        ['admissionNumber', 'Admission Number'], ['name', 'Name'], ['batch', 'Batch'],
+        ['place', 'Place'], ['email', 'Email'], ['phone', 'Phone'], ['whatsapp', 'WhatsApp'],
+        ['address', 'Address'], ['admYear', 'Year of Admission'], ['leaveYear', 'Year of Leaving'],
+        ['eduQual', 'Educational Qualification'], ['religiousDegree', 'Religious / General Degree'],
+        ['higherEdu', 'Higher Education'], ['currentStatus', 'Current Status'],
+        ['workLocation', 'Work Location'], ['jobRole', 'Job Role'], ['college', 'College'],
+        ['course', 'Course'], ['skills', 'Creative Skills'], ['languages', 'Languages Known'],
+        ['orgRoles', 'Organizational Roles'], ['familyCount', 'Family Members'],
+        ['earningMembers', 'Earning Members'], ['hasDependents', 'Has Dependents'],
+        ['dependentsWho', 'Dependents'], ['parentsDeceased', 'Parents Deceased'],
+        ['chronicIll', 'Chronic Illness'], ['chronicIllDetails', 'Chronic Illness Details'],
+        ['fatherName', "Father's Name"], ['motherName', "Mother's Name"],
+        ['ownHouse', 'Own House'], ['married', 'Married'], ['childrenCount', 'Children']
+      ];
+
+      function openMemberDetails(admissionNumber) {
+        if (!memberModal) return;
+        mdLoading.classList.remove('d-none');
+        mdError.classList.add('d-none');
+        mdFields.classList.add('d-none');
+        mdFields.innerHTML = '';
+        mdTitle.textContent = 'Member Details';
+        mdSubtitle.textContent = 'Read only';
+        memberModal.show();
+
+        fetch('/leaders/members/' + encodeURIComponent(admissionNumber), { credentials: 'same-origin' })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (res) {
+            mdLoading.classList.add('d-none');
+            if (!res.ok || !res.data.success) {
+              mdError.textContent = (res.data && res.data.message) || 'Could not load this member.';
+              mdError.classList.remove('d-none');
+              return;
+            }
+            var m = res.data.member || {};
+            /* password is never sent by the server, but never render it either */
+            delete m.password;
+
+            mdTitle.textContent = m.name || 'Member Details';
+            mdSubtitle.textContent = 'Admission No. ' + (m.admissionNumber || '—') + ' · Batch ' + (m.batch || '—');
+
+            mdFields.innerHTML = DETAIL_FIELDS.map(function (f) {
+              var val = m[f[0]];
+              if (val === null || typeof val === 'undefined' || val === '') val = '—';
+              return '<div class="col-12 col-sm-6">' +
+                '<div class="detail-label">' + esc(f[1]) + '</div>' +
+                '<div class="detail-value">' + esc(val) + '</div>' +
+                '</div>';
+            }).join('');
+            mdFields.classList.remove('d-none');
+          })
+          .catch(function () {
+            mdLoading.classList.add('d-none');
+            mdError.textContent = 'Network error. Please try again.';
+            mdError.classList.remove('d-none');
+          });
+      }
+
+      membersBody.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-view-member]');
+        if (!btn) return;
+        openMemberDetails(btn.getAttribute('data-view-member'));
+      });
+
+      /* ---------------- tasks ---------------- */
+      var tasksList = document.getElementById('tasksList');
+      var tasksEmpty = document.getElementById('tasksEmpty');
+      var tasksLoading = document.getElementById('tasksLoading');
+      var tasksAlert = document.getElementById('tasksAlert');
+      var statTasks = document.getElementById('statTasks');
+
+      var createModalEl = document.getElementById('taskCreateModal');
+      var createModal = createModalEl ? new bootstrap.Modal(createModalEl) : null;
+      var createForm = document.getElementById('taskCreateForm');
+      var createError = document.getElementById('taskCreateError');
+      var createSubmit = document.getElementById('taskCreateSubmit');
+      var createPicker = document.getElementById('taskCreatePicker');
+
+      var editModalEl = document.getElementById('taskMembersModal');
+      var editModal = editModalEl ? new bootstrap.Modal(editModalEl) : null;
+      var editPicker = document.getElementById('taskEditPicker');
+      var editError = document.getElementById('taskMembersError');
+      var editCount = document.getElementById('taskMembersCount');
+      var editSubtitle = document.getElementById('taskMembersSubtitle');
+      var editSaveBtn = document.getElementById('taskMembersSave');
+      var editingTaskId = null;
+
+      function flash(message, type) {
+        tasksAlert.textContent = message;
+        tasksAlert.className = 'alert alert-' + (type || 'success') + ' rounded-3 py-2 px-3 small mb-3';
+        setTimeout(function () { tasksAlert.classList.add('d-none'); }, 3500);
+      }
+
+      function buildPicker(container, selectedAdmissions) {
+        var selected = {};
+        (selectedAdmissions || []).forEach(function (a) { selected[String(a).toLowerCase()] = true; });
+
+        if (!allMembers.length) {
+          container.innerHTML = '<div class="text-muted small p-3 text-center">No batch members available.</div>';
+          return;
+        }
+
+        container.innerHTML = allMembers.map(function (m, i) {
+          var id = container.id + '_m' + i;
+          var checked = selected[String(m.admissionNumber).toLowerCase()] ? ' checked' : '';
+          return '<label class="picker-row" for="' + id + '">' +
+            '<input class="form-check-input m-0" type="checkbox" id="' + id + '" value="' + esc(m.admissionNumber) + '"' + checked + '>' +
+            '<span class="fw-semibold">' + esc(m.name) + '</span>' +
+            '<span class="text-muted small ms-auto">' + esc(m.admissionNumber || '—') + '</span>' +
+            '</label>';
+        }).join('');
+      }
+
+      function pickedFrom(container) {
+        return Array.prototype.slice
+          .call(container.querySelectorAll('input[type="checkbox"]:checked'))
+          .map(function (c) { return c.value; });
+      }
+
+      function renderTasks() {
+        statTasks.textContent = allTasks.length;
+        tasksEmpty.classList.toggle('hidden', allTasks.length > 0);
+
+        tasksList.innerHTML = allTasks.map(function (t) {
+          var pills = (t.members || []).length
+            ? t.members.map(function (m) { return '<span class="member-pill">' + esc(m.name || m.admissionNumber) + '</span>'; }).join('')
+            : '<span class="text-muted small">No members assigned yet.</span>';
+
+          return '<div class="task-item">' +
+            '<div class="d-flex flex-wrap align-items-start gap-2">' +
+              '<div class="me-auto">' +
+                '<div class="task-title">' + esc(t.title) + '</div>' +
+                '<div class="task-meta mt-1">' +
+                  '<i class="bi bi-calendar-event me-1"></i>Due ' + esc(fmtDate(t.dueDate)) +
+                  ' &middot; <i class="bi bi-people me-1"></i>' + (t.members || []).length + ' member(s)' +
+                '</div>' +
+              '</div>' +
+              '<button class="btn btn-sm btn-light border rounded-3" data-task-members="' + esc(t._id) + '">' +
+                '<i class="bi bi-person-check me-1"></i>Members</button>' +
+              '<button class="btn btn-sm btn-outline-danger rounded-3" data-task-delete="' + esc(t._id) + '">' +
+                '<i class="bi bi-trash"></i></button>' +
+            '</div>' +
+            '<div class="mt-2">' + pills + '</div>' +
+            '</div>';
+        }).join('');
+      }
+
+      function loadTasks() {
+        tasksLoading.classList.remove('hidden');
+        return fetch('/leaders/tasks', { credentials: 'same-origin' })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (res) {
+            tasksLoading.classList.add('hidden');
+            if (!res.ok || !res.data.success) {
+              flash((res.data && res.data.message) || 'Could not load tasks.', 'danger');
+              return;
+            }
+            allTasks = res.data.tasks || [];
+            renderTasks();
+          })
+          .catch(function () {
+            tasksLoading.classList.add('hidden');
+            flash('Network error while loading tasks.', 'danger');
+          });
+      }
+
+      document.getElementById('newTaskBtn').addEventListener('click', function () {
+        if (!createModal) return;
+        createForm.reset();
+        createError.classList.add('d-none');
+        buildPicker(createPicker, []);
+        createModal.show();
+      });
+
+      document.addEventListener('click', function (e) {
+        var all = e.target.closest('[data-picker-all]');
+        var none = e.target.closest('[data-picker-none]');
+        if (!all && !none) return;
+        var which = (all || none).getAttribute(all ? 'data-picker-all' : 'data-picker-none');
+        var container = which === 'create' ? createPicker : editPicker;
+        Array.prototype.slice.call(container.querySelectorAll('input[type="checkbox"]'))
+          .forEach(function (c) { c.checked = !!all; });
+        if (container === editPicker) updateEditCount();
+      });
+
+      createForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        createError.classList.add('d-none');
+        createSubmit.disabled = true;
+
+        fetch('/leaders/tasks', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: document.getElementById('taskTitle').value,
+            dueDate: document.getElementById('taskDueDate').value,
+            members: pickedFrom(createPicker)
+          })
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (res) {
+            if (!res.ok || !res.data.success) {
+              createError.textContent = (res.data && res.data.message) || 'Could not create the task.';
+              createError.classList.remove('d-none');
+              return;
+            }
+            allTasks.unshift(res.data.task);
+            renderTasks();
+            createModal.hide();
+            flash('Task created.', 'success');
+          })
+          .catch(function () {
+            createError.textContent = 'Network error. Please try again.';
+            createError.classList.remove('d-none');
+          })
+          .finally(function () { createSubmit.disabled = false; });
+      });
+
+      function updateEditCount() {
+        editCount.textContent = pickedFrom(editPicker).length + ' selected';
+      }
+
+      editPicker.addEventListener('change', updateEditCount);
+
+      tasksList.addEventListener('click', function (e) {
+        var memBtn = e.target.closest('[data-task-members]');
+        var delBtn = e.target.closest('[data-task-delete]');
+
+        if (memBtn) {
+          editingTaskId = memBtn.getAttribute('data-task-members');
+          var task = allTasks.filter(function (t) { return t._id === editingTaskId; })[0];
+          if (!task || !editModal) return;
+          editError.classList.add('d-none');
+          editSubtitle.textContent = task.title;
+          buildPicker(editPicker, (task.members || []).map(function (m) { return m.admissionNumber; }));
+          updateEditCount();
+          editModal.show();
+          return;
+        }
+
+        if (delBtn) {
+          var id = delBtn.getAttribute('data-task-delete');
+          var t = allTasks.filter(function (x) { return x._id === id; })[0];
+          if (!window.confirm('Delete task "' + (t ? t.title : '') + '"? This cannot be undone.')) return;
+          delBtn.disabled = true;
+
+          fetch('/leaders/tasks/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin' })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+            .then(function (res) {
+              if (!res.ok || !res.data.success) {
+                flash((res.data && res.data.message) || 'Could not delete the task.', 'danger');
+                delBtn.disabled = false;
+                return;
+              }
+              allTasks = allTasks.filter(function (x) { return x._id !== id; });
+              renderTasks();
+              flash('Task deleted.', 'success');
+            })
+            .catch(function () {
+              flash('Network error. Please try again.', 'danger');
+              delBtn.disabled = false;
+            });
+        }
+      });
+
+      editSaveBtn.addEventListener('click', function () {
+        if (!editingTaskId) return;
+        editError.classList.add('d-none');
+        editSaveBtn.disabled = true;
+
+        fetch('/leaders/tasks/' + encodeURIComponent(editingTaskId) + '/members', {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ members: pickedFrom(editPicker) })
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (res) {
+            if (!res.ok || !res.data.success) {
+              editError.textContent = (res.data && res.data.message) || 'Could not save the members.';
+              editError.classList.remove('d-none');
+              return;
+            }
+            allTasks = allTasks.map(function (t) { return t._id === res.data.task._id ? res.data.task : t; });
+            renderTasks();
+            editModal.hide();
+            flash('Task members updated.', 'success');
+          })
+          .catch(function () {
+            editError.textContent = 'Network error. Please try again.';
+            editError.classList.remove('d-none');
+          })
+          .finally(function () { editSaveBtn.disabled = false; });
+      });
+
+      /* ---------------- session / views ---------------- */
       function showDashboard(data) {
         var name = (data.leader && data.leader.name) || 'Batch Leader';
         document.getElementById('leaderName').textContent = name;
@@ -307,10 +895,14 @@
 
         loginView.classList.add('hidden');
         dashboardView.classList.remove('hidden');
+
+        loadTasks();
       }
 
       function showLogin() {
         allMembers = [];
+        allTasks = [];
+        renderTasks();
         loginForm.reset();
         searchInput.value = '';
         dashboardView.classList.add('hidden');

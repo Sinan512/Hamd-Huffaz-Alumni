@@ -5,6 +5,7 @@ var MemberDetails = require('../models/MemberDetails');
 var BatchDetails  = require('../models/BatchDetails');
 var EventDetails  = require('../models/EventDetails');
 var Gallery       = require('../models/Gallery');
+var Article       = require('../models/Article');
 
 /* ==================================================================
    DUMMY DATA
@@ -61,32 +62,6 @@ var NEWS = [
   }
 ];
 
-var TESTIMONIALS = [
-  { initials: 'AM', name: 'Ahmad Musthafa',  batch: 'Batch 2010 · Dubai, UAE',   text: 'HAMD has been a source of barakah in my life. Reconnecting with batch mates and contributing to Da\'wa activities together has kept the spirit of the Markaz alive wherever I go.' },
-  { initials: 'SN', name: 'Sulaiman Noushad',batch: 'Batch 2014 · Kozhikode',    text: 'The scholarship I received through HAMD helped me pursue further studies in Islamic sciences. I am forever grateful to this brotherhood and the committee\'s dedication.' },
-  { initials: 'FH', name: 'Farhan Hamza',    batch: 'Batch 2007 · Riyadh, KSA',  text: 'The annual gatherings at Parappalli Markaz are something I travel thousands of miles for. The bond we share as HAMD alumni is unlike anything else — it is a brotherhood for life.' },
-  { initials: 'RI', name: 'Riyad Ibrahim',   batch: 'Batch 2016 · Kannur',       text: 'Serving as a HAMD volunteer opened doors I never imagined. The training, the network, and the sincerity of everyone involved truly reflects the values we learned at the Markaz.' },
-  { initials: 'ZA', name: 'Zainul Abidin',   batch: 'Batch 2019 · Muscat, Oman', text: 'The digital portal has made staying connected so much easier. I can access event details, contribute to fundraisers, and keep up with news from all over the world.' },
-  { initials: 'NA', name: 'Nabil Ashraf',    batch: 'Batch 2012 · Malappuram',   text: 'HAMD\'s Da\'wa camps in our district brought hundreds of young people closer to the Quran. Proud to be part of an alumni body that gives back so selflessly to society.' }
-];
-
-var DONATE = {
-  features: [
-    'Scholarship funding',
-    'Da\'wa programmes',
-    'Community welfare',
-    'Educational resources',
-    'Alumni events',
-    'Emergency aid'
-  ],
-  bank: {
-    account: 'HAMD Alumni Trust',
-    number:  'XXXX XXXX XXXX',
-    ifsc:    'HDFC0001234'
-  },
-  whatsapp: '+91 94000 12345'
-};
-
 var CONTACT = {
   address:  'Parappalli Markaz, Parappalli P.O,<br/>Malappuram District, Kerala – 676 552',
   email:    'info@hamd-alumni.org',
@@ -99,9 +74,7 @@ var CONTACT = {
 /* Stats that have no collection yet — the first two are replaced with
    live counts in buildHomeData(). */
 var EXTRA_STATS = [
-  { icon: 'bi-megaphone',       target: 250, suffix: '+', label: 'Da\'wa Activities' },
-  { icon: 'bi-globe2',          target: 18,  suffix: '+', label: 'Countries' },
-  { icon: 'bi-hand-thumbs-up',  target: 300, suffix: '+', label: 'Volunteers' }
+  { icon: 'bi-megaphone', target: 250, suffix: '+', label: 'Da\'wa Activities' }
 ];
 
 /* ==================================================================
@@ -113,7 +86,7 @@ var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov',
 async function getEvents() {
   try {
     var docs = await EventDetails
-      .find({}, { title: 1, date: 1, category: 1, location: 1, 'image.contentType': 1 })
+      .find({}, { title: 1, date: 1, category: 1, location: 1, registration: 1, 'image.contentType': 1 })
       .sort({ date: 1 })
       .limit(12)
       .lean();
@@ -125,11 +98,12 @@ async function getEvents() {
         title:    doc.title    || '',
         category: doc.category || 'General',
         location: doc.location || '',
+        registration: doc.registration === true,
         day:      String(d.getUTCDate()).padStart(2, '0'),
         month:    MONTHS[d.getUTCMonth()] || '',
         imageUrl: (doc.image && doc.image.contentType)
           ? '/events/' + String(doc._id) + '/image'
-          : 'https://picsum.photos/seed/ev' + String(doc._id).slice(-4) + '/640/360'
+          : null
       };
     });
   } catch (err) {
@@ -161,6 +135,44 @@ async function getGallery() {
   }
 }
 
+function toExcerpt(text, max) {
+  var clean = String(text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (clean.length <= max) return clean;
+  return clean.slice(0, max).replace(/\s+\S*$/, '') + '…';
+}
+
+function formatDate(value) {
+  var d = value ? new Date(value) : null;
+  if (!d || isNaN(d.getTime())) return '';
+  return MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
+}
+
+async function getArticles() {
+  try {
+    var docs = await Article
+      .find({}, { heading: 1, author: 1, content: 1, createdAt: 1, 'image.contentType': 1 })
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .lean();
+
+    return docs.map(function (doc) {
+      return {
+        id:       String(doc._id),
+        heading:  doc.heading || 'Untitled',
+        author:   doc.author  || 'HAMD Alumni',
+        excerpt:  toExcerpt(doc.content, 180),
+        date:     formatDate(doc.createdAt),
+        imageUrl: (doc.image && doc.image.contentType)
+          ? '/articles/' + String(doc._id) + '/image'
+          : null
+      };
+    });
+  } catch (err) {
+    console.error('Home: articles fetch failed —', err.message);
+    return [];
+  }
+}
+
 async function getStats() {
   var alumni  = 0;
   var batches = 0;
@@ -178,21 +190,20 @@ async function getStats() {
 }
 
 async function buildHomeData() {
-  var results = await Promise.all([getStats(), getEvents(), getGallery()]);
+  var results = await Promise.all([getStats(), getEvents(), getGallery(), getArticles()]);
 
   return {
     /* real data (MongoDB) */
-    stats:   results[0],
-    events:  results[1],
-    gallery: results[2],
+    stats:    results[0],
+    events:   results[1],
+    gallery:  results[2],
+    articles: results[3],
 
     /* dummy data (this file) */
     timeline:     TIMELINE,
     aboutCards:   ABOUT_CARDS,
     committee:    COMMITTEE,
     news:         NEWS,
-    testimonials: TESTIMONIALS,
-    donate:       DONATE,
     contact:      CONTACT
   };
 }
@@ -209,9 +220,9 @@ router.get('/', async function (req, res) {
   } catch (err) {
     console.error('Home: render fell back to empty data —', err.message);
     data = {
-      stats: [], events: [], gallery: [],
+      stats: [], events: [], gallery: [], articles: [],
       timeline: TIMELINE, aboutCards: ABOUT_CARDS, committee: COMMITTEE,
-      news: NEWS, testimonials: TESTIMONIALS, donate: DONATE, contact: CONTACT
+      news: NEWS, contact: CONTACT
     };
   }
   data.layout = false;
@@ -225,7 +236,7 @@ router.get('/gallery/:id/image', async function (req, res) {
     if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
     res.set('Content-Type', doc.image.contentType || 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
-    return res.send(doc.image.data);
+    return res.send(Buffer.from(doc.image.data));
   } catch (err) {
     return res.sendStatus(404);
   }
@@ -238,7 +249,20 @@ router.get('/events/:id/image', async function (req, res) {
     if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
     res.set('Content-Type', doc.image.contentType || 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
-    return res.send(doc.image.data);
+    return res.send(Buffer.from(doc.image.data));
+  } catch (err) {
+    return res.sendStatus(404);
+  }
+});
+
+/* Public article image */
+router.get('/articles/:id/image', async function (req, res) {
+  try {
+    var doc = await Article.findById(req.params.id).select('image').lean();
+    if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
+    res.set('Content-Type', doc.image.contentType || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.send(Buffer.from(doc.image.data));
   } catch (err) {
     return res.sendStatus(404);
   }
@@ -251,8 +275,6 @@ module.exports.dummy = {
   ABOUT_CARDS: ABOUT_CARDS,
   COMMITTEE: COMMITTEE,
   NEWS: NEWS,
-  TESTIMONIALS: TESTIMONIALS,
-  DONATE: DONATE,
   CONTACT: CONTACT,
   EXTRA_STATS: EXTRA_STATS
 };
