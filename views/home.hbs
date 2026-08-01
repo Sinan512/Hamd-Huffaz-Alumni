@@ -447,6 +447,8 @@
     }
     #particles-canvas {
       position: absolute; inset: 0;
+      /* Explicit 100% so offsetWidth/Height are never 0 even off-screen */
+      width: 100%; height: 100%;
       pointer-events: none;
       opacity: 0.55;
       z-index: 1;
@@ -1210,15 +1212,25 @@
     .social-link:hover { background: var(--blue-600); color: #fff; transform: translateY(-4px) scale(1.08); box-shadow: 0 6px 18px rgba(37,99,235,0.35); }
 
     .map-box {
-      width: 100%; height: 220px;
-      background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
-      border-radius: var(--radius-sm);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 10px;
-      color: var(--blue-500); font-size: 2.2rem;
-      border: 1px solid var(--blue-200);
+      width: 100%; height: 160px;
+      background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--blue-200);
       margin-top: 28px;
+      color: var(--blue-500); font-size: 2.2rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .map-box:hover {
+      background: linear-gradient(135deg, var(--blue-100), var(--blue-200));
+      border-color: var(--blue-400);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(37,99,235,0.18);
+      color: var(--blue-600);
     }
     .map-box span { font-size: 0.88rem; font-weight: 600; color: var(--slate); }
 
@@ -1317,16 +1329,7 @@
       .gallery-item:hover { transform: none; }
     }
 
-    /* Ensure no element ever creates horizontal scroll */
-    section, footer, header, nav, div {
-      max-width: 100%;
-    }
-
-    /* Safe area padding for notch/home-bar devices */
-    body {
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-    }
+    /* Safe area padding for notch/home-bar devices — only vertical, never horizontal (horizontal shifts content) */
     #back-top {
       bottom: calc(28px + env(safe-area-inset-bottom));
       right: calc(28px + env(safe-area-inset-right));
@@ -1811,11 +1814,13 @@
               </div>
             </div>
 
-            <div class="map-box">
+            <a href="https://share.google/DqQemO3vLyOcaUe4e" target="_blank" rel="noopener noreferrer" class="map-box" aria-label="Open Parappalli Markaz location in Google Maps">
               <i class="bi bi-map-fill"></i>
-              <a href="https://share.google/DqQemO3vLyOcaUe4e"></a>
-              <span >Parappalli Markaz Campus Map</span>
-            </div>
+              <span>Parappalli Markaz Campus</span>
+              <small style="font-size:0.78rem;color:var(--blue-600);font-weight:600;display:inline-flex;align-items:center;gap:5px;">
+                Open in Google Maps <i class="bi bi-box-arrow-up-right" style="font-size:0.72rem;"></i>
+              </small>
+            </a>
           </div>
         </div>
 
@@ -1907,7 +1912,7 @@
             <div class="footer-heading">Community Centre</div>
             <ul class="footer-links">
               <li><a href="https://share.google/DqQemO3vLyOcaUe4e"><i class="bi bi-geo-alt"></i> Parappalli Markaz,Kollam, Koyilandy, Kerala 673307</a></li>
-              <li><a href="huffazalumnimarkazmalikdeenar@gmail.com"><i class="bi bi-envelope"></i> huffazalumnimarkazmalikdeenar@gmail.com</a></li>
+              <li><a href="mailto:huffazalumnimarkazmalikdeenar@gmail.com"><i class="bi bi-envelope"></i> huffazalumnimarkazmalikdeenar@gmail.com</a></li>
               <li><a href="tel:+919072500432"><i class="bi bi-telephone"></i> +91 90725 00432</a></li>
             </ul>
           </div>
@@ -2051,48 +2056,49 @@
 
     hamburger.addEventListener('click', toggleMobileNav);
 
-    // 3. High-DPI Interactive Particle Canvas with Mouse Attract/Repel
+    // 3. High-DPI Interactive Particle Canvas with Mouse Repel
     (function initParticles() {
       const canvas = document.getElementById('particles-canvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      let w, h, particles = [];
+      let particles = [];
       let mouse = { x: null, y: null, radius: 140 };
+      // Cache last known good dimensions — used when hero is scrolled off-screen
+      let lastW = 0, lastH = 0;
       let isHeroVisible = true;
+      let rafId = null;
 
-      // Pause loop when hero is off-screen for battery & performance
       const heroSection = document.getElementById('hero');
+
+      // Watch hero visibility — re-init canvas when it becomes visible again
+      // so the drawing dimensions are always correct
       const heroObserver = new IntersectionObserver((entries) => {
+        const wasHidden = !isHeroVisible;
         isHeroVisible = entries[0].isIntersecting;
-      });
+        if (isHeroVisible && wasHidden) {
+          // Hero came back into view: re-sync canvas size and restart loop
+          initCanvas();
+        }
+      }, { threshold: 0 });
       heroObserver.observe(heroSection);
 
-      function resize() {
+      function initCanvas() {
         const dpr = window.devicePixelRatio || 1;
-        w = canvas.width = canvas.offsetWidth * dpr;
-        h = canvas.height = canvas.offsetHeight * dpr;
-        ctx.scale(dpr, dpr);
+        // Use the hero section's dimensions as the authoritative source
+        // (more reliable than canvas.offsetWidth when hero is partially off-screen)
+        const w = heroSection.offsetWidth  || lastW || window.innerWidth;
+        const h = heroSection.offsetHeight || lastH || window.innerHeight;
+        lastW = w; lastH = h;
+        canvas.width  = w * dpr;
+        canvas.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset + scale in one call
       }
 
-      window.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = e.clientX - rect.left;
-        mouse.y = e.clientY - rect.top;
-      });
-
-      window.addEventListener('mouseleave', () => {
-        mouse.x = null;
-        mouse.y = null;
-      });
-
-      function createParticle() {
-        const displayW = canvas.offsetWidth;
-        const displayH = canvas.offsetHeight;
+      function createParticle(w, h) {
         return {
-          x: Math.random() * displayW,
-          y: Math.random() * displayH,
-          baseX: 0, baseY: 0,
-          r: Math.random() * 2.5 + 0.8,
+          x:  Math.random() * w,
+          y:  Math.random() * h,
+          r:  Math.random() * 2.5 + 0.8,
           dx: (Math.random() - 0.5) * 0.45,
           dy: (Math.random() - 0.5) * 0.45,
           alpha: Math.random() * 0.6 + 0.25
@@ -2100,23 +2106,39 @@
       }
 
       function init() {
-        resize();
-        const count = Math.min(Math.floor(canvas.offsetWidth / 12), 90);
-        particles = Array.from({ length: count }, createParticle);
+        initCanvas();
+        const count = Math.min(Math.floor(lastW / 12), 90);
+        particles = Array.from({ length: count }, () => createParticle(lastW, lastH));
       }
 
-      function draw() {
-        if (!isHeroVisible) {
-          requestAnimationFrame(draw);
-          return;
-        }
+      // Touch support — treat finger position as mouse for repel effect
+      canvas.addEventListener('touchmove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const t = e.touches[0];
+        mouse.x = t.clientX - rect.left;
+        mouse.y = t.clientY - rect.top;
+      }, { passive: true });
+      canvas.addEventListener('touchend', () => { mouse.x = null; mouse.y = null; });
 
-        const displayW = canvas.offsetWidth;
-        const displayH = canvas.offsetHeight;
-        ctx.clearRect(0, 0, displayW, displayH);
+      window.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+      }, { passive: true });
+      window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+      function draw() {
+        rafId = requestAnimationFrame(draw);
+
+        // Skip drawing when hero is off-screen (save battery) but keep loop alive
+        if (!isHeroVisible) return;
+
+        const w = lastW; const h = lastH;
+        if (!w || !h) return;
+
+        ctx.clearRect(0, 0, w, h);
 
         particles.forEach(p => {
-          // Mouse interaction (Repulsion effect)
           if (mouse.x !== null && mouse.y !== null) {
             const dx = mouse.x - p.x;
             const dy = mouse.y - p.y;
@@ -2129,28 +2151,27 @@
             }
           }
 
-          // Movement
           p.x += p.dx;
           p.y += p.dy;
 
-          // Screen wrap
-          if (p.x < 0) p.x = displayW;
-          if (p.x > displayW) p.x = 0;
-          if (p.y < 0) p.y = displayH;
-          if (p.y > displayH) p.y = 0;
+          // Wrap particles at cached dimensions
+          if (p.x < 0) p.x = w;
+          if (p.x > w) p.x = 0;
+          if (p.y < 0) p.y = h;
+          if (p.y > h) p.y = 0;
 
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(147, 197, 253, ${p.alpha})`;
           ctx.fill();
         });
-
-        requestAnimationFrame(draw);
       }
 
-      window.addEventListener('resize', () => {
-        init();
-      }, { passive: true });
+      // On resize, re-init fully (new canvas size + fresh particle positions)
+      window.addEventListener('resize', () => { init(); }, { passive: true });
+
+      // Reduce motion: skip particles entirely if user prefers reduced motion
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
       init();
       draw();
