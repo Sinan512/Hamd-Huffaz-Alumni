@@ -1485,7 +1485,7 @@
           <article class="event-card">
             <div class="event-img-wrap">
               {{#if this.imageUrl}}
-              <img src="{{this.imageUrl}}" alt="{{this.title}}" loading="lazy" />
+              <img src="{{this.imageUrl}}" alt="{{this.title}}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'event-img-fallback\'><i class=\'bi bi-calendar-event\'></i></div>';" />
               {{else}}
               <div class="event-img-fallback"><i class="bi bi-calendar-event"></i></div>
               {{/if}}
@@ -1538,7 +1538,7 @@
                    onkeydown="if(event.key==='Enter'){openArticle(this)}">
             <div class="article-img">
               {{#if this.imageUrl}}
-              <img src="{{this.imageUrl}}" alt="{{this.heading}}" loading="lazy" />
+              <img src="{{this.imageUrl}}" alt="{{this.heading}}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'bi bi-journal-richtext\'></i>';" />
               {{else}}
               <i class="bi bi-journal-richtext"></i>
               {{/if}}

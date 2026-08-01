@@ -1,5 +1,7 @@
-var express = require('express');
-var router  = express.Router();
+var express  = require('express');
+var router   = express.Router();
+var mongoose = require('mongoose');
+var connectDB = require('../config/db');
 
 var MemberDetails = require('../models/MemberDetails');
 var BatchDetails  = require('../models/BatchDetails');
@@ -85,14 +87,16 @@ var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov',
 
 async function getEvents() {
   try {
+    await connectDB();
     var docs = await EventDetails
-      .find({}, { title: 1, date: 1, category: 1, location: 1, registration: 1, 'image.contentType': 1 })
+      .find({}, { title: 1, date: 1, category: 1, location: 1, registration: 1, 'image.contentType': 1, 'image.data': 1 })
       .sort({ date: 1 })
       .limit(12)
       .lean();
 
     return docs.map(function (doc) {
       var d = new Date(doc.date);
+      var hasImg = !!(doc.image && (doc.image.contentType || doc.image.data));
       return {
         id:       String(doc._id),
         title:    doc.title    || '',
@@ -101,9 +105,7 @@ async function getEvents() {
         registration: doc.registration === true,
         day:      String(d.getUTCDate()).padStart(2, '0'),
         month:    MONTHS[d.getUTCMonth()] || '',
-        imageUrl: (doc.image && doc.image.contentType)
-          ? '/events/' + String(doc._id) + '/image'
-          : null
+        imageUrl: hasImg ? '/admin/event/' + String(doc._id) + '/image' : null
       };
     });
   } catch (err) {
@@ -114,14 +116,15 @@ async function getEvents() {
 
 async function getGallery() {
   try {
+    await connectDB();
     var docs = await Gallery
-      .find({}, { description: 1, 'image.contentType': 1 })
+      .find({}, { description: 1, 'image.contentType': 1, 'image.data': 1 })
       .sort({ createdAt: -1 })
       .limit(12)
       .lean();
 
     return docs
-      .filter(function (doc) { return doc.image && doc.image.contentType; })
+      .filter(function (doc) { return doc.image && (doc.image.contentType || doc.image.data); })
       .map(function (doc, i) {
         return {
           id:          String(doc._id),
@@ -149,13 +152,15 @@ function formatDate(value) {
 
 async function getArticles() {
   try {
+    await connectDB();
     var docs = await Article
-      .find({}, { heading: 1, author: 1, content: 1, createdAt: 1, 'image.contentType': 1 })
+      .find({}, { heading: 1, author: 1, content: 1, createdAt: 1, 'image.contentType': 1, 'image.data': 1 })
       .sort({ createdAt: -1 })
       .limit(9)
       .lean();
 
     return docs.map(function (doc) {
+      var hasImg = !!(doc.image && (doc.image.contentType || doc.image.data));
       return {
         id:       String(doc._id),
         heading:  doc.heading || 'Untitled',
@@ -164,9 +169,7 @@ async function getArticles() {
         content:  String(doc.content || ''),
         readTime: Math.max(1, Math.round(String(doc.content || '').split(/\s+/).filter(Boolean).length / 200)),
         date:     formatDate(doc.createdAt),
-        imageUrl: (doc.image && doc.image.contentType)
-          ? '/articles/' + String(doc._id) + '/image'
-          : null
+        imageUrl: hasImg ? '/admin/articles/' + String(doc._id) + '/image' : null
       };
     });
   } catch (err) {
@@ -174,6 +177,7 @@ async function getArticles() {
     return [];
   }
 }
+
 // correct data fetch replaced with approximate count
 async function getStats() {
   var alumni   = "300+";
@@ -181,8 +185,7 @@ async function getStats() {
   var events   = 0;
   var articles = 0;
 
-  // try { alumni = await MemberDetails.countDocuments({}); }
-  // catch (err) { console.error('Home: member count failed —', err.message); }
+  try { await connectDB(); } catch (e) {}
 
   try { batches = await BatchDetails.countDocuments({}); }
   catch (err) { console.error('Home: batch count failed —', err.message); }
@@ -244,11 +247,14 @@ router.get('/', async function (req, res) {
 /* Public gallery image — so the home page never depends on /admin URLs */
 router.get('/gallery/:id/image', async function (req, res) {
   try {
+    await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.sendStatus(404);
     var doc = await Gallery.findById(req.params.id).select('image').lean();
     if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
     res.set('Content-Type', doc.image.contentType || 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
-    return res.send(Buffer.from(doc.image.data));
+    var buffer = doc.image.data.buffer || doc.image.data;
+    return res.send(buffer);
   } catch (err) {
     return res.sendStatus(404);
   }
@@ -257,11 +263,14 @@ router.get('/gallery/:id/image', async function (req, res) {
 /* Public event image */
 router.get('/events/:id/image', async function (req, res) {
   try {
+    await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.sendStatus(404);
     var doc = await EventDetails.findById(req.params.id).select('image').lean();
     if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
     res.set('Content-Type', doc.image.contentType || 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
-    return res.send(Buffer.from(doc.image.data));
+    var buffer = doc.image.data.buffer || doc.image.data;
+    return res.send(buffer);
   } catch (err) {
     return res.sendStatus(404);
   }
@@ -270,11 +279,14 @@ router.get('/events/:id/image', async function (req, res) {
 /* Public article image */
 router.get('/articles/:id/image', async function (req, res) {
   try {
+    await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.sendStatus(404);
     var doc = await Article.findById(req.params.id).select('image').lean();
     if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
     res.set('Content-Type', doc.image.contentType || 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
-    return res.send(Buffer.from(doc.image.data));
+    var buffer = doc.image.data.buffer || doc.image.data;
+    return res.send(buffer);
   } catch (err) {
     return res.sendStatus(404);
   }
