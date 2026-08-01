@@ -89,7 +89,7 @@ async function getEvents() {
   try {
     await connectDB();
     var docs = await EventDetails
-      .find({}, { title: 1, date: 1, category: 1, location: 1, registration: 1, 'image.contentType': 1, 'image.data': 1 })
+      .find({}, { title: 1, date: 1, category: 1, location: 1, description: 1, registration: 1, 'image.contentType': 1, 'image.data': 1 })
       .sort({ date: 1 })
       .limit(12)
       .lean();
@@ -102,10 +102,12 @@ async function getEvents() {
         title:    doc.title    || '',
         category: doc.category || 'General',
         location: doc.location || '',
+        description: doc.description || '',
         registration: doc.registration === true,
         day:      String(d.getUTCDate()).padStart(2, '0'),
         month:    MONTHS[d.getUTCMonth()] || '',
-        imageUrl: hasImg ? '/admin/event/' + String(doc._id) + '/image' : null
+        dateLabel: isNaN(d.getTime()) ? '' : (String(d.getUTCDate()).padStart(2, '0') + ' ' + (MONTHS[d.getUTCMonth()] || '') + ' ' + d.getUTCFullYear()),
+        imageUrl: hasImg ? '/admin/events/' + String(doc._id) + '/image' : null
       };
     });
   } catch (err) {

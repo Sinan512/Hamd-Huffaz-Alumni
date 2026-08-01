@@ -115,7 +115,7 @@
       border-radius: 20px;
       display: flex; align-items: center; justify-content: center;
       font-size: 2.2rem; color: #fff;
-      box-shadow: 0 0 30px rgba(175, 197, 245, 0.6);
+      box-shadow: 0 0 30px rgba(93, 117, 165, 0.452);
       animation: pulse-logo 1.6s ease-in-out infinite;
     }
     .loader-ring {
@@ -639,7 +639,7 @@
     .btn-primary-hamd {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 13px 32px;
-      background: var(--grad-primary);
+      background: linear-gradient(135deg, #02299e 0%, #0348d4 50%, #022770 100%);
       color: #fff;
       border: none;
       border-radius: 100px;
@@ -953,6 +953,64 @@
     .event-title { font-size: 1.05rem; font-weight: 700; color: var(--navy); margin-bottom: 10px; line-height: 1.4; }
     .event-location { font-size: 0.86rem; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-bottom: 20px; margin-top: auto; }
     
+    .event-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .event-open-badge {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: .04em;
+      color: #15803d; background: rgba(34,197,94,0.12);
+      border-radius: 999px; padding: 5px 12px;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .event-view { font-size: .85rem; font-weight: 600; color: var(--blue-600); display: inline-flex; align-items: center; gap: 5px; transition: gap .25s ease; }
+    .event-card:hover .event-view { gap: 11px; }
+    .event-card { cursor: pointer; }
+    .event-card:focus-visible { outline: 3px solid var(--blue-400); outline-offset: 3px; }
+
+    /* Auto-moving carousel */
+    .events-carousel::before, .events-carousel::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 3; pointer-events: none;
+    }
+    .events-carousel::before { left: 0; background: linear-gradient(90deg, var(--light), transparent); }
+    .events-carousel::after { right: 0; background: linear-gradient(270deg, var(--light), transparent); }
+    .events-track { will-change: transform; }
+    .event-card { animation: eventFloatIn .7s var(--cubic-spring) both; }
+    @keyframes eventFloatIn { from { opacity: 0; transform: translateY(26px) scale(.96); } to { opacity: 1; transform: none; } }
+    .carousel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 26px; }
+    .carousel-dot {
+      width: 8px; height: 8px; border-radius: 999px; border: 0; padding: 0;
+      background: var(--blue-200); cursor: pointer; transition: var(--transition);
+    }
+    .carousel-dot.active { width: 26px; background: var(--blue-600); }
+
+    /* Event modal */
+    .event-modal {
+      position: fixed; inset: 0; z-index: 1200;
+      background: rgba(15,23,42,0.72); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility .3s ease;
+    }
+    .event-modal.open { opacity: 1; visibility: visible; }
+    .event-modal-content {
+      position: relative; background: #fff; border-radius: var(--radius);
+      max-width: 640px; width: 100%; max-height: 88vh; overflow-y: auto;
+      box-shadow: 0 30px 80px rgba(15,23,42,0.35);
+      transform: translateY(24px) scale(.97); transition: transform .35s var(--cubic-spring);
+    }
+    .event-modal.open .event-modal-content { transform: none; }
+    .event-modal-img { width: 100%; max-height: 300px; object-fit: cover; display: block; }
+    .event-modal-body { padding: 30px; }
+    .event-modal-title { font-size: 1.45rem; font-weight: 800; color: var(--navy); margin: 6px 0 14px; line-height: 1.3; }
+    .event-modal-meta { display: flex; flex-wrap: wrap; gap: 18px; font-size: .86rem; color: var(--muted); margin-bottom: 18px; }
+    .event-modal-text { font-size: .95rem; line-height: 1.8; color: var(--slate); white-space: pre-line; margin-bottom: 26px; }
+    .event-modal-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .event-modal-close {
+      position: absolute; top: 14px; right: 14px; z-index: 2;
+      width: 40px; height: 40px; border-radius: 50%; border: 0;
+      background: rgba(15,23,42,0.55); color: #fff; font-size: 1.3rem;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: var(--transition);
+    }
+    .event-modal-close:hover { background: var(--blue-600); transform: scale(1.08); }
+
     .carousel-controls { display: flex; gap: 12px; }
     .carousel-btn {
       width: 46px; height: 46px;
@@ -971,6 +1029,7 @@
 
     @media (max-width: 767.98px) {
       .events-carousel { overflow: visible; }
+      .events-carousel::before, .events-carousel::after { display: none; }
       .events-track {
         transform: none !important;
         display: grid;
@@ -1392,32 +1451,40 @@
     <div class="container">
       <div class="text-center mb-5 reveal">
         <div class="section-label"><i class="bi bi-award"></i> Leaders</div>
-        <h2 class="section-title">Executive Committee</h2>
+        <h2 class="section-title">Hamd Cabinet 2026-27</h2>
         <p class="section-sub mx-auto mt-3">Guiding the alumni association with vision, integrity, and dedication.</p>
       </div>
       <div class="row g-4" id="committee-container">
         <div class="col-sm-6 col-lg-4 reveal delay-1">
           <div class="glass-card committee-card">
-            <div class="avatar-placeholder">MD</div>
+            <div class="avatar-placeholder"><img style="border-radius: 50%;" src="/images/sabithali.jpeg" alt="leaders"/></div>
             <div class="committee-role">President</div>
-            <div class="committee-name">Usthad Muhammad Deenari</div>
-            <div class="committee-place"><i class="bi bi-geo-alt-fill" style="color:var(--blue-500)"></i> Malappuram, Kerala</div>
+            <div class="committee-name">Hafiz Sabith Ali Saqafi Koduvally</div>
+            <div class="committee-place"><i class="bi bi-geo-alt-fill" style="color:var(--blue-500)"></i> Kannur, Kerala</div>
           </div>
         </div>
         <div class="col-sm-6 col-lg-4 reveal delay-2">
           <div class="glass-card committee-card">
-            <div class="avatar-placeholder">AH</div>
+            <div class="avatar-placeholder"><img style="border-radius: 50%;" src="/images/thameem.jpeg" alt="leaders"/></div>
             <div class="committee-role">General Secretary</div>
-            <div class="committee-name">Hafiz Ahmed Koya</div>
-            <div class="committee-place"><i class="bi bi-geo-alt-fill" style="color:var(--blue-500)"></i> Calicut, Kerala</div>
+            <div class="committee-name">Hafiz Ahmed Thameem Fazili Chullikkode</div>
+            <div class="committee-place"><i class="bi bi-geo-alt-fill" style="color:var(--blue-500)"></i> Malappuram, Kerala</div>
           </div>
         </div>
         <div class="col-sm-6 col-lg-4 reveal delay-3">
           <div class="glass-card committee-card">
-            <div class="avatar-placeholder">SU</div>
-            <div class="committee-role">Treasurer</div>
-            <div class="committee-name">Hafiz Sulaiman Markazi</div>
-            <div class="committee-place"><i class="bi bi-geo-alt-fill" style="color:var(--blue-500)"></i> Dubai, UAE</div>
+            <div class="avatar-placeholder"><img style="border-radius: 50%;" src="/images/thaqiyudheen.jpeg" alt="leaders"/></div>
+            <div class="committee-role">F.Secretary</div>
+            <div class="committee-name">Hafiz Thaqiyudheen Saqafi Kavanur</div>
+            <div class="committee-place"><i class="bi bi-geo-alt-fill" style="color:var(--blue-500)"></i> Malappuram, Kerala</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 reveal delay-3">
+          <div class="glass-card committee-card">
+            <div class="avatar-placeholder"><img style="border-radius: 50%;" src="/images/anassaqafi.jpeg" alt="leaders"/></div>
+            <div class="committee-role">Cordinator</div>
+            <div class="committee-name">Hafiz Anas Saqafi Cheruthiruthi</div>
+            <div class="committee-place"><i class="bi bi-geo-alt-fill" style="color:var(--blue-500)"></i> Palakkad, Kerala</div>
           </div>
         </div>
       </div>
@@ -1482,7 +1549,16 @@
       <div class="events-carousel reveal">
         <div class="events-track" id="events-track">
           {{#each events}}
-          <article class="event-card">
+          <article class="event-card" role="button" tabindex="0"
+                   data-event-title="{{this.title}}"
+                   data-event-category="{{this.category}}"
+                   data-event-location="{{this.location}}"
+                   data-event-date="{{this.dateLabel}}"
+                   data-event-image="{{this.imageUrl}}"
+                   data-event-description="{{this.description}}"
+                   data-event-registration="{{#if this.registration}}1{{else}}0{{/if}}"
+                   onclick="openEvent(this)"
+                   onkeydown="if(event.key==='Enter'){openEvent(this)}">
             <div class="event-img-wrap">
               {{#if this.imageUrl}}
               <img src="{{this.imageUrl}}" alt="{{this.title}}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'event-img-fallback\'><i class=\'bi bi-calendar-event\'></i></div>';" />
@@ -1497,11 +1573,10 @@
               {{#if this.location}}
               <div class="event-location"><i class="bi bi-geo-alt"></i> {{this.location}}</div>
               {{/if}}
-              {{#if this.registration}}
-              <a href="/users" class="btn-primary-hamd" style="font-size:0.85rem;padding:10px 24px;">Register Now</a>
-              {{else}}
-              <a href="#contact" class="btn-outline-hamd" style="font-size:0.85rem;padding:10px 24px;">More Info</a>
-              {{/if}}
+              <div class="event-foot">
+                {{#if this.registration}}<span class="event-open-badge"><i class="bi bi-check2-circle"></i> Registration open</span>{{/if}}
+                <span class="event-view">View details <i class="bi bi-arrow-right"></i></span>
+              </div>
             </div>
           </article>
           {{/each}}
@@ -1513,8 +1588,32 @@
           {{/unless}}
         </div>
       </div>
+      {{#if events.length}}
+      <div class="carousel-dots" id="events-dots"></div>
+      {{/if}}
     </div>
   </section>
+
+  <!-- Event detail modal -->
+  <div class="event-modal" id="event-modal" role="dialog" aria-modal="true" aria-label="Event details" onclick="closeEvent()">
+    <div class="event-modal-content" onclick="event.stopPropagation()">
+      <button class="event-modal-close" onclick="closeEvent()" aria-label="Close event"><i class="bi bi-x"></i></button>
+      <img id="event-modal-img" src="" alt="" class="event-modal-img d-none" />
+      <div class="event-modal-body">
+        <span class="event-tag" id="event-modal-category"></span>
+        <h3 class="event-modal-title" id="event-modal-title"></h3>
+        <div class="event-modal-meta">
+          <span id="event-modal-date-wrap"><i class="bi bi-calendar3"></i> <span id="event-modal-date"></span></span>
+          <span id="event-modal-location-wrap"><i class="bi bi-geo-alt"></i> <span id="event-modal-location"></span></span>
+        </div>
+        <p class="event-modal-text" id="event-modal-text"></p>
+        <div class="event-modal-actions">
+          <a href="/users" class="btn-primary-hamd d-none" id="event-modal-register" style="font-size:0.9rem;padding:11px 26px;">Register Now</a>
+          <button type="button" class="btn-outline-hamd" onclick="closeEvent()" style="font-size:0.9rem;padding:11px 26px;">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================== ARTICLES ===================== -->
   <section id="articles" class="section-pad">
@@ -1589,7 +1688,6 @@
       <div class="text-center mb-5 reveal">
         <div class="section-label"><i class="bi bi-envelope-paper"></i> Connect</div>
         <h2 class="section-title">Get in Touch</h2>
-        <p class="section-sub mx-auto mt-3">We welcome inquiries regarding alumni membership, events, or portal support.</p>
       </div>
 
       <div class="row g-5 align-items-start">
@@ -1602,7 +1700,7 @@
               <div class="contact-info-icon"><i class="bi bi-geo-alt-fill"></i></div>
               <div>
                 <div class="contact-info-label">Address</div>
-                <div class="contact-info-value">Parappalli Markaz, Malappuram District, Kerala, India - 676505</div>
+                <div class="contact-info-value">Parappalli Rd, behind juma masjid, Kollam, Koyilandy, Kerala 673307</div>
               </div>
             </div>
 
@@ -1610,7 +1708,7 @@
               <div class="contact-info-icon"><i class="bi bi-envelope-fill"></i></div>
               <div>
                 <div class="contact-info-label">Email</div>
-                <div class="contact-info-value">info@hamdalumni.org</div>
+                <div class="contact-info-value">huffazalumnimarkazmalikdeenar@gmail.com</div>
               </div>
             </div>
 
@@ -1618,23 +1716,24 @@
               <div class="contact-info-icon"><i class="bi bi-telephone-fill"></i></div>
               <div>
                 <div class="contact-info-label">Phone / WhatsApp</div>
-                <div class="contact-info-value">+91 94000 12345</div>
+                <div class="contact-info-value">+91 90725 00432</div>
               </div>
             </div>
 
             <div style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(37,99,235,0.12);">
               <div class="contact-info-label" style="margin-bottom:12px;">Social Channels</div>
               <div class="social-links">
-                <a href="#" class="social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-                <a href="#" class="social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                <a href="https://www.facebook.com/profile.php?id=61557633896661" class="social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                <a href="https://www.instagram.com/hamd_media" class="social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
                 <a href="#" class="social-link" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
-                <a href="#" class="social-link" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                <a href="http://wa.me/+919072500432" class="social-link" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
               </div>
             </div>
 
             <div class="map-box">
               <i class="bi bi-map-fill"></i>
-              <span>Parappalli Markaz Campus Map</span>
+              <a href="https://share.google/DqQemO3vLyOcaUe4e"></a>
+              <span >Parappalli Markaz Campus Map</span>
             </div>
           </div>
         </div>
@@ -1648,15 +1747,15 @@
               <div class="row g-3">
                 <div class="col-sm-6 form-group">
                   <label class="form-label-hamd" for="c-name">Full Name *</label>
-                  <input type="text" id="c-name" class="form-control-hamd" placeholder="Hafiz Ahmed" required />
+                  <input type="text" id="c-name" class="form-control-hamd" placeholder="Your Name" required />
                 </div>
                 <div class="col-sm-6 form-group">
                   <label class="form-label-hamd" for="c-email">Email Address *</label>
-                  <input type="email" id="c-email" class="form-control-hamd" placeholder="ahmed@example.com" required />
+                  <input type="email" id="c-email" class="form-control-hamd" placeholder="youremail@example.com" required />
                 </div>
                 <div class="col-sm-6 form-group">
                   <label class="form-label-hamd" for="c-phone">Phone Number</label>
-                  <input type="tel" id="c-phone" class="form-control-hamd" placeholder="+91 98765 43210" />
+                  <input type="tel" id="c-phone" class="form-control-hamd" placeholder="+91 12345 67890" />
                 </div>
                 <div class="col-sm-6 form-group">
                   <label class="form-label-hamd" for="c-subject">Subject</label>
@@ -1693,10 +1792,10 @@
             </div>
             <p class="footer-tagline">Huffaz Alumni Malik Deenar — Parappalli Markaz. Uniting graduates, celebrating legacy, and serving the Ummah with knowledge and devotion.</p>
             <div class="footer-social">
-              <a href="#" class="footer-social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-              <a href="#" class="footer-social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+              <a href="https://www.facebook.com/profile.php?id=61557633896661" class="footer-social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+              <a href="https://www.instagram.com/hamd_media" class="footer-social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
               <a href="#" class="footer-social-link" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
-              <a href="#" class="footer-social-link" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+              <a href="http://wa.me/+919072500432" class="footer-social-link" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
             </div>
           </div>
 
@@ -1724,11 +1823,11 @@
 
           <!-- Contact Info -->
           <div class="col-md-6 col-lg-4">
-            <div class="footer-heading">Central Office</div>
+            <div class="footer-heading">Community Centre</div>
             <ul class="footer-links">
-              <li><a href="#contact"><i class="bi bi-geo-alt"></i> Parappalli Markaz, Malappuram, Kerala</a></li>
-              <li><a href="mailto:info@hamdalumni.org"><i class="bi bi-envelope"></i> info@hamdalumni.org</a></li>
-              <li><a href="tel:+919400012345"><i class="bi bi-telephone"></i> +91 94000 12345</a></li>
+              <li><a href="https://share.google/DqQemO3vLyOcaUe4e"><i class="bi bi-geo-alt"></i> Parappalli Markaz,Kollam, Koyilandy, Kerala 673307</a></li>
+              <li><a href="huffazalumnimarkazmalikdeenar@gmail.com"><i class="bi bi-envelope"></i> huffazalumnimarkazmalikdeenar@gmail.com</a></li>
+              <li><a href="tel:+919072500432"><i class="bi bi-telephone"></i> +91 90725 00432</a></li>
             </ul>
           </div>
         </div>
@@ -2005,72 +2104,125 @@
 
     // 6. Touch-Enabled Events Carousel
     (function initEventsCarousel() {
-      const track = document.getElementById('events-track');
+      const track   = document.getElementById('events-track');
       const prevBtn = document.getElementById('events-prev');
       const nextBtn = document.getElementById('events-next');
+      const dotsBox = document.getElementById('events-dots');
       if (!track) return;
+
+      const cards = Array.from(track.querySelectorAll('.event-card'));
+      if (!cards.length) return;
+
+      cards.forEach((card, i) => { card.style.animationDelay = (i * 90) + 'ms'; });
 
       let currentIndex = 0;
       let startX = 0;
-      let currentTranslate = 0;
       let prevTranslate = 0;
       let isDragging = false;
+      let autoTimer = null;
+      const AUTO_MS = 3800;
 
       function getCardWidth() {
-        const firstCard = track.querySelector('.event-card');
-        return firstCard ? firstCard.offsetWidth + 24 : 344;
+        return cards[0] ? cards[0].offsetWidth + 24 : 344;
       }
 
       function getMaxIndex() {
-        const cards = track.querySelectorAll('.event-card');
-        const visibleCards = Math.floor(track.parentElement.offsetWidth / getCardWidth());
-        return Math.max(0, cards.length - visibleCards);
+        const visible = Math.max(1, Math.floor(track.parentElement.offsetWidth / getCardWidth()));
+        return Math.max(0, cards.length - visible);
+      }
+
+      function buildDots() {
+        if (!dotsBox) return;
+        dotsBox.innerHTML = '';
+        if (window.innerWidth < 768) return;
+        const total = getMaxIndex() + 1;
+        if (total <= 1) return;
+        for (let i = 0; i < total; i++) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'carousel-dot' + (i === currentIndex ? ' active' : '');
+          b.setAttribute('aria-label', 'Go to event slide ' + (i + 1));
+          b.addEventListener('click', () => { currentIndex = i; updateCarousel(); restartAuto(); });
+          dotsBox.appendChild(b);
+        }
+      }
+
+      function syncDots() {
+        if (!dotsBox) return;
+        Array.from(dotsBox.children).forEach((d, i) => d.classList.toggle('active', i === currentIndex));
       }
 
       function updateCarousel() {
-        if (window.innerWidth < 768) {
-          track.style.transform = 'none';
-          return;
-        }
-        const cardWidth = getCardWidth();
-        currentIndex = Math.max(0, Math.min(currentIndex, getMaxIndex()));
-        currentTranslate = -currentIndex * cardWidth;
-        prevTranslate = currentTranslate;
-        track.style.transform = `translateX(${currentTranslate}px)`;
-
-        if (prevBtn) prevBtn.disabled = currentIndex === 0;
-        if (nextBtn) nextBtn.disabled = currentIndex >= getMaxIndex();
+        if (window.innerWidth < 768) { track.style.transform = 'none'; return; }
+        const max = getMaxIndex();
+        currentIndex = Math.max(0, Math.min(currentIndex, max));
+        prevTranslate = -currentIndex * getCardWidth();
+        track.style.transform = 'translateX(' + prevTranslate + 'px)';
+        if (prevBtn) prevBtn.disabled = false;
+        if (nextBtn) nextBtn.disabled = false;
+        syncDots();
       }
 
-      if (prevBtn) prevBtn.addEventListener('click', () => { currentIndex--; updateCarousel(); });
-      if (nextBtn) nextBtn.addEventListener('click', () => { currentIndex++; updateCarousel(); });
+      function goNext() {
+        currentIndex = currentIndex >= getMaxIndex() ? 0 : currentIndex + 1;
+        updateCarousel();
+      }
+      function goPrev() {
+        currentIndex = currentIndex <= 0 ? getMaxIndex() : currentIndex - 1;
+        updateCarousel();
+      }
 
-      // Touch & Drag Swipe Gesture Support
+      function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+      function startAuto() {
+        stopAuto();
+        if (window.innerWidth < 768 || getMaxIndex() < 1) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        autoTimer = setInterval(() => {
+          const modal = document.getElementById('event-modal');
+          if (document.hidden || (modal && modal.classList.contains('open'))) return;
+          goNext();
+        }, AUTO_MS);
+      }
+      function restartAuto() { startAuto(); }
+
+      if (prevBtn) prevBtn.addEventListener('click', () => { goPrev(); restartAuto(); });
+      if (nextBtn) nextBtn.addEventListener('click', () => { goNext(); restartAuto(); });
+
+      const carouselEl = track.parentElement;
+      carouselEl.addEventListener('mouseenter', stopAuto);
+      carouselEl.addEventListener('mouseleave', startAuto);
+      carouselEl.addEventListener('focusin', stopAuto);
+      carouselEl.addEventListener('focusout', startAuto);
+
       track.addEventListener('touchstart', (e) => {
         if (window.innerWidth < 768) return;
+        stopAuto();
         startX = e.touches[0].clientX;
         isDragging = true;
       }, { passive: true });
 
       track.addEventListener('touchmove', (e) => {
         if (!isDragging || window.innerWidth < 768) return;
-        const currentX = e.touches[0].clientX;
-        const diff = currentX - startX;
-        track.style.transform = `translateX(${prevTranslate + diff}px)`;
+        const diff = e.touches[0].clientX - startX;
+        track.style.transform = 'translateX(' + (prevTranslate + diff) + 'px)';
       }, { passive: true });
 
       track.addEventListener('touchend', (e) => {
         if (!isDragging || window.innerWidth < 768) return;
         isDragging = false;
-        const endX = e.changedTouches[0].clientX;
-        const diff = endX - startX;
-        if (diff < -50 && currentIndex < getMaxIndex()) currentIndex++;
-        if (diff > 50 && currentIndex > 0) currentIndex--;
-        updateCarousel();
+        const diff = e.changedTouches[0].clientX - startX;
+        if (diff < -50) goNext();
+        else if (diff > 50) goPrev();
+        else updateCarousel();
+        startAuto();
       });
 
-      window.addEventListener('resize', updateCarousel, { passive: true });
+      window.addEventListener('resize', () => { buildDots(); updateCarousel(); startAuto(); }, { passive: true });
+      document.addEventListener('visibilitychange', () => { document.hidden ? stopAuto() : startAuto(); });
+
+      buildDots();
       updateCarousel();
+      startAuto();
     })();
 
     // 7. Lightbox Gallery Modal
@@ -2115,6 +2267,45 @@
       document.body.style.overflow = '';
     }
 
+    function openEvent(el) {
+      const modal = document.getElementById('event-modal');
+      if (!modal) return;
+      const imgEl = document.getElementById('event-modal-img');
+      const title = el.getAttribute('data-event-title') || 'Event';
+      const cat   = el.getAttribute('data-event-category') || '';
+      const loc   = el.getAttribute('data-event-location') || '';
+      const date  = el.getAttribute('data-event-date') || '';
+      const image = el.getAttribute('data-event-image') || '';
+      const desc  = el.getAttribute('data-event-description') || '';
+      const reg   = el.getAttribute('data-event-registration') === '1';
+
+      document.getElementById('event-modal-title').textContent = title;
+      const catEl = document.getElementById('event-modal-category');
+      catEl.textContent = cat;
+      catEl.style.display = cat ? 'inline-block' : 'none';
+
+      document.getElementById('event-modal-date').textContent = date;
+      document.getElementById('event-modal-date-wrap').style.display = date ? 'inline-flex' : 'none';
+      document.getElementById('event-modal-location').textContent = loc;
+      document.getElementById('event-modal-location-wrap').style.display = loc ? 'inline-flex' : 'none';
+      document.getElementById('event-modal-text').textContent = desc || 'More details about this event will be announced soon.';
+
+      const regBtn = document.getElementById('event-modal-register');
+      if (reg) regBtn.classList.remove('d-none'); else regBtn.classList.add('d-none');
+
+      if (image) { imgEl.src = image; imgEl.alt = title; imgEl.classList.remove('d-none'); }
+      else { imgEl.src = ''; imgEl.classList.add('d-none'); }
+
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeEvent() {
+      const modal = document.getElementById('event-modal');
+      if (modal) modal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
     function closeGallery() {
       const modal = document.getElementById('gallery-modal');
       if (modal) modal.classList.remove('open');
@@ -2122,7 +2313,7 @@
     }
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { closeGallery(); closeArticle(); }
+      if (e.key === 'Escape') { closeGallery(); closeArticle(); closeEvent(); }
     });
 
     // 8. Contact Form Handling
