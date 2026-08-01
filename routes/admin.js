@@ -9,6 +9,7 @@ var BatchDetails  = require('../models/BatchDetails');
 var BatchLeader   = require('../models/BatchLeader');
 var EventDetails  = require('../models/EventDetails');
 var Gallery       = require('../models/Gallery');
+var Article       = require('../models/Article');
 var AdminSecret   = require('../models/AdminSecret');
 const connectDB   = require('../config/db');
 
@@ -257,17 +258,10 @@ router.post('/profile', upload.single('avatar'), async function (req, res) {
 router.post('/credentials', async function (req, res) {
   try {
     var admin = req.admin;
-    var currentPassword = (req.body.currentPassword || '').trim();
-    var newUsername     = (req.body.newUsername || '').trim().toLowerCase();
+    var newUsername     = (req.body.newUsername || req.body.username || '').trim().toLowerCase();
     var newPassword     = (req.body.newPassword || '').trim();
     var confirmPassword = (req.body.confirmPassword || '').trim();
 
-    if (!currentPassword) {
-      return res.status(400).json({ success: false, message: 'Please enter your current password.' });
-    }
-    if (!safeEqual(sha256(admin.salt, currentPassword), admin.passwordHash)) {
-      return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
-    }
     if (!newUsername && !newPassword) {
       return res.status(400).json({ success: false, message: 'Enter a new username or a new password.' });
     }
@@ -452,6 +446,41 @@ async function getGalleryImages() {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* HELPER: fetch articles (metadata only, never the binary)            */
+/* ------------------------------------------------------------------ */
+function articleExcerpt(text, max) {
+  var clean = String(text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (clean.length <= max) return clean;
+  return clean.slice(0, max).replace(/\s+\S*$/, '') + '\u2026';
+}
+
+async function getArticles() {
+  try {
+    var docs = await Article
+      .find({}, { heading: 1, author: 1, content: 1, createdAt: 1, 'image.contentType': 1 })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return docs.map(function (doc) {
+      var d = doc.createdAt ? new Date(doc.createdAt) : null;
+      return {
+        _id:      String(doc._id),
+        heading:  doc.heading || 'Untitled',
+        author:   doc.author  || '',
+        excerpt:  articleExcerpt(doc.content, 140),
+        content:  doc.content || '',
+        dateFormatted: d ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+        createdAt: d ? d.toISOString() : null,
+        hasImage: !!(doc.image && doc.image.contentType)
+      };
+    });
+  } catch (error) {
+    console.error('Articles lookup failed:', error.message);
+    return [];
+  }
+}
+
 router.get('/', async function (req, res, next) {
   await connectDB();
   var totalAlumni  = 0;
@@ -463,6 +492,7 @@ router.get('/', async function (req, res, next) {
   var batchChart   = { labels: [], values: [], batchCount: 0 };
   var upcomingEvents = [];
   var galleryImages  = [];
+  var articles       = [];
 
   try {
     totalAlumni     = await MemberDetails.countDocuments();
@@ -473,6 +503,7 @@ router.get('/', async function (req, res, next) {
     totalBatches   = batchChart.batchCount;
     upcomingEvents = await getAllEvents();
     galleryImages  = await getGalleryImages();
+    articles       = await getArticles();
     /* Collect sorted unique batch years from the member list */
     var yearSet = {};
     allMembers.forEach(function (m) { if (m.batch) yearSet[m.batch] = true; });
@@ -499,7 +530,8 @@ router.get('/', async function (req, res, next) {
     batchLeadersList: allBatchLeaders,
     batchYears:       batchYears,
     upcomingEvents: upcomingEvents,
-    galleryImages: galleryImages
+    galleryImages: galleryImages,
+    articles: articles
   });
 });
 
@@ -568,6 +600,48 @@ router.get('/events/:id', async function (req, res) {
   } catch (error) {
     console.error('Get event detail failed:', error.message);
     return res.status(500).json({ success: false, message: 'Could not load event.' });
+  }
+});
+
+/* ================================================================== */
+/* GET  /admin/registrations – every member with at least 1 event       */
+/* ================================================================== */
+router.get('/registrations', async function (req, res) {
+  await connectDB();
+  try {
+    var events = await EventDetails.find({}, { title: 1 }).lean();
+    var titleById = {};
+    events.forEach(function (e) { titleById[String(e._id)] = e.title || ''; });
+
+    var docs = await MemberDetails
+      .find({ registeredEvents: { $exists: true, $ne: [] } },
+            { name: 1, place: 1, batch: 1, phone: 1, whatsapp: 1, admissionNumber: 1, registeredEvents: 1 })
+      .sort({ batch: 1, name: 1 })
+      .lean();
+
+    var members = docs.map(function (m) {
+      var ids = Array.isArray(m.registeredEvents) ? m.registeredEvents : [];
+      return {
+        id:              String(m._id),
+        name:            m.name || '',
+        place:           m.place || '',
+        batch:           m.batch || '',
+        admissionNumber: m.admissionNumber || '',
+        phone:           m.phone || '',
+        whatsapp:        m.whatsapp || m.phone || '',
+        events:          ids.map(function (id) { return titleById[String(id)] || 'Event'; })
+      };
+    });
+
+    return res.json({
+      success: true,
+      event:   { id: '', title: 'All events' },
+      count:   members.length,
+      members: members
+    });
+  } catch (error) {
+    console.error('All registrations lookup failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load registered members.' });
   }
 });
 
@@ -1622,6 +1696,104 @@ router.delete('/gallery/:id', async function (req, res) {
   } catch (error) {
     console.error('Delete gallery image failed:', error.message);
     return res.status(500).json({ success: false, message: 'Could not delete the image.' });
+  }
+});
+
+/* ================================================================== */
+/* GET  /admin/articles  – list saved articles (JSON, no binary)        */
+/* ================================================================== */
+router.get('/articles', async function (req, res) {
+  await connectDB();
+  try {
+    var articles = await getArticles();
+    return res.json({ success: true, articles: articles });
+  } catch (error) {
+    console.error('List articles failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load the articles.' });
+  }
+});
+
+/* ================================================================== */
+/* GET  /admin/articles/:id/image  – serve stored article image         */
+/* ================================================================== */
+router.get('/articles/:id/image', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).end();
+    }
+    var doc = await Article.findById(req.params.id, { 'image.data': 1, 'image.contentType': 1 }).lean();
+    if (!doc || !doc.image || !doc.image.data) {
+      return res.status(404).end();
+    }
+    res.set('Content-Type', doc.image.contentType);
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.send(doc.image.data.buffer || doc.image.data);
+  } catch (error) {
+    console.error('Serve article image failed:', error.message);
+    return res.status(500).end();
+  }
+});
+
+/* ================================================================== */
+/* POST /admin/articles – save an article into ARTICLE_DETAILS          */
+/* ================================================================== */
+router.post('/articles', upload.single('articleImage'), async function (req, res) {
+  await connectDB();
+  try {
+    var heading = (req.body.heading || '').trim();
+    var author  = (req.body.author  || '').trim();
+    var content = (req.body.content || '').trim();
+
+    if (!heading) {
+      return res.status(400).json({ success: false, message: 'Article heading is required.' });
+    }
+
+    var payload = { heading: heading, author: author, content: content };
+    if (req.file && req.file.buffer) {
+      payload.image = { data: req.file.buffer, contentType: req.file.mimetype };
+    }
+
+    var doc = await Article.create(payload);
+    var d = doc.createdAt ? new Date(doc.createdAt) : new Date();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Article uploaded.',
+      article: {
+        _id:      String(doc._id),
+        heading:  doc.heading,
+        author:   doc.author || '',
+        excerpt:  articleExcerpt(doc.content, 140),
+        content:  doc.content || '',
+        dateFormatted: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        createdAt: d.toISOString(),
+        hasImage: !!(doc.image && doc.image.contentType)
+      }
+    });
+  } catch (error) {
+    console.error('Create article failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not save the article. Please try again.' });
+  }
+});
+
+/* ================================================================== */
+/* DELETE /admin/articles/:id  – remove a saved article                 */
+/* ================================================================== */
+router.delete('/articles/:id', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid article id.' });
+    }
+    var doc = await Article.findByIdAndDelete(req.params.id);
+    if (!doc) {
+      return res.status(404).json({ success: false, message: 'Article not found.' });
+    }
+    return res.json({ success: true, message: 'Article deleted.' });
+  } catch (error) {
+    console.error('Delete article failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not delete the article.' });
   }
 });
 

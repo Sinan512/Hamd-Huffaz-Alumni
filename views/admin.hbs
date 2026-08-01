@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}} - Alumni Admin Portal</title>
-  <link rel="icon" type="image/x-icon" href="/logo/favicon.ico">
-  <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png">
+  <link rel="icon" href="/logo/hamd-icon-white.png" />
+  <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png" />
 
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -86,7 +86,7 @@
     }
 
     .sidebar .brand-logo img {
-      height: 40px;
+      height: 60px;
       max-width: 150px;
       object-fit: contain;
     }
@@ -525,6 +525,41 @@
       font-size: 16px;
     }
 
+    /* --- ARTICLES GRID --- */
+    .article-tile {
+      position: relative;
+      height: 100%;
+      display: flex; flex-direction: column;
+      border: 1px solid rgba(15,23,42,0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+      transition: box-shadow .2s ease, transform .2s ease;
+    }
+    .article-tile:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(15,23,42,0.12); }
+    .article-tile-img {
+      height: 150px;
+      background: linear-gradient(135deg, #dbeafe, #eff6ff);
+      display: flex; align-items: center; justify-content: center;
+      color: #60a5fa; font-size: 2rem;
+    }
+    .article-tile-img img { width: 100%; height: 100%; object-fit: cover; }
+    .article-tile-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .article-tile-heading { font-weight: 700; font-size: 0.95rem; line-height: 1.35; }
+    .article-tile-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: #64748b; }
+    .article-tile-excerpt { font-size: 12.5px; color: #64748b; line-height: 1.6; }
+    .article-tile-delete {
+      position: absolute; top: 10px; right: 10px;
+      width: 32px; height: 32px; border: 0; border-radius: 50%;
+      background: rgba(220,38,38,0.92); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .2s ease; cursor: pointer;
+    }
+    .article-tile:hover .article-tile-delete,
+    .article-tile:focus-within .article-tile-delete { opacity: 1; }
+    [data-bs-theme="dark"] .article-tile { background: #111827; border-color: rgba(255,255,255,0.08); }
+    [data-bs-theme="dark"] .article-tile-heading { color: #e5e7eb; }
+
     /* --- GALLERY GRID --- */
     .gallery-tile {
       position: relative;
@@ -728,7 +763,7 @@
     [data-bs-theme="dark"] .custom-table tbody tr:hover {
       background-color: #1a2235;
     }
-
+    
     /* ---- Dark mode: batch tag ---- */
     [data-bs-theme="dark"] .batch-tag {
       background: #1e293b;
@@ -899,7 +934,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="brand-logo">
-        <img src="/logo/hamd-full-dark.png" alt="HAMD Logo">
+        <img src="/logo/hamd-full-white.png" alt="HAMD Logo">
       </div>
       <button type="button" class="sidebar-close-btn ms-auto" id="sidebarCloseBtn" aria-label="Close navigation">
         <i class="bi bi-x-lg"></i>
@@ -917,6 +952,7 @@
       <div class="sidebar-section-title mt-3">Events &amp; Content</div>
       <a href="#events-section"><i class="bi bi-calendar2-event-fill me-2"></i>Events</a>
       <a href="#registrations-section"><i class="bi bi-check2-square me-2"></i>Registrations</a>
+      <a href="#articles-section"><i class="bi bi-journal-text me-2"></i>Articles</a>
       <a href="#gallery-section"><i class="bi bi-images me-2"></i>Gallery</a>
     </div>
 
@@ -1374,6 +1410,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
           </span>
           <div class="d-flex gap-2 align-items-center">
             <select id="regEventSelect" class="form-select form-select-sm rounded-3" style="min-width:220px;">
+              <option value="">All events</option>
               {{#each upcomingEvents}}
               <option value="{{this.id}}">{{this.title}}</option>
               {{/each}}
@@ -1392,13 +1429,58 @@ onclick="openLeaderDetailsModal(this.dataset)">
                   <th>Name</th>
                   <th>Place</th>
                   <th>Batch</th>
+                  <th id="regEventsHeader">Registered Events</th>
                   <th style="width:140px;" class="text-end">Actions</th>
                 </tr>
               </thead>
               <tbody id="regMembersBody">
-                <tr><td colspan="5" class="text-center text-muted py-4 small">Select an event to view registrations.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-4 small">Loading registered members…</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARTICLES -->
+      <div class="card mb-4" id="articles-section">
+        <div class="card-header">
+          <span><i class="bi bi-journal-text text-primary me-2"></i>Articles
+            <span id="articleCountBadge" class="badge bg-primary-subtle text-primary rounded-pill ms-2" style="font-size:11px;">{{articles.length}}</span>
+          </span>
+          <button class="btn btn-sm btn-primary rounded-3" data-bs-toggle="modal" data-bs-target="#addArticleModal">
+            <i class="bi bi-upload me-1"></i>Upload Article
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="articlesGrid" class="row g-3">
+            {{#each articles}}
+            <div class="col-12 col-md-6 col-xl-4" data-article-id="{{this._id}}">
+              <div class="article-tile">
+                <div class="article-tile-img">
+                  {{#if this.hasImage}}
+                  <img src="/admin/articles/{{this._id}}/image" alt="{{this.heading}}" loading="lazy">
+                  {{else}}
+                  <i class="bi bi-journal-richtext"></i>
+                  {{/if}}
+                </div>
+                <div class="article-tile-body">
+                  <div class="article-tile-heading">{{this.heading}}</div>
+                  <div class="article-tile-meta">
+                    <span><i class="bi bi-person me-1"></i>{{#if this.author}}{{this.author}}{{else}}Unknown{{/if}}</span>
+                    <span><i class="bi bi-calendar3 me-1"></i>{{this.dateFormatted}}</span>
+                  </div>
+                  <div class="article-tile-excerpt">{{this.excerpt}}</div>
+                </div>
+                <button type="button" class="article-tile-delete" data-delete-article="{{this._id}}" title="Delete article" aria-label="Delete article">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+          <div id="articlesEmpty" class="gallery-empty {{#if articles.length}}d-none{{/if}}">
+            <i class="bi bi-journal-text d-block mb-2" style="font-size:1.6rem;"></i>
+            No articles uploaded yet. Use "Upload Article" to publish the first one.
           </div>
         </div>
       </div>
@@ -1602,6 +1684,48 @@ onclick="openLeaderDetailsModal(this.dataset)">
           </form>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Upload Article -->
+  <div class="modal fade" id="addArticleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-2">
+          <h5 class="modal-fw-bold fw-bold mb-0"><i class="bi bi-journal-text text-primary me-2"></i>Upload Article</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-0">
+          <form id="addArticleForm" enctype="multipart/form-data">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label fw-semibold small">Heading <span class="text-danger">*</span></label>
+                <input type="text" name="heading" class="form-control rounded-3" maxlength="200" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold small">Author</label>
+                <input type="text" name="author" class="form-control rounded-3" maxlength="120" placeholder="Optional">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Content</label>
+                <textarea name="content" id="articleContentInput" class="form-control rounded-3" rows="8" placeholder="Write or paste the article text..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Cover image <span class="text-muted fw-normal">(optional)</span></label>
+                <input type="file" name="articleImage" id="articleImageInput" class="form-control rounded-3" accept="image/*">
+                <div id="articleImagePreviewWrapper" class="mt-2 d-none">
+                  <img id="articleImagePreview" src="" alt="Preview" class="rounded-3 border" style="max-height:160px;max-width:100%;object-fit:cover;">
+                </div>
+              </div>
+            </div>
+            <div id="addArticleAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3" role="alert"></div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" id="addArticleSubmit" class="btn btn-primary rounded-3 px-4">Save Article</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -1926,7 +2050,10 @@ onclick="openLeaderDetailsModal(this.dataset)">
         <div class="modal-body p-4">
 
           <!-- Leader info card -->
-          <div class="p-3 rounded-3 mb-4 d-flex align-items-center gap-3" style="background:#f8fafc;">
+          <div class="p-3 rounded-3 mb-4 d-flex align-items-center gap-3" style=" [data-bs-theme="dark"] {
+      background: #1e293b;
+      color: #94a3b8;
+    }">
             <div class="member-avatar-wrapper">
               <div class="member-avatar-icon"><i class="bi bi-person-badge"></i></div>
             </div>
@@ -3408,6 +3535,132 @@ onclick="openLeaderDetailsModal(this.dataset)">
     })();
   </script>
 
+  <!-- ==================== ARTICLE SCRIPTS ==================== -->
+  <script>
+    (function () {
+      var form       = document.getElementById('addArticleForm');
+      var fileInput  = document.getElementById('articleImageInput');
+      var previewBox = document.getElementById('articleImagePreviewWrapper');
+      var preview    = document.getElementById('articleImagePreview');
+      var alertBox   = document.getElementById('addArticleAlert');
+      var submitBtn  = document.getElementById('addArticleSubmit');
+      var grid       = document.getElementById('articlesGrid');
+      var emptyBox   = document.getElementById('articlesEmpty');
+      var countBadge = document.getElementById('articleCountBadge');
+      var modalEl    = document.getElementById('addArticleModal');
+      if (!form || !grid) return;
+
+      function esc(v) {
+        return String(v == null ? '' : v)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function showAlert(type, message) {
+        if (!alertBox) return;
+        alertBox.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-0 mt-3';
+        alertBox.textContent = message;
+      }
+      function hideAlert() {
+        if (alertBox) { alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3'; alertBox.textContent = ''; }
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', function () {
+          var file = fileInput.files && fileInput.files[0];
+          if (!file) { previewBox.classList.add('d-none'); preview.src = ''; return; }
+          var reader = new FileReader();
+          reader.onload = function (ev) { preview.src = ev.target.result; previewBox.classList.remove('d-none'); };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function tile(a) {
+        var img = a.hasImage
+          ? '<img src="/admin/articles/' + a._id + '/image" alt="' + esc(a.heading) + '" loading="lazy">'
+          : '<i class="bi bi-journal-richtext"></i>';
+        return '' +
+          '<div class="col-12 col-md-6 col-xl-4" data-article-id="' + a._id + '">' +
+            '<div class="article-tile">' +
+              '<div class="article-tile-img">' + img + '</div>' +
+              '<div class="article-tile-body">' +
+                '<div class="article-tile-heading">' + esc(a.heading) + '</div>' +
+                '<div class="article-tile-meta">' +
+                  '<span><i class="bi bi-person me-1"></i>' + esc(a.author || 'Unknown') + '</span>' +
+                  '<span><i class="bi bi-calendar3 me-1"></i>' + esc(a.dateFormatted || '') + '</span>' +
+                '</div>' +
+                '<div class="article-tile-excerpt">' + esc(a.excerpt || '') + '</div>' +
+              '</div>' +
+              '<button type="button" class="article-tile-delete" data-delete-article="' + a._id + '" title="Delete article" aria-label="Delete article"><i class="bi bi-trash"></i></button>' +
+            '</div>' +
+          '</div>';
+      }
+
+      function render(articles) {
+        grid.innerHTML = (articles || []).map(tile).join('');
+        if (countBadge) countBadge.textContent = String((articles || []).length);
+        if (emptyBox) emptyBox.classList.toggle('d-none', !!(articles && articles.length));
+      }
+
+      function refresh() {
+        return fetch('/admin/articles', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+          .then(function (res) { return res.json(); })
+          .then(function (data) { if (data && data.success) render(data.articles || []); })
+          .catch(function () { /* keep the server-rendered list */ });
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        hideAlert();
+        submitBtn.disabled = true;
+        var label = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+
+        fetch('/admin/articles', { method: 'POST', body: new FormData(form), credentials: 'same-origin' })
+          .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, data: body }; }); })
+          .then(function (result) {
+            if (!result.ok || !result.data.success) {
+              throw new Error((result.data && result.data.message) || 'Could not save the article.');
+            }
+            showAlert('success', result.data.message || 'Article uploaded.');
+            form.reset();
+            if (previewBox) { previewBox.classList.add('d-none'); preview.src = ''; }
+            return refresh().then(function () {
+              setTimeout(function () {
+                hideAlert();
+                if (window.bootstrap && modalEl) {
+                  var inst = window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl);
+                  inst.hide();
+                }
+              }, 800);
+            });
+          })
+          .catch(function (err) { showAlert('danger', err.message || 'Could not save the article.'); })
+          .then(function () { submitBtn.disabled = false; submitBtn.textContent = label; });
+      });
+
+      grid.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-delete-article]');
+        if (!btn) return;
+        var id = btn.getAttribute('data-delete-article');
+        if (!window.confirm('Delete this article permanently?')) return;
+        btn.disabled = true;
+
+        fetch('/admin/articles/' + id, { method: 'DELETE', headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.message) || 'Could not delete the article.');
+            var card = grid.querySelector('[data-article-id="' + id + '"]');
+            if (card) card.remove();
+            var left = grid.querySelectorAll('[data-article-id]').length;
+            if (countBadge) countBadge.textContent = String(left);
+            if (emptyBox) emptyBox.classList.toggle('d-none', left > 0);
+          })
+          .catch(function (err) { window.alert(err.message || 'Could not delete the article.'); btn.disabled = false; });
+      });
+    })();
+  </script>
+
   <!-- ==================== GALLERY SCRIPTS ==================== -->
   <script>
     (function () {
@@ -3584,33 +3837,49 @@ onclick="openLeaderDetailsModal(this.dataset)">
       '</td>' +
       '<td class="small">' + (m.place ? esc(m.place) : '<span class="text-muted">—</span>') + '</td>' +
       '<td><span class="badge bg-light text-dark border">' + (m.batch ? esc(m.batch) : '—') + '</span></td>' +
+      '<td class="small">' + eventsCell(m) + '</td>' +
       '<td class="text-end"><div class="d-flex gap-1 justify-content-end">' + waBtn + telBtn + '</div></td>' +
     '</tr>';
   }
 
+  function eventsCell(m) {
+    var list = Array.isArray(m.events) && m.events.length
+      ? m.events
+      : (selectEl.value ? [selectEl.options[selectEl.selectedIndex].text] : []);
+    if (!list.length) return '<span class="text-muted">—</span>';
+    return list.map(function (t) {
+      return '<span class="badge bg-primary-subtle text-primary border me-1 mb-1" style="font-weight:600;">' + esc(t) + '</span>';
+    }).join('');
+  }
+
   function message(text) {
-    bodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4 small">' + esc(text) + '</td></tr>';
+    bodyEl.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4 small">' + esc(text) + '</td></tr>';
   }
 
   function load() {
-    var id = selectEl.value;
-    if (!id) { countEl.textContent = '0'; message('No events available yet.'); return; }
+    var id  = selectEl.value;
+    var url = id
+      ? '/admin/events/' + encodeURIComponent(id) + '/registrations'
+      : '/admin/registrations';
 
-    bodyEl.innerHTML = '<tr><td colspan="5" class="text-center py-4">' +
+    bodyEl.innerHTML = '<tr><td colspan="6" class="text-center py-4">' +
       '<span class="spinner-border spinner-border-sm text-secondary me-2"></span>' +
       '<span class="text-muted small">Loading registrations…</span></td></tr>';
 
-    fetch('/admin/events/' + encodeURIComponent(id) + '/registrations', { credentials: 'same-origin' })
+    fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
       .then(function (res) { return res.json().catch(function () { throw new Error('Server error (' + res.status + ')'); }); })
       .then(function (data) {
         if (!data || !data.success) throw new Error((data && data.message) || 'Could not load registered members.');
         countEl.textContent = String(data.count || 0);
-        if (!data.members || !data.members.length) { message('No members registered for this event yet.'); return; }
+        if (!data.members || !data.members.length) {
+          message(id ? 'No members registered for this event yet.' : 'No registered members yet.');
+          return;
+        }
         bodyEl.innerHTML = data.members.map(row).join('');
       })
       .catch(function (err) {
         countEl.textContent = '0';
-        bodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4 small">' + esc(err.message) + '</td></tr>';
+        bodyEl.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4 small">' + esc(err.message) + '</td></tr>';
       });
   }
 
@@ -4096,10 +4365,6 @@ onclick="openLeaderDetailsModal(this.dataset)">
       <div class="modal-body">
         <div class="alert d-none" id="adminPasswordAlert" role="alert"></div>
         <div class="mb-3">
-          <label class="form-label fw-semibold small">Current password</label>
-          <input type="password" class="form-control rounded-3" name="currentPassword" autocomplete="current-password" required>
-        </div>
-        <div class="mb-3">
           <label class="form-label fw-semibold small">Username</label>
           <input type="text" class="form-control rounded-3" name="username" minlength="3" maxlength="40" value="{{admin.username}}" required>
         </div>
@@ -4231,7 +4496,6 @@ onclick="openLeaderDetailsModal(this.dataset)">
 
       var fd      = new FormData(passwordForm);
       var payload = {
-        currentPassword: fd.get('currentPassword') || '',
         username:        String(fd.get('username') || '').trim(),
         newPassword:     fd.get('newPassword') || '',
         confirmPassword: fd.get('confirmPassword') || ''

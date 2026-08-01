@@ -126,7 +126,7 @@ async function getGallery() {
         return {
           id:          String(doc._id),
           description: doc.description || ('Gallery image ' + (i + 1)),
-          url:         '/gallery/' + String(doc._id) + '/image'
+          url:         '/admin/gallery/' + String(doc._id) + '/image'
         };
       });
   } catch (err) {
@@ -152,7 +152,7 @@ async function getArticles() {
     var docs = await Article
       .find({}, { heading: 1, author: 1, content: 1, createdAt: 1, 'image.contentType': 1 })
       .sort({ createdAt: -1 })
-      .limit(6)
+      .limit(9)
       .lean();
 
     return docs.map(function (doc) {
@@ -161,6 +161,8 @@ async function getArticles() {
         heading:  doc.heading || 'Untitled',
         author:   doc.author  || 'HAMD Alumni',
         excerpt:  toExcerpt(doc.content, 180),
+        content:  String(doc.content || ''),
+        readTime: Math.max(1, Math.round(String(doc.content || '').split(/\s+/).filter(Boolean).length / 200)),
         date:     formatDate(doc.createdAt),
         imageUrl: (doc.image && doc.image.contentType)
           ? '/articles/' + String(doc._id) + '/image'
@@ -172,21 +174,31 @@ async function getArticles() {
     return [];
   }
 }
-
+// correct data fetch replaced with approximate count
 async function getStats() {
-  var alumni  = 0;
-  var batches = 0;
+  var alumni   = "300+";
+  var batches  = 0;
+  var events   = 0;
+  var articles = 0;
 
-  try { alumni = await MemberDetails.countDocuments({}); }
-  catch (err) { console.error('Home: member count failed —', err.message); }
+  // try { alumni = await MemberDetails.countDocuments({}); }
+  // catch (err) { console.error('Home: member count failed —', err.message); }
 
   try { batches = await BatchDetails.countDocuments({}); }
   catch (err) { console.error('Home: batch count failed —', err.message); }
 
+  try { events = await EventDetails.countDocuments({}); }
+  catch (err) { console.error('Home: event count failed —', err.message); }
+
+  try { articles = await Article.countDocuments({}); }
+  catch (err) { console.error('Home: article count failed —', err.message); }
+
   return [
-    { icon: 'bi-mortarboard', target: alumni,  suffix: '', label: 'Registered Alumni' },
-    { icon: 'bi-calendar3',   target: batches, suffix: '', label: 'Batches' }
-  ].concat(EXTRA_STATS);
+    { icon: 'bi-mortarboard',     target: alumni,   suffix: '+', label: 'Alumni Members' },
+    { icon: 'bi-collection',      target: batches,  suffix: '', label: 'Batches' },
+    { icon: 'bi-calendar-check',  target: events,   suffix: '', label: 'Events' },
+    { icon: 'bi-journal-text',    target: articles, suffix: '', label: 'Published Articles' }
+  ];
 }
 
 async function buildHomeData() {

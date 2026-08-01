@@ -10,7 +10,8 @@ var articleSchema = new mongoose.Schema(
       contentType: { type: String, default: null }
     }
   },
-  { timestamps: true, collection: 'articles' }
+  { timestamps: true, collection: 'ARTICLE_DETAILS' }
 );
 
-module.exports = mongoose.model('Article', articleSchema);
+/* Third argument pins the collection name so mongoose does not pluralize it. */
+module.exports = mongoose.model('Article', articleSchema, 'ARTICLE_DETAILS');

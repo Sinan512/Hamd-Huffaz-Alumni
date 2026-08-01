@@ -9,7 +9,7 @@
   <meta property="og:title" content="HAMD Alumni Portal" />
   <meta property="og:description" content="Official Alumni Management Portal of Huffaz Alumni Malik Deenar Parappalli Markaz." />
   <meta property="og:type" content="website" />
-<link rel="icon" href="/logo/hamd-icon-white.png" />
+  <link rel="icon" href="/logo/hamd-icon-white.png" />
   <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png" />
 
   <!-- Google Fonts: Outfit & Inter -->
@@ -687,7 +687,7 @@
       transition: var(--transition);
     }
     .glass-card:hover .about-icon-wrap {
-      background: var(--grad-primary);
+      background: linear-gradient(135deg, #033ce8 0%, #0340ba 50%, #013fbc 100%);
       color: #fff;
       transform: scale(1.1) rotate(-4deg);
       box-shadow: 0 6px 20px rgba(37,99,235,0.3);
@@ -761,7 +761,7 @@
       transition: var(--transition);
     }
     .stat-card:hover .stat-icon {
-      background: var(--grad-primary);
+      background: linear-gradient(135deg, #033ce8 0%, #0340ba 50%, #013fbc 100%);
       color: #fff; transform: scale(1.1) rotate(6deg);
       box-shadow: 0 6px 20px rgba(37,99,235,0.4);
     }
@@ -982,30 +982,8 @@
     }
 
     /* ============================================================
-       NEWS & ARTICLES
+       ARTICLES
     ============================================================ */
-    #news { background: var(--white); }
-    .news-card {
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: #fff;
-      border: 1px solid rgba(37,99,235,0.08);
-      box-shadow: 0 4px 20px rgba(37,99,235,0.07);
-      transition: var(--transition);
-      height: 100%;
-      display: flex; flex-direction: column;
-    }
-    .news-card:hover { transform: translateY(-6px); box-shadow: 0 18px 44px rgba(37,99,235,0.15); }
-    .news-img { height: 210px; overflow: hidden; position: relative; }
-    .news-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--cubic-spring); }
-    .news-card:hover .news-img img { transform: scale(1.07); }
-    .news-body { padding: 26px; display: flex; flex-direction: column; flex: 1; }
-    .news-category { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--blue-600); margin-bottom: 10px; }
-    .news-title { font-size: 1.08rem; font-weight: 700; color: var(--navy); margin-bottom: 12px; line-height: 1.45; }
-    .news-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.7; margin-bottom: 20px; flex: 1; }
-    .news-meta { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(37,99,235,0.08); padding-top: 16px; font-size: 0.82rem; color: var(--muted); }
-    .news-read { font-weight: 600; color: var(--blue-600); display: inline-flex; align-items: center; gap: 5px; }
-    .news-card:hover .news-read { gap: 9px; color: var(--blue-800); }
 
     #articles { background: var(--light); }
     .article-card {
@@ -1036,6 +1014,56 @@
       font-size: 0.8rem; color: var(--muted);
       border-top: 1px solid rgba(37,99,235,0.08); padding-top: 16px;
     }
+
+    .article-date { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--blue-600); margin-bottom: 10px; }
+    .article-card { cursor: pointer; }
+    .article-card:focus-visible { outline: 3px solid var(--blue-400); outline-offset: 3px; }
+    .article-read { font-weight: 600; color: var(--blue-600); display: inline-flex; align-items: center; gap: 5px; transition: gap .25s ease; }
+    .article-card:hover .article-read { gap: 10px; }
+    .event-img-fallback {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.4rem; color: var(--blue-400);
+      background: linear-gradient(135deg, var(--blue-100), var(--blue-50));
+    }
+    .empty-state {
+      text-align: center; padding: 56px 24px;
+      border: 1px dashed rgba(37,99,235,0.25);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.6);
+      color: var(--muted);
+    }
+    .empty-state i { font-size: 2.2rem; color: var(--blue-400); display: block; margin-bottom: 12px; }
+    .empty-state p { margin: 0; font-size: 0.95rem; }
+
+    /* ---- Article reader modal ---- */
+    .article-modal {
+      position: fixed; inset: 0; z-index: 3000;
+      background: rgba(8, 20, 45, 0.72);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility .3s ease;
+    }
+    .article-modal.open { opacity: 1; visibility: visible; }
+    .article-modal-content {
+      background: #fff; border-radius: var(--radius);
+      max-width: 760px; width: 100%; max-height: 88vh; overflow-y: auto;
+      position: relative; box-shadow: 0 30px 80px rgba(8,20,45,0.4);
+    }
+    .article-modal-img { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+    .article-modal-body { padding: 32px; }
+    .article-modal-title { font-size: 1.55rem; font-weight: 800; color: var(--navy); line-height: 1.3; margin-bottom: 12px; }
+    .article-modal-meta { display: flex; flex-wrap: wrap; gap: 18px; font-size: 0.85rem; color: var(--muted); margin-bottom: 22px; }
+    .article-modal-text { font-size: 1rem; color: var(--slate); line-height: 1.9; white-space: pre-wrap; }
+    .article-modal-close {
+      position: absolute; top: 14px; right: 14px; z-index: 2;
+      width: 40px; height: 40px; border: 0; border-radius: 50%;
+      background: rgba(255,255,255,0.94); color: var(--navy);
+      font-size: 1.3rem; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 18px rgba(8,20,45,0.2); cursor: pointer;
+    }
+    @media (max-width: 575.98px) { .article-modal-body { padding: 22px; } }
 
     /* ============================================================
        CONTACT
@@ -1201,7 +1229,6 @@
           <a href="#committee" class="nav-link-item">Committee</a>
           <a href="#gallery"   class="nav-link-item">Gallery</a>
           <a href="#events"    class="nav-link-item">Events</a>
-          <a href="#news"      class="nav-link-item">News</a>
           <a href="#articles"  class="nav-link-item">Articles</a>
           <a href="#contact"   class="nav-link-item">Contact</a>
         </div>
@@ -1232,7 +1259,6 @@
     <a href="#committee" class="nav-link-item" onclick="closeMobileNav()">Committee <i class="bi bi-chevron-right"></i></a>
     <a href="#gallery"   class="nav-link-item" onclick="closeMobileNav()">Gallery <i class="bi bi-chevron-right"></i></a>
     <a href="#events"    class="nav-link-item" onclick="closeMobileNav()">Events <i class="bi bi-chevron-right"></i></a>
-    <a href="#news"      class="nav-link-item" onclick="closeMobileNav()">News <i class="bi bi-chevron-right"></i></a>
     <a href="#articles"  class="nav-link-item" onclick="closeMobileNav()">Articles <i class="bi bi-chevron-right"></i></a>
     <a href="#contact"   class="nav-link-item" onclick="closeMobileNav()">Contact <i class="bi bi-chevron-right"></i></a>
   </div>
@@ -1252,10 +1278,10 @@
           Huffaz Alumni Malik Deenar · Parappalli Markaz
         </div>
         <h1 class="hero-title">
-          Connecting Legacy,<br><span>Empowering Ummah</span>
+          United by the Qur'an,<br><span>Connected for Life</span>
         </h1>
         <p class="hero-subtitle">
-          Official network of Parappalli Markaz Huffaz graduates across Kerala and globally—fostering academic excellence, Islamic brotherhood, and continuous Da'wa.
+          HAMD (Huffaz Alumni of Markaz Malik Deenar) is the alumni platform for students who completed Hifz at various institutions and pursued higher Islamic studies at Markaz Malik Deenar Quran Research Academy
         </p>
         
       </div>
@@ -1279,22 +1305,22 @@
             A Legacy Built on<br><span class="gradient-text" style="background:var(--grad-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Knowledge & Devotion</span>
           </h2>
           <p class="section-sub mb-4">
-            Huffaz Alumni Malik Deenar (HAMD) unites graduates of Parappalli Markaz—nurturing thousands of Huffaz who now lead educational, spiritual, and community initiatives worldwide.
+            HAMD brings together Huffaz alumni on a single platform to strengthen brotherhood, preserve the values of Qur'anic and Islamic education, and encourage knowledge, service, and meaningful contributions to society.
           </p>
           
           <div class="timeline" id="timeline-container">
             <div class="timeline-item">
-              <div class="timeline-year">2005</div>
+              <div class="timeline-year">2020</div>
               <div class="timeline-title">Foundation of HAMD</div>
               <div class="timeline-desc">Established by early graduates to build an enduring platform of alumni collaboration.</div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-year">2015</div>
+              <div class="timeline-year">2025</div>
               <div class="timeline-title">Global Expansion</div>
               <div class="timeline-desc">Chapters established across GCC countries and key Indian metros.</div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-year">2025</div>
+              <div class="timeline-year">2026</div>
               <div class="timeline-title">Digital Portal Launch</div>
               <div class="timeline-desc">Next-generation platform launched for alumni directory, events, and community support.</div>
             </div>
@@ -1348,34 +1374,15 @@
         <h2 class="section-title">HAMD by the Numbers</h2>
       </div>
       <div class="row g-4 justify-content-center" id="stats-container">
-        <div class="col-12 col-sm-6 col-lg-3 reveal delay-1">
+        {{#each stats}}
+        <div class="col-12 col-sm-6 col-lg-3 reveal">
           <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-mortarboard"></i></div>
-            <div class="stat-number" data-target="2500" data-suffix="+">0</div>
-            <div class="stat-label">Graduated Huffaz</div>
+            <div class="stat-icon"><i class="bi {{this.icon}}"></i></div>
+            <div class="stat-number" data-target="{{this.target}}" data-suffix="{{this.suffix}}">0</div>
+            <div class="stat-label">{{this.label}}</div>
           </div>
         </div>
-        <div class="col-12 col-sm-6 col-lg-3 reveal delay-2">
-          <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-globe-americas"></i></div>
-            <div class="stat-number" data-target="18" data-suffix="+">0</div>
-            <div class="stat-label">Global Chapters</div>
-          </div>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3 reveal delay-3">
-          <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
-            <div class="stat-number" data-target="120" data-suffix="+">0</div>
-            <div class="stat-label">Annual Events</div>
-          </div>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3 reveal delay-4">
-          <div class="glass-card-dark stat-card">
-            <div class="stat-icon"><i class="bi bi-trophy"></i></div>
-            <div class="stat-number" data-target="20" data-suffix=" Yrs">0</div>
-            <div class="stat-label">Glorious Heritage</div>
-          </div>
-        </div>
+        {{/each}}
       </div>
     </div>
   </section>
@@ -1384,7 +1391,7 @@
   <section id="committee" class="section-pad">
     <div class="container">
       <div class="text-center mb-5 reveal">
-        <div class="section-label"><i class="bi bi-award"></i> Leadership</div>
+        <div class="section-label"><i class="bi bi-award"></i> Leaders</div>
         <h2 class="section-title">Executive Committee</h2>
         <p class="section-sub mx-auto mt-3">Guiding the alumni association with vision, integrity, and dedication.</p>
       </div>
@@ -1426,33 +1433,25 @@
         <p class="section-sub mx-auto mt-3">Visual highlights from our global reunions, convocations, and community programs.</p>
       </div>
       <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4 reveal" id="gallery-container">
+        {{#each gallery}}
         <div class="col">
-          <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Markaz Convocation Ceremony">
-            <img src="https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80" alt="Convocation Ceremony" loading="lazy" />
+          <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="{{this.description}}">
+            <img src="{{this.url}}" alt="{{this.description}}" loading="lazy" />
             <div class="gallery-overlay">
               <i class="bi bi-zoom-in"></i>
-              <span>View Ceremony</span>
+              <span>View Image</span>
             </div>
           </div>
         </div>
-        <div class="col">
-          <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Alumni Annual Meet">
-            <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80" alt="Annual Gathering" loading="lazy" />
-            <div class="gallery-overlay">
-              <i class="bi bi-zoom-in"></i>
-              <span>View Gathering</span>
-            </div>
+        {{/each}}
+        {{#unless gallery.length}}
+        <div class="col-12">
+          <div class="empty-state">
+            <i class="bi bi-images"></i>
+            <p>No gallery images have been published yet.</p>
           </div>
         </div>
-        <div class="col">
-          <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="Quranic Recitation Contest">
-            <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80" alt="Recitation Event" loading="lazy" />
-            <div class="gallery-overlay">
-              <i class="bi bi-zoom-in"></i>
-              <span>View Contest</span>
-            </div>
-          </div>
-        </div>
+        {{/unless}}
       </div>
     </div>
   </section>
@@ -1482,110 +1481,36 @@
 
       <div class="events-carousel reveal">
         <div class="events-track" id="events-track">
+          {{#each events}}
           <article class="event-card">
             <div class="event-img-wrap">
-              <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80" alt="Grand Alumni Summit" loading="lazy" />
-              <div class="event-date-badge"><div class="day">15</div><div class="month">AUG</div></div>
+              {{#if this.imageUrl}}
+              <img src="{{this.imageUrl}}" alt="{{this.title}}" loading="lazy" />
+              {{else}}
+              <div class="event-img-fallback"><i class="bi bi-calendar-event"></i></div>
+              {{/if}}
+              <div class="event-date-badge"><div class="day">{{this.day}}</div><div class="month">{{this.month}}</div></div>
             </div>
             <div class="event-body">
-              <span class="event-tag">Summit</span>
-              <h3 class="event-title">Grand Alumni Summit 2026</h3>
-              <div class="event-location"><i class="bi bi-geo-alt"></i> Parappalli Markaz Auditorium</div>
-              <a href="#contact" class="btn-primary-hamd" style="font-size:0.85rem;padding:10px 24px;">Register Now</a>
+              <span class="event-tag">{{this.category}}</span>
+              <h3 class="event-title">{{this.title}}</h3>
+              {{#if this.location}}
+              <div class="event-location"><i class="bi bi-geo-alt"></i> {{this.location}}</div>
+              {{/if}}
+              {{#if this.registration}}
+              <a href="/users" class="btn-primary-hamd" style="font-size:0.85rem;padding:10px 24px;">Register Now</a>
+              {{else}}
+              <a href="#contact" class="btn-outline-hamd" style="font-size:0.85rem;padding:10px 24px;">More Info</a>
+              {{/if}}
             </div>
           </article>
-
-          <article class="event-card">
-            <div class="event-img-wrap">
-              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80" alt="International Hifz Seminar" loading="lazy" />
-              <div class="event-date-badge"><div class="day">28</div><div class="month">SEP</div></div>
-            </div>
-            <div class="event-body">
-              <span class="event-tag">Academic</span>
-              <h3 class="event-title">International Hifz Pedagogy Seminar</h3>
-              <div class="event-location"><i class="bi bi-geo-alt"></i> Virtual Zoom Conference</div>
-              <a href="#contact" class="btn-primary-hamd" style="font-size:0.85rem;padding:10px 24px;">Join Webinar</a>
-            </div>
-          </article>
-
-          <article class="event-card">
-            <div class="event-img-wrap">
-              <img src="https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=600&q=80" alt="GCC Chapter Gathering" loading="lazy" />
-              <div class="event-date-badge"><div class="day">10</div><div class="month">OCT</div></div>
-            </div>
-            <div class="event-body">
-              <span class="event-tag">Reunion</span>
-              <h3 class="event-title">GCC Chapter Reunion & Dinner</h3>
-              <div class="event-location"><i class="bi bi-geo-alt"></i> Grand Hotel, Dubai UAE</div>
-              <a href="#contact" class="btn-primary-hamd" style="font-size:0.85rem;padding:10px 24px;">RSVP Today</a>
-            </div>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== NEWS & ARTICLES ===================== -->
-  <section id="news" class="section-pad">
-    <div class="container">
-      <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-5">
-        <div class="reveal">
-          <div class="section-label"><i class="bi bi-newspaper"></i> News</div>
-          <h2 class="section-title">Latest Updates</h2>
-        </div>
-        <a href="#contact" class="btn-outline-hamd reveal">View All Updates <i class="bi bi-arrow-right"></i></a>
-      </div>
-
-      <div class="row g-4" id="news-container">
-        <div class="col-md-6 col-lg-4 reveal delay-1">
-          <div class="news-card">
-            <div class="news-img">
-              <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80" alt="Scholastic Research Award" loading="lazy" />
-            </div>
-            <div class="news-body">
-              <div class="news-category">Achievement</div>
-              <h3 class="news-title">HAMD Alumni Win Prestigious National Quranic Award</h3>
-              <p class="news-desc">Three Parappalli Markaz graduates were honored at the National Quranic Sciences Conference for research excellence.</p>
-              <div class="news-meta">
-                <span><i class="bi bi-clock"></i> July 24, 2026</span>
-                <a href="#contact" class="news-read">Read <i class="bi bi-arrow-right"></i></a>
-              </div>
-            </div>
+          {{/each}}
+          {{#unless events.length}}
+          <div class="empty-state w-100">
+            <i class="bi bi-calendar-x"></i>
+            <p>No events have been published yet.</p>
           </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4 reveal delay-2">
-          <div class="news-card">
-            <div class="news-img">
-              <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=600&q=80" alt="Educational Endowment" loading="lazy" />
-            </div>
-            <div class="news-body">
-              <div class="news-category">Initiative</div>
-              <h3 class="news-title">Educational Endowment Trust Announced</h3>
-              <p class="news-desc">The executive committee launches a ₹50 Lakh endowment trust to support aspiring Huffaz students.</p>
-              <div class="news-meta">
-                <span><i class="bi bi-clock"></i> July 18, 2026</span>
-                <a href="#contact" class="news-read">Read <i class="bi bi-arrow-right"></i></a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4 reveal delay-3">
-          <div class="news-card">
-            <div class="news-img">
-              <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80" alt="New Portal Launch" loading="lazy" />
-            </div>
-            <div class="news-body">
-              <div class="news-category">Technology</div>
-              <h3 class="news-title">Alumni Digital Portal 2.0 Live</h3>
-              <p class="news-desc">Enhanced portal features seamless directory access, event management, and research publication sharing.</p>
-              <div class="news-meta">
-                <span><i class="bi bi-clock"></i> July 10, 2026</span>
-                <a href="#contact" class="news-read">Read <i class="bi bi-arrow-right"></i></a>
-              </div>
-            </div>
-          </div>
+          {{/unless}}
         </div>
       </div>
     </div>
@@ -1601,56 +1526,62 @@
       </div>
 
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="articles-container">
-        <div class="col reveal delay-1">
-          <article class="article-card">
+        {{#each articles}}
+        <div class="col reveal">
+          <article class="article-card" role="button" tabindex="0"
+                   data-article-heading="{{this.heading}}"
+                   data-article-author="{{this.author}}"
+                   data-article-date="{{this.date}}"
+                   data-article-image="{{this.imageUrl}}"
+                   data-article-content="{{this.content}}"
+                   onclick="openArticle(this)"
+                   onkeydown="if(event.key==='Enter'){openArticle(this)}">
             <div class="article-img">
-              <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=600&q=80" alt="Preserving Quranic Traditions" loading="lazy" />
+              {{#if this.imageUrl}}
+              <img src="{{this.imageUrl}}" alt="{{this.heading}}" loading="lazy" />
+              {{else}}
+              <i class="bi bi-journal-richtext"></i>
+              {{/if}}
             </div>
             <div class="article-body">
-              <h3 class="article-heading">Methodologies in Preserving Hifz in the Modern Era</h3>
-              <p class="article-excerpt">Exploring innovative pedagogical tools for retaining Quranic memorization alongside modern academic commitments.</p>
+              {{#if this.date}}<div class="article-date"><i class="bi bi-calendar3"></i> {{this.date}}</div>{{/if}}
+              <h3 class="article-heading">{{this.heading}}</h3>
+              <p class="article-excerpt">{{this.excerpt}}</p>
               <div class="article-meta">
-                <span><i class="bi bi-person"></i> Hafiz Dr. Bilal</span>
-                <span><i class="bi bi-clock"></i> 6 min read</span>
+                <span><i class="bi bi-person"></i> {{this.author}}</span>
+                <span class="article-read">Read article <i class="bi bi-arrow-right"></i></span>
               </div>
             </div>
           </article>
         </div>
-
-        <div class="col reveal delay-2">
-          <article class="article-card">
-            <div class="article-img">
-              <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80" alt="Role of Huffaz in Society" loading="lazy" />
-            </div>
-            <div class="article-body">
-              <h3 class="article-heading">The Role of Huffaz in Social Upliftment</h3>
-              <p class="article-excerpt">How spiritual leaders can spearhead community healthcare, youth mentoring, and ethical education.</p>
-              <div class="article-meta">
-                <span><i class="bi bi-person"></i> Usthad Omar</span>
-                <span><i class="bi bi-clock"></i> 8 min read</span>
-              </div>
-            </div>
-          </article>
+        {{/each}}
+        {{#unless articles.length}}
+        <div class="col-12">
+          <div class="empty-state">
+            <i class="bi bi-journal-text"></i>
+            <p>No articles have been published yet.</p>
+          </div>
         </div>
-
-        <div class="col reveal delay-3">
-          <article class="article-card">
-            <div class="article-img">
-              <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80" alt="Markaz Heritage" loading="lazy" />
-            </div>
-            <div class="article-body">
-              <h3 class="article-heading">Parappalli Markaz: Decades of Spiritual Legacy</h3>
-              <p class="article-excerpt">A historical reflection on the institution's founding fathers and their enduring educational vision.</p>
-              <div class="article-meta">
-                <span><i class="bi bi-person"></i> Hafiz Hamza</span>
-                <span><i class="bi bi-clock"></i> 10 min read</span>
-              </div>
-            </div>
-          </article>
-        </div>
+        {{/unless}}
       </div>
     </div>
   </section>
+
+  <!-- Article reader modal -->
+  <div class="article-modal" id="article-modal" role="dialog" aria-modal="true" aria-label="Article reader" onclick="closeArticle()">
+    <div class="article-modal-content" onclick="event.stopPropagation()">
+      <button class="article-modal-close" onclick="closeArticle()" aria-label="Close article"><i class="bi bi-x"></i></button>
+      <img id="article-modal-img" src="" alt="" class="article-modal-img d-none" />
+      <div class="article-modal-body">
+        <h3 class="article-modal-title" id="article-modal-title"></h3>
+        <div class="article-modal-meta">
+          <span><i class="bi bi-person"></i> <span id="article-modal-author"></span></span>
+          <span><i class="bi bi-calendar3"></i> <span id="article-modal-date"></span></span>
+        </div>
+        <div class="article-modal-text" id="article-modal-text"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================== CONTACT SECTION ===================== -->
   <section id="contact" class="section-pad">
@@ -1785,7 +1716,6 @@
           <div class="col-6 col-md-3 col-lg-2">
             <div class="footer-heading">Explore</div>
             <ul class="footer-links">
-              <li><a href="#news">News</a></li>
               <li><a href="#articles">Articles</a></li>
               <li><a href="#contact">Contact</a></li>
               <li><a href="#contact">Member Portal</a></li>
@@ -2157,6 +2087,34 @@
       document.body.style.overflow = 'hidden';
     }
 
+    function openArticle(el) {
+      const modal = document.getElementById('article-modal');
+      if (!modal) return;
+      const imgEl   = document.getElementById('article-modal-img');
+      const heading = el.getAttribute('data-article-heading') || 'Untitled';
+      const author  = el.getAttribute('data-article-author')  || 'HAMD Alumni';
+      const date    = el.getAttribute('data-article-date')    || '';
+      const image   = el.getAttribute('data-article-image')   || '';
+      const content = el.getAttribute('data-article-content') || '';
+
+      document.getElementById('article-modal-title').textContent  = heading;
+      document.getElementById('article-modal-author').textContent = author;
+      document.getElementById('article-modal-date').textContent   = date;
+      document.getElementById('article-modal-text').textContent   = content || 'No content available for this article.';
+
+      if (image) { imgEl.src = image; imgEl.alt = heading; imgEl.classList.remove('d-none'); }
+      else { imgEl.src = ''; imgEl.classList.add('d-none'); }
+
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeArticle() {
+      const modal = document.getElementById('article-modal');
+      if (modal) modal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
     function closeGallery() {
       const modal = document.getElementById('gallery-modal');
       if (modal) modal.classList.remove('open');
@@ -2164,7 +2122,7 @@
     }
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeGallery();
+      if (e.key === 'Escape') { closeGallery(); closeArticle(); }
     });
 
     // 8. Contact Form Handling
