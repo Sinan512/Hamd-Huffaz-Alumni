@@ -76,7 +76,11 @@
     ============================================================ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      overflow-x: hidden; /* kill horizontal scroll at root */
+    }
 
     body {
       font-family: var(--font);
@@ -85,7 +89,10 @@
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      /* Hide body until loading screen finishes so content never flashes */
+      visibility: hidden;
     }
+    body.page-ready { visibility: visible; }
 
     ::selection { background: var(--blue-200); color: var(--blue-900); }
 
@@ -106,9 +113,15 @@
       align-items: center;
       justify-content: center;
       gap: 24px;
-      transition: opacity 0.5s var(--cubic-spring), visibility 0.5s var(--cubic-spring);
+      transition: opacity 0.55s var(--cubic-spring), visibility 0.55s var(--cubic-spring);
+      /* Ensure loading screen itself is always visible regardless of body visibility */
+      visibility: visible !important;
     }
-    #loading-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    #loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden !important;
+      pointer-events: none;
+    }
     .loader-logo {
       width: 72px; height: 72px;
       background: var(--grad-primary);
@@ -171,13 +184,20 @@
       z-index: 700;
       padding: 20px 0;
       transition: var(--transition);
+      /* Prevent the nav itself from causing horizontal overflow */
+      width: 100%;
+      max-width: 100vw;
+      will-change: background, box-shadow, padding;
+      /* Force GPU layer so it never gets "stuck" during scroll */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
     }
     #main-nav.scrolled {
-      background: rgba(255, 255, 255, 0.88);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border-bottom: 1px solid rgba(37, 99, 235, 0.12);
-      box-shadow: 0 4px 30px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 4px 30px rgba(15, 23, 42, 0.08);
       padding: 12px 0;
     }
     .nav-brand-box {
@@ -205,6 +225,10 @@
       border: 1px solid rgba(255,255,255,0.12);
       backdrop-filter: blur(12px);
       transition: var(--transition);
+      /* Prevent pill nav from overflowing on mid-size screens */
+      overflow: hidden;
+      flex-shrink: 1;
+      min-width: 0;
     }
     #main-nav.scrolled .desktop-nav-wrap {
       background: rgba(241,245,249,0.8);
@@ -216,10 +240,14 @@
       color: rgba(255,255,255,0.85);
       font-size: 0.86rem;
       font-weight: 500;
-      padding: 7px 16px;
+      padding: 7px 14px;
       border-radius: 100px;
       transition: color 0.25s ease;
       white-space: nowrap;
+      flex-shrink: 0;
+    }
+    @media (max-width: 1199.98px) {
+      .nav-link-item { font-size: 0.8rem; padding: 7px 10px; }
     }
     #main-nav.scrolled .nav-link-item { color: var(--slate); }
     .nav-link-item:hover { color: #fff; }
@@ -319,18 +347,24 @@
     .mobile-nav-overlay.open { opacity: 1; visibility: visible; }
     .mobile-nav-card {
       position: fixed;
-      top: 80px; left: 16px; right: 16px;
+      top: 76px; left: 12px; right: 12px;
       background: rgba(255,255,255,0.96);
       backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       border: 1px solid rgba(37,99,235,0.15);
       border-radius: var(--radius);
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      padding: 20px;
+      padding: 16px;
       display: flex; flex-direction: column; gap: 6px;
       z-index: 660;
       transform: translateY(-20px) scale(0.96);
       opacity: 0; visibility: hidden;
       transition: var(--transition);
+      /* Never exceed viewport width */
+      max-width: calc(100vw - 24px);
+      box-sizing: border-box;
+      overflow-y: auto;
+      max-height: calc(100vh - 100px);
     }
     .mobile-nav-card.open {
       transform: translateY(0) scale(1);
@@ -358,11 +392,14 @@
     ============================================================ */
     #hero {
       min-height: 100vh;
+      min-height: 100dvh; /* dynamic viewport height for mobile browsers */
       position: relative;
       display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
+      overflow: hidden; /* clips the blobs that extend beyond hero */
       background: var(--navy);
       padding: 120px 0 80px;
+      /* Isolate stacking context so blobs can't bleed out */
+      isolation: isolate;
     }
     .hero-aurora {
       position: absolute; inset: 0;
@@ -383,21 +420,23 @@
       opacity: 0.35;
       animation: blob-float 14s ease-in-out infinite;
       pointer-events: none;
+      /* Blobs must stay inside hero — the parent overflow:hidden clips them */
+      max-width: 100%;
     }
     .hero-blob-1 {
-      width: 550px; height: 550px;
+      width: clamp(280px, 50vw, 550px); height: clamp(280px, 50vw, 550px);
       background: radial-gradient(circle, #3b82f6, #1d4ed8);
       top: -140px; right: -100px;
       animation-delay: 0s;
     }
     .hero-blob-2 {
-      width: 420px; height: 420px;
+      width: clamp(220px, 40vw, 420px); height: clamp(220px, 40vw, 420px);
       background: radial-gradient(circle, #60a5fa, #2563eb);
       bottom: -80px; left: -100px;
       animation-delay: -5s;
     }
     .hero-blob-3 {
-      width: 300px; height: 300px;
+      width: clamp(160px, 28vw, 300px); height: clamp(160px, 28vw, 300px);
       background: radial-gradient(circle, #93c5fd, #3b82f6);
       top: 35%; left: 45%;
       animation-delay: -9s;
@@ -415,13 +454,14 @@
     .hero-content-box {
       position: relative; z-index: 2;
       text-align: center;
-      padding: clamp(32px, 6vw, 64px) clamp(24px, 5vw, 56px);
+      padding: clamp(28px, 6vw, 64px) clamp(18px, 5vw, 56px);
       background: rgba(255, 255, 255, 0.04);
       backdrop-filter: blur(28px);
       -webkit-backdrop-filter: blur(28px);
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: var(--radius-xl);
       box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.05);
+      width: 100%; /* never exceed container */
       max-width: 780px; margin: 0 auto;
     }
     .hero-badge {
@@ -733,7 +773,8 @@
     #stats {
       background: var(--navy);
       position: relative;
-      overflow: hidden;
+      overflow: hidden; /* clip the decorative blobs */
+      isolation: isolate;
     }
     .stats-blob {
       position: absolute;
@@ -742,8 +783,8 @@
       opacity: 0.2;
       pointer-events: none;
     }
-    .stats-blob-1 { width: 450px; height: 450px; background: var(--blue-600); top: -120px; right: -100px; }
-    .stats-blob-2 { width: 360px; height: 360px; background: var(--blue-400); bottom: -100px; left: -80px; }
+    .stats-blob-1 { width: clamp(200px, 40vw, 450px); height: clamp(200px, 40vw, 450px); background: var(--blue-600); top: -120px; right: -100px; }
+    .stats-blob-2 { width: clamp(180px, 32vw, 360px); height: clamp(180px, 32vw, 360px); background: var(--blue-400); bottom: -100px; left: -80px; }
     .stat-card {
       padding: 38px 24px;
       text-align: center;
@@ -892,7 +933,13 @@
        EVENTS CAROUSEL
     ============================================================ */
     #events { background: var(--light); }
-    .events-carousel { overflow: hidden; position: relative; padding: 10px 0; }
+    .events-carousel {
+      overflow: hidden; /* critical: clips track cards that extend beyond */
+      position: relative;
+      padding: 10px 0;
+      /* Ensure it never widens the page */
+      max-width: 100%;
+    }
     .events-track {
       display: flex;
       gap: 24px;
@@ -1144,7 +1191,11 @@
       box-shadow: 0 6px 20px rgba(37,99,235,0.3);
     }
     .contact-info-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
-    .contact-info-value { font-size: 0.95rem; color: var(--navy); font-weight: 600; }
+    .contact-info-value {
+      font-size: 0.95rem; color: var(--navy); font-weight: 600;
+      word-break: break-word; /* long emails and addresses wrap correctly */
+      overflow-wrap: break-word;
+    }
     
     .social-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
     .social-link {
@@ -1200,6 +1251,7 @@
       color: rgba(255,255,255,0.65);
       position: relative;
       overflow: hidden;
+      isolation: isolate;
     }
     .footer-top { padding: 80px 0 52px; }
     .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; font-weight: 800; font-size: 1.4rem; color: #fff; }
@@ -1249,6 +1301,35 @@
       .section-title { font-size: clamp(1.6rem, 7vw, 2.2rem); }
       .footer-bottom { justify-content: center; text-align: center; }
       .footer-bottom-links { justify-content: center; flex-wrap: wrap; }
+      /* Reduce hero content padding on very small screens */
+      .hero-content-box { border-radius: var(--radius-lg); }
+      /* Prevent about-card hover from causing layout shift on mobile */
+      .glass-card:hover { transform: none; }
+      .glass-card-dark:hover { transform: none; }
+    }
+
+    /* Touch devices: suppress translateY hover that causes scroll-jitter */
+    @media (hover: none) and (pointer: coarse) {
+      .glass-card:hover,
+      .glass-card-dark:hover,
+      .article-card:hover,
+      .event-card:hover,
+      .gallery-item:hover { transform: none; }
+    }
+
+    /* Ensure no element ever creates horizontal scroll */
+    section, footer, header, nav, div {
+      max-width: 100%;
+    }
+
+    /* Safe area padding for notch/home-bar devices */
+    body {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    #back-top {
+      bottom: calc(28px + env(safe-area-inset-bottom));
+      right: calc(28px + env(safe-area-inset-right));
     }
   </style>
 </head>
@@ -1857,12 +1938,29 @@
     ============================================================ */
 
     // 1. Loading Screen Handler
+    // Block scroll/interaction while loading screen is visible
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.pointerEvents = 'none';
+
+    function dismissLoader() {
+      const loader = document.getElementById('loading-screen');
+      if (!loader || loader.classList.contains('hidden')) return;
+      loader.classList.add('hidden');
+      // Reveal page body — content was hidden via visibility:hidden
+      document.body.classList.add('page-ready');
+      // Re-enable scroll and interaction
+      document.documentElement.style.overflow = '';
+      document.body.style.pointerEvents = '';
+    }
+
+    // Primary trigger: window 'load' fires after all resources (images, fonts, scripts)
     window.addEventListener('load', () => {
-      setTimeout(() => {
-        const loader = document.getElementById('loading-screen');
-        if (loader) loader.classList.add('hidden');
-      }, 600);
+      // Small grace period for final paint
+      setTimeout(dismissLoader, 500);
     });
+
+    // Fallback safety net: dismiss after 5 s max regardless
+    setTimeout(dismissLoader, 5000);
 
     // 2. Navbar & Indicator Mechanics
     const nav = document.getElementById('main-nav');
@@ -1916,18 +2014,20 @@
     const profileBtn = document.getElementById('profile-btn');
     const profileDropdown = document.getElementById('profile-dropdown');
 
-    profileBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      profileDropdown.classList.toggle('show');
-      profileBtn.setAttribute('aria-expanded', profileDropdown.classList.contains('show'));
-    });
+    if (profileBtn && profileDropdown) {
+      profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('show');
+        profileBtn.setAttribute('aria-expanded', profileDropdown.classList.contains('show'));
+      });
 
-    document.addEventListener('click', () => {
-      if (profileDropdown.classList.contains('show')) {
-        profileDropdown.classList.remove('show');
-        profileBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
+      document.addEventListener('click', () => {
+        if (profileDropdown.classList.contains('show')) {
+          profileDropdown.classList.remove('show');
+          profileBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
 
     // Mobile Navigation Toggle
     const hamburger = document.getElementById('hamburger');
