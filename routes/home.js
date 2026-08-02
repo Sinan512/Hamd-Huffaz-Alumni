@@ -107,7 +107,7 @@ async function getEvents() {
         day:      String(d.getUTCDate()).padStart(2, '0'),
         month:    MONTHS[d.getUTCMonth()] || '',
         dateLabel: isNaN(d.getTime()) ? '' : (String(d.getUTCDate()).padStart(2, '0') + ' ' + (MONTHS[d.getUTCMonth()] || '') + ' ' + d.getUTCFullYear()),
-        imageUrl: hasImg ? '/admin/events/' + String(doc._id) + '/image' : null
+        imageUrl: hasImg ? '/media/events/' + String(doc._id) : null
       };
     });
   } catch (err) {
@@ -131,7 +131,7 @@ async function getGallery() {
         return {
           id:          String(doc._id),
           description: doc.description || ('Gallery image ' + (i + 1)),
-          url:         '/admin/gallery/' + String(doc._id) + '/image'
+          url:         '/media/gallery/' + String(doc._id)
         };
       });
   } catch (err) {
@@ -171,7 +171,7 @@ async function getArticles() {
         content:  String(doc.content || ''),
         readTime: Math.max(1, Math.round(String(doc.content || '').split(/\s+/).filter(Boolean).length / 200)),
         date:     formatDate(doc.createdAt),
-        imageUrl: hasImg ? '/admin/articles/' + String(doc._id) + '/image' : null
+        imageUrl: hasImg ? '/media/articles/' + String(doc._id) : null
       };
     });
   } catch (err) {
@@ -302,5 +302,8 @@ module.exports.dummy = {
   COMMITTEE: COMMITTEE,
   NEWS: NEWS,
   CONTACT: CONTACT,
+  EXTRA_STATS: EXTRA_STATS
+};
+T,
   EXTRA_STATS: EXTRA_STATS
 };

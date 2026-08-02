@@ -11,6 +11,7 @@ var connectDB = require('./config/db');
 
 var homeRouter   = require('./routes/home');
 var adminRouter = require('./routes/admin');
+var mediaRouter   = require('./routes/media');
 var usersRouter = require('./routes/users');
 var leadersRouter = require('./routes/leaders');
 const { log } = require('console');
@@ -121,6 +122,9 @@ app.use(function (req, res, next) {
 
 // Home page + its public image endpoints — see routes/home.js
 app.use('/', homeRouter);
+
+// Public, read-only image endpoints (not behind admin auth) — see routes/media.js
+app.use('/media', mediaRouter);
 
 app.use('/admin', adminRouter);
 app.use('/users', usersRouter);
