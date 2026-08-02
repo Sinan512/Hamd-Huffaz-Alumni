@@ -304,6 +304,4 @@ module.exports.dummy = {
   CONTACT: CONTACT,
   EXTRA_STATS: EXTRA_STATS
 };
-T,
-  EXTRA_STATS: EXTRA_STATS
 };
