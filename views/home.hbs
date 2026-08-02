@@ -1379,10 +1379,17 @@
         <!-- Profile / Actions -->
         <div class="d-flex align-items-center gap-3">
           <div class="position-relative">
-            <a href="/users"><button class="nav-profile-btn" id="profile-btn" aria-haspopup="true" aria-expanded="false" aria-label="Login menu">
+            <button class="nav-profile-btn" id="profile-btn" aria-haspopup="true" aria-expanded="false" aria-label="Login menu" onclick="toggleProfileDropdown()">
               <i class="bi bi-person-circle"></i>
-            </button></a>
-           
+            </button>
+            <div class="profile-dropdown" id="profile-dropdown">
+              <a href="/users">
+                <i class="bi bi-person-fill"></i> Member Login
+              </a>
+              <a href="/leaders">
+                <i class="bi bi-shield-lock-fill"></i> Leader Login
+              </a>
+            </div>
           </div>
 
           <!-- Mobile Hamburger -->
@@ -1966,6 +1973,26 @@
 
     // Fallback safety net: dismiss after 5 s max regardless
     setTimeout(dismissLoader, 5000);
+
+    // 2a. Profile Dropdown Toggle
+    function toggleProfileDropdown() {
+      const dropdown = document.getElementById('profile-dropdown');
+      const btn = document.getElementById('profile-btn');
+      if (!dropdown) return;
+      const isOpen = dropdown.classList.toggle('show');
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    // Close profile dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('profile-dropdown');
+      const btn = document.getElementById('profile-btn');
+      if (!dropdown || !btn) return;
+      if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
 
     // 2. Navbar & Indicator Mechanics
     const nav = document.getElementById('main-nav');
