@@ -784,7 +784,7 @@ router.put('/events/:id', upload.single('eventImage'), async function (req, res)
 });
 
 /* ================================================================== */
-/* DELETE /admin/events/:id  – remove event                           */
+/* DELETE /admin/events/:id  – remove event and clean up member refs  */
 /* ================================================================== */
 router.delete('/events/:id', async function (req, res) {
   await connectDB();
@@ -792,10 +792,21 @@ router.delete('/events/:id', async function (req, res) {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ success: false, message: 'Invalid event id.' });
     }
-    var event = await EventDetails.findByIdAndDelete(req.params.id);
+
+    var eventId = new mongoose.Types.ObjectId(req.params.id);
+
+    /* 1. Delete the event from EVENT_DETAILS */
+    var event = await EventDetails.findByIdAndDelete(eventId);
     if (!event) {
       return res.status(404).json({ success: false, message: 'Event not found.' });
     }
+
+    /* 2. Remove the event id from every member who had it registered */
+    await MemberDetails.updateMany(
+      { registeredEvents: eventId },
+      { $pull: { registeredEvents: eventId } }
+    );
+
     return res.json({ success: true, message: 'Event "' + event.title + '" deleted successfully.' });
   } catch (error) {
     console.error('Delete event failed:', error.message);
