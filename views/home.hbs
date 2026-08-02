@@ -272,23 +272,36 @@
     }
 
     .nav-profile-btn {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: var(--glass-bg);
-      border: 1.5px solid var(--glass-border);
+      height: 38px;
+      padding: 0 18px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.12);
+      border: 1.5px solid rgba(255,255,255,0.28);
       backdrop-filter: blur(8px);
       color: #fff;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       transition: var(--transition);
-      font-size: 1.1rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      font-family: var(--font);
     }
     #main-nav.scrolled .nav-profile-btn {
-      background: rgba(37,99,235,0.08);
-      border-color: rgba(37,99,235,0.2);
-      color: var(--blue-600);
+      background: rgba(37,99,235,0.09);
+      border-color: rgba(37,99,235,0.28);
+      color: var(--blue-700);
     }
-    .nav-profile-btn:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(37,99,235,0.25); }
+    .nav-profile-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+      background: rgba(255,255,255,0.22);
+    }
+    #main-nav.scrolled .nav-profile-btn:hover {
+      background: rgba(37,99,235,0.15);
+    }
 
     .profile-dropdown {
       position: absolute;
@@ -1388,13 +1401,9 @@
         <!-- Profile / Actions -->
         <div class="d-flex align-items-center gap-3">
           <div class="position-relative">
-            <button
-  class="btn btn-outline-primary rounded px-3 py-2 nav-profile-btn"
-  aria-haspopup="true"
-  aria-expanded="false"
-  aria-label="Login menu">
-  Huffaz Portal
-</button>
+            <button class="nav-profile-btn" id="profile-btn" aria-haspopup="true" aria-expanded="false" aria-label="Login menu">
+              Huffaz Alumni
+            </button>
             <div class="profile-dropdown" id="profile-dropdown">
               <a href="/users">
                 <i class="bi bi-person-fill"></i> Member Login
