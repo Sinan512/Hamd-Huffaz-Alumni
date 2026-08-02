@@ -1128,6 +1128,15 @@
     .article-card:focus-visible { outline: 3px solid var(--blue-400); outline-offset: 3px; }
     .article-read { font-weight: 600; color: var(--blue-600); display: inline-flex; align-items: center; gap: 5px; transition: gap .25s ease; }
     .article-card:hover .article-read { gap: 10px; }
+    .article-share-btn {
+      border: 1px solid rgba(37,99,235,0.28); background: rgba(37,99,235,0.06);
+      color: var(--blue-600); font-size: 0.78rem; font-weight: 700;
+      padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+      cursor: pointer; transition: background .2s ease, color .2s ease, transform .2s ease;
+    }
+    .article-share-btn:hover { background: var(--blue-600); color: #fff; transform: translateY(-1px); }
+    .article-share-btn:focus-visible { outline: 3px solid var(--blue-400); outline-offset: 2px; }
+
     .event-img-fallback {
       width: 100%; height: 100%;
       display: flex; align-items: center; justify-content: center;
@@ -1719,6 +1728,7 @@
         {{#each articles}}
         <div class="col reveal">
           <article class="article-card" role="button" tabindex="0"
+                   data-article-id="{{this.id}}"
                    data-article-heading="{{this.heading}}"
                    data-article-author="{{this.author}}"
                    data-article-date="{{this.date}}"
@@ -1739,10 +1749,20 @@
               <p class="article-excerpt">{{this.excerpt}}</p>
               <div class="article-meta">
                 <span><i class="bi bi-person"></i> {{this.author}}</span>
-                <span class="article-read">Read article <i class="bi bi-arrow-right"></i></span>
+                <span class="d-inline-flex align-items-center gap-3">
+                  <button type="button" class="article-share-btn"
+                          data-article-id="{{this.id}}"
+                          data-article-heading="{{this.heading}}"
+                          title="Share this article" aria-label="Share this article"
+                          onclick="shareArticle(event, this)">
+                    <i class="bi bi-share-fill"></i> Share
+                  </button>
+                  <span class="article-read">Read article <i class="bi bi-arrow-right"></i></span>
+                </span>
               </div>
             </div>
           </article>
+
         </div>
         {{/each}}
         {{#unless articles.length}}
@@ -1769,8 +1789,14 @@
           <span><i class="bi bi-calendar3"></i> <span id="article-modal-date"></span></span>
         </div>
         <div class="article-modal-text" id="article-modal-text"></div>
+        <div class="mt-4">
+          <button type="button" id="article-modal-share" class="article-share-btn d-none" onclick="shareArticle(event, this)">
+            <i class="bi bi-share-fill"></i> Share this article
+          </button>
+        </div>
       </div>
     </div>
+
   </div>
 
   <!-- ===================== CONTACT SECTION ===================== -->
@@ -2396,6 +2422,7 @@
       const date    = el.getAttribute('data-article-date')    || '';
       const image   = el.getAttribute('data-article-image')   || '';
       const content = el.getAttribute('data-article-content') || '';
+      const id      = el.getAttribute('data-article-id')      || '';
 
       document.getElementById('article-modal-title').textContent  = heading;
       document.getElementById('article-modal-author').textContent = author;
@@ -2405,6 +2432,16 @@
       if (image) { imgEl.src = image; imgEl.alt = heading; imgEl.classList.remove('d-none'); }
       else { imgEl.src = ''; imgEl.classList.add('d-none'); }
 
+      const shareBtn = document.getElementById('article-modal-share');
+      if (shareBtn) {
+        if (id) { shareBtn.classList.remove('d-none'); shareBtn.setAttribute('data-article-id', id); shareBtn.setAttribute('data-article-heading', heading); }
+        else { shareBtn.classList.add('d-none'); }
+      }
+
+      if (id && ('#article-' + id) !== window.location.hash) {
+        history.replaceState(null, '', '#article-' + id);
+      }
+
       modal.classList.add('open');
       document.body.style.overflow = 'hidden';
     }
@@ -2413,7 +2450,94 @@
       const modal = document.getElementById('article-modal');
       if (modal) modal.classList.remove('open');
       document.body.style.overflow = '';
+      if (String(window.location.hash || '').indexOf('#article-') === 0) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
     }
+
+    /* ---------- Article share link ---------- */
+    function articleShareUrl(id) {
+      return window.location.origin + window.location.pathname + '#article-' + id;
+    }
+
+    function articleToast(text) {
+      let box = document.getElementById('article-share-toast');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'article-share-toast';
+        box.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);' +
+          'background:#0f172a;color:#fff;padding:11px 20px;border-radius:999px;font-size:.87rem;font-weight:600;' +
+          'box-shadow:0 12px 32px rgba(15,23,42,.28);z-index:20000;opacity:0;transition:opacity .25s ease,transform .25s ease;';
+        document.body.appendChild(box);
+      }
+      box.textContent = text;
+      requestAnimationFrame(function () {
+        box.style.opacity = '1';
+        box.style.transform = 'translateX(-50%) translateY(0)';
+      });
+      clearTimeout(box._t);
+      box._t = setTimeout(function () {
+        box.style.opacity = '0';
+        box.style.transform = 'translateX(-50%) translateY(20px)';
+      }, 2200);
+    }
+
+    function copyTextFallback(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:-1000px;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      return ok;
+    }
+
+    function shareArticle(event, el) {
+      if (event) { event.preventDefault(); event.stopPropagation(); }
+      const holder = el || (event && event.currentTarget);
+      if (!holder) return;
+      const id = holder.getAttribute('data-article-id');
+      if (!id) return;
+      const heading = holder.getAttribute('data-article-heading') || 'Article';
+      const url = articleShareUrl(id);
+
+      if (navigator.share) {
+        navigator.share({ title: heading, text: heading, url: url })
+          .catch(function () { /* user dismissed the share sheet */ });
+        return;
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url)
+          .then(function () { articleToast('Link copied'); })
+          .catch(function () {
+            articleToast(copyTextFallback(url) ? 'Link copied' : url);
+          });
+        return;
+      }
+
+      articleToast(copyTextFallback(url) ? 'Link copied' : url);
+    }
+
+    function openArticleFromHash() {
+      const hash = String(window.location.hash || '');
+      if (hash.indexOf('#article-') !== 0) return;
+      const id = hash.slice('#article-'.length);
+      if (!id) return;
+      const card = document.querySelector('.article-card[data-article-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (!card) return;
+      const section = document.getElementById('articles');
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(function () { openArticle(card); }, 350);
+    }
+
+    window.addEventListener('DOMContentLoaded', function () { setTimeout(openArticleFromHash, 250); });
+    window.addEventListener('hashchange', openArticleFromHash);
+
 
     function openEvent(el) {
       const modal = document.getElementById('event-modal');

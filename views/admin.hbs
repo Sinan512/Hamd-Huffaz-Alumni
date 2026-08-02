@@ -32,6 +32,11 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- jsPDF + AutoTable (registered members PDF export) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+
   <style>
     :root {
       --font-main: 'Plus Jakarta Sans', sans-serif;
@@ -1415,9 +1420,13 @@ onclick="openLeaderDetailsModal(this.dataset)">
               <option value="{{this.id}}">{{this.title}}</option>
               {{/each}}
             </select>
+            <button id="regDownloadPdfBtn" class="btn btn-sm btn-danger rounded-3 text-nowrap" title="Download this list as PDF" disabled>
+              <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+            </button>
             <button id="regRefreshBtn" class="btn btn-sm btn-light border rounded-3" title="Refresh">
               <i class="bi bi-arrow-clockwise"></i>
             </button>
+
           </div>
         </div>
         <div class="card-body p-0">
@@ -3803,7 +3812,10 @@ onclick="openLeaderDetailsModal(this.dataset)">
   var bodyEl    = document.getElementById('regMembersBody');
   var countEl   = document.getElementById('regCountBadge');
   var refreshEl = document.getElementById('regRefreshBtn');
+  var pdfEl     = document.getElementById('regDownloadPdfBtn');
+  var currentMembers = [];
   if (!selectEl || !bodyEl) return;
+
 
   function esc(v) {
     return String(v == null ? '' : v)
@@ -3862,6 +3874,9 @@ onclick="openLeaderDetailsModal(this.dataset)">
       ? '/admin/events/' + encodeURIComponent(id) + '/registrations'
       : '/admin/registrations';
 
+    currentMembers = [];
+    setPdfEnabled(false);
+
     bodyEl.innerHTML = '<tr><td colspan="6" class="text-center py-4">' +
       '<span class="spinner-border spinner-border-sm text-secondary me-2"></span>' +
       '<span class="text-muted small">Loading registrations…</span></td></tr>';
@@ -3875,18 +3890,117 @@ onclick="openLeaderDetailsModal(this.dataset)">
           message(id ? 'No members registered for this event yet.' : 'No registered members yet.');
           return;
         }
+        currentMembers = data.members;
+        setPdfEnabled(true);
         bodyEl.innerHTML = data.members.map(row).join('');
       })
       .catch(function (err) {
         countEl.textContent = '0';
+        currentMembers = [];
+        setPdfEnabled(false);
         bodyEl.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4 small">' + esc(err.message) + '</td></tr>';
       });
   }
 
+  /* ---------------- PDF export ---------------- */
+  function setPdfEnabled(on) {
+    if (pdfEl) pdfEl.disabled = !on;
+  }
+
+  function selectedEventTitle() {
+    if (!selectEl.value) return '';
+    var opt = selectEl.options[selectEl.selectedIndex];
+    return opt ? String(opt.text || '').trim() : '';
+  }
+
+  function slugify(text) {
+    return String(text || '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'all-events';
+  }
+
+  function todayStamp() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  function downloadPdf() {
+    if (!currentMembers.length) return;
+
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) {
+      alert('PDF library could not be loaded. Please check your internet connection and try again.');
+      return;
+    }
+
+    var eventTitle = selectedEventTitle();
+    var heading    = eventTitle || 'All Registered Members';
+    var perEvent   = !!selectEl.value;
+
+    var doc = new jsPDFCtor({ orientation: perEvent ? 'p' : 'l', unit: 'pt', format: 'a4' });
+    var pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('HAMD Alumni', 40, 46);
+
+    doc.setFontSize(14);
+    doc.setTextColor(17, 24, 39);
+    doc.text(heading, 40, 68, { maxWidth: pageWidth - 80 });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    doc.text('Registered members: ' + currentMembers.length + '   |   Generated: ' + new Date().toLocaleString(), 40, 86);
+
+    var head = perEvent
+      ? [['#', 'Name', 'Admission No', 'Place', 'Batch', 'Phone', 'WhatsApp']]
+      : [['#', 'Name', 'Admission No', 'Place', 'Batch', 'Phone', 'WhatsApp', 'Registered Events']];
+
+    var body = currentMembers.map(function (m, i) {
+      var base = [
+        String(i + 1),
+        m.name || '—',
+        m.admissionNumber || '—',
+        m.place || '—',
+        m.batch || '—',
+        m.phone || '—',
+        m.whatsapp || '—'
+      ];
+      if (!perEvent) {
+        base.push(Array.isArray(m.events) && m.events.length ? m.events.join(', ') : '—');
+      }
+      return base;
+    });
+
+    doc.autoTable({
+      head: head,
+      body: body,
+      startY: 100,
+      styles: { fontSize: 9, cellPadding: 5, overflow: 'linebreak', textColor: [31, 41, 55] },
+      headStyles: { fillColor: [16, 138, 96], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [244, 247, 246] },
+      columnStyles: { 0: { cellWidth: 28, halign: 'right' } },
+      margin: { left: 40, right: 40, bottom: 40 },
+      didDrawPage: function (data) {
+        var page = doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text('Page ' + page, pageWidth - 60, doc.internal.pageSize.getHeight() - 20);
+      }
+    });
+
+    doc.save('registrations-' + slugify(eventTitle || 'all-events') + '-' + todayStamp() + '.pdf');
+  }
+
   selectEl.addEventListener('change', load);
   if (refreshEl) refreshEl.addEventListener('click', load);
+  if (pdfEl) pdfEl.addEventListener('click', downloadPdf);
   load();
 })();
+
 </script>
 
 <!-- ==================== MEMBER DETAILS (VIEW / EDIT) ==================== -->

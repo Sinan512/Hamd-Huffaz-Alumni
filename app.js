@@ -52,14 +52,23 @@ var isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL
 // Required so the "secure" cookie works behind a proxy
 app.set('trust proxy', 1);
 
+/* A changing secret invalidates every existing session, so warn loudly if the
+   development fallback is used in production. */
+var SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
+if (!process.env.SESSION_SECRET) {
+  console.warn('SESSION_SECRET is not set — using the development fallback. Set it in .env so logins survive restarts.');
+}
+
 var sessionConfig = {
   name: 'hamd.sid',
-  secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  rolling: true,
+  rolling: true,           // every request pushes the expiry 7 more days out
+  unset: 'destroy',
   cookie: {
     maxAge: SEVEN_DAYS_MS,
+    expires: new Date(Date.now() + SEVEN_DAYS_MS), // never a browser-session cookie
     httpOnly: true,
     sameSite: 'lax',
     secure: isProduction,
@@ -67,18 +76,41 @@ var sessionConfig = {
   }
 };
 
-if (process.env.MONGODB_URI) {
+/* Persist sessions in MongoDB. Without a store express-session falls back to
+   MemoryStore, which loses every login on restart / serverless cold start —
+   the main reason sessions appeared to expire early. */
+var SESSION_MONGO_URI =
+  process.env.MONGODB_URI || process.env.MONGODB_ATLAS || process.env.MONGODB_LOCAL;
+
+if (SESSION_MONGO_URI) {
   sessionConfig.store = MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
+    mongoUrl: SESSION_MONGO_URI,
     collectionName: 'SESSIONS',
     ttl: SEVEN_DAYS_SEC,
-    touchAfter: 24 * 3600,
+    /* Keep the stored expiry in step with the rolling cookie. With the old
+       24 hour value the DB document could expire before the cookie did. */
+    touchAfter: 0,
     autoRemove: 'native',
-    stringify: false
+    stringify: false,
   });
+} else {
+  console.warn('No MongoDB URI configured — sessions use in-memory storage and will NOT survive a restart.');
 }
 
 app.use(session(sessionConfig));
+
+/* Refresh both the cookie window and the stored session document on every
+   request from a logged-in user, so an active user is never signed out
+   before a full 7 idle days have passed. */
+app.use(function (req, res, next) {
+  if (req.session && (req.session.memberId || req.session.adminId || req.session.leaderId)) {
+    req.session.cookie.maxAge = SEVEN_DAYS_MS;
+    req.session.cookie.expires = new Date(Date.now() + SEVEN_DAYS_MS);
+    req.session.touch();
+  }
+  next();
+});
+
 
 // Make login state available to every view
 app.use(function (req, res, next) {
