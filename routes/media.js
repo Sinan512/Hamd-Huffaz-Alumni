@@ -43,7 +43,7 @@ function sendImage(Model) {
 
       res.set('Content-Type', doc.image.contentType || 'application/octet-stream');
       res.set('Cache-Control', 'public, max-age=' + ONE_WEEK_SECONDS + ', immutable');
-      return res.send(doc.image.data);
+      return res.send(doc.image.data.buffer || doc.image.data);
     } catch (error) {
       console.error('Media: image fetch failed —', error.message);
       return res.status(500).end();

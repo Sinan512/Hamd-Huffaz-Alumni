@@ -1603,7 +1603,7 @@
         {{#each gallery}}
         <div class="col">
           <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="{{this.description}}">
-            <img src="{{this.url}}" alt="{{this.description}}" loading="lazy" />
+            <img src="{{this.url}}" alt="{{this.description}}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'gallery-img-fallback\'><i class=\'bi bi-image\'></i></div>';" />
             <div class="gallery-overlay">
               <i class="bi bi-zoom-in"></i>
               <span>View Image</span>
