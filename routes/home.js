@@ -8,6 +8,7 @@ var BatchDetails  = require('../models/BatchDetails');
 var EventDetails  = require('../models/EventDetails');
 var Gallery       = require('../models/Gallery');
 var Article       = require('../models/Article');
+var Message       = require('../models/Message');
 
 /* ==================================================================
    DUMMY DATA
@@ -82,6 +83,24 @@ var EXTRA_STATS = [
 /* ==================================================================
    REAL DATA HELPERS
 ================================================================== */
+
+/* ------------------------------------------------------------------
+   Convert whatever MongoDB gives back for an image into real bytes.
+   NOTE: never use `buf.buffer` directly — that is the underlying
+   ArrayBuffer the Buffer is only a *view* into (usually a larger
+   shared/pooled block), so sending it ships wrong or truncated bytes
+   and the browser renders a broken image.
+------------------------------------------------------------------ */
+function toImageBuffer(data) {
+  if (!data) return null;
+  if (Buffer.isBuffer(data)) return data;                       // normal case
+  if (typeof data.buffer !== 'undefined' && data.buffer) {      // BSON Binary
+    var b = data.buffer;
+    if (Buffer.isBuffer(b)) return b;
+    return Buffer.from(b, data.byteOffset || 0, data.byteLength || data.length);
+  }
+  return Buffer.from(data);
+}
 
 var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -255,8 +274,7 @@ router.get('/gallery/:id/image', async function (req, res) {
     if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
     res.set('Content-Type', doc.image.contentType || 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
-    var buffer = doc.image.data.buffer || doc.image.data;
-    return res.send(buffer);
+    return res.send(toImageBuffer(doc.image.data));
   } catch (err) {
     return res.sendStatus(404);
   }
@@ -271,8 +289,7 @@ router.get('/events/:id/image', async function (req, res) {
     if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
     res.set('Content-Type', doc.image.contentType || 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
-    var buffer = doc.image.data.buffer || doc.image.data;
-    return res.send(buffer);
+    return res.send(toImageBuffer(doc.image.data));
   } catch (err) {
     return res.sendStatus(404);
   }
@@ -287,10 +304,45 @@ router.get('/articles/:id/image', async function (req, res) {
     if (!doc || !doc.image || !doc.image.data) return res.sendStatus(404);
     res.set('Content-Type', doc.image.contentType || 'image/jpeg');
     res.set('Cache-Control', 'public, max-age=86400');
-    var buffer = doc.image.data.buffer || doc.image.data;
-    return res.send(buffer);
+    return res.send(toImageBuffer(doc.image.data));
   } catch (err) {
     return res.sendStatus(404);
+  }
+});
+
+/* ==================================================================
+   POST /contact  – "Send a Message" form on the home page.
+   Stores the enquiry in the MESSAGES collection.
+================================================================== */
+router.post('/contact', async function (req, res) {
+  try {
+    var body    = req.body || {};
+    var name    = String(body.name    || '').trim();
+    var email   = String(body.email   || '').trim();
+    var phone   = String(body.phone   || '').trim();
+    var subject = String(body.subject || '').trim();
+    var message = String(body.message || '').trim();
+
+    if (!name || !email || !message) {
+      return res.status(400).json({ success: false, message: 'Name, email and message are required.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+    if (name.length > 120 || email.length > 160 || phone.length > 40 ||
+        subject.length > 160 || message.length > 5000) {
+      return res.status(400).json({ success: false, message: 'One of the fields is too long.' });
+    }
+
+    await connectDB();
+    await Message.create({
+      name: name, email: email, phone: phone, subject: subject, message: message
+    });
+
+    return res.json({ success: true, message: 'Thank you! Your message has been sent successfully.' });
+  } catch (err) {
+    console.error('Home: contact message save failed \u2014', err.message);
+    return res.status(500).json({ success: false, message: 'Could not send your message. Please try again later.' });
   }
 });
 

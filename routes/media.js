@@ -22,6 +22,24 @@ var EventDetails = require('../models/EventDetails');
    document whose id is already public in the rendered page.
 ================================================================== */
 
+/* ------------------------------------------------------------------
+   Convert whatever MongoDB gives back for an image into real bytes.
+   NOTE: never use `buf.buffer` directly — that is the underlying
+   ArrayBuffer the Buffer is only a *view* into (usually a larger
+   shared/pooled block), so sending it ships wrong or truncated bytes
+   and the browser renders a broken image.
+------------------------------------------------------------------ */
+function toImageBuffer(data) {
+  if (!data) return null;
+  if (Buffer.isBuffer(data)) return data;                       // normal case
+  if (typeof data.buffer !== 'undefined' && data.buffer) {      // BSON Binary
+    var b = data.buffer;
+    if (Buffer.isBuffer(b)) return b;
+    return Buffer.from(b, data.byteOffset || 0, data.byteLength || data.length);
+  }
+  return Buffer.from(data);
+}
+
 var ONE_WEEK_SECONDS = 60 * 60 * 24 * 7;
 
 function sendImage(Model) {
@@ -43,7 +61,7 @@ function sendImage(Model) {
 
       res.set('Content-Type', doc.image.contentType || 'application/octet-stream');
       res.set('Cache-Control', 'public, max-age=' + ONE_WEEK_SECONDS + ', immutable');
-      return res.send(doc.image.data.buffer || doc.image.data);
+      return res.send(toImageBuffer(doc.image.data));
     } catch (error) {
       console.error('Media: image fetch failed —', error.message);
       return res.status(500).end();
