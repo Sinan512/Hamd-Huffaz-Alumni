@@ -856,10 +856,10 @@ router.patch('/leaders/:id/credentials', async function (req, res) {
 });
 
 /* ================================================================== */
-/* HELPER: default password for a member  ->  <admissionNumber>@123     */
+/* HELPER: default password for a member  ->  <admissionNumber>     */
 /* ================================================================== */
 function generateMemberPassword(admissionNumber) {
-  return String(admissionNumber || '').trim() + '@123';
+  return String(admissionNumber || '').trim();
 }
 
 /* ================================================================== */
