@@ -520,7 +520,7 @@ router.get('/', async function (req, res, next) {
 
     stats: {
       totalAlumni:    totalAlumni.toLocaleString('en-US'),
-      alumniGrowth:   '+12.4%',
+      alumniGrowth:   'registered',
       totalBatches:   String(totalBatches),
       batchLeaders:   String(batchLeaders),
       upcomingEvents: String(upcomingEvents.length)
