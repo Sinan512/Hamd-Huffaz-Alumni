@@ -30,7 +30,7 @@ function categoryBadge(cat) {
 async function getGalleryImages() {
   try {
     var docs = await Gallery
-      .find({}, { description: 1, createdAt: 1, 'image.contentType': 1 })
+      .find({}, { description: 1, createdAt: 1, 'image.contentType': 1, 'image.data': 1 })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -38,7 +38,7 @@ async function getGalleryImages() {
       return {
         _id:         String(doc._id),
         description: doc.description || '',
-        hasImage:    !!(doc.image && doc.image.contentType)
+        hasImage:    !!(doc.image && doc.image.contentType && doc.image.data)
       };
     });
   } catch (err) {
