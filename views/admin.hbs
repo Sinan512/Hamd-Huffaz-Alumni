@@ -925,6 +925,104 @@
       border-top-color: var(--card-border) !important;
     }
 
+    /* ---- Mobile fixes: All Registered Members table ---- */
+    @media (max-width: 767px) {
+
+      /* Card header: stack title row and controls row vertically */
+      #members-section .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 14px 16px;
+      }
+
+      #members-section .card-header > div {
+        width: 100%;
+      }
+
+      /* Make the filter + add-member row fill width and wrap if needed */
+      #members-section .card-header > div:last-child {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      /* Batch filter select: grow to fill available space */
+      #batchFilterSelect {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto !important;
+        font-size: 12px;
+      }
+
+      /* Reduce table cell padding so columns don't overflow */
+      #membersTable th,
+      #membersTable td {
+        padding: 10px 10px;
+        font-size: 12px;
+      }
+
+      /* Hide "Joined Date" column on small screens — least critical info */
+      #membersTable th:nth-child(3),
+      #membersTable td:nth-child(3) {
+        display: none;
+      }
+
+      /* Member name + email: constrain width to prevent blowout */
+      #membersTable td:first-child .fw-bold {
+        max-width: 110px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      #membersTable td:first-child .text-muted {
+        max-width: 110px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Shrink avatar icon on mobile */
+      .member-avatar-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 17px;
+      }
+
+      /* Avatar cell: tighten the gap */
+      #membersTable td:first-child .d-flex {
+        gap: 8px;
+      }
+
+      /* Pagination bar: stack info text above buttons on very small screens */
+      #membersPaginationBar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px 14px;
+      }
+
+      #membersPaginationBar > div {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+
+    /* Extra-small screens (< 480px): also hide Contact column header text */
+    @media (max-width: 479px) {
+      #membersTable th:nth-child(4) {
+        font-size: 0;           /* hide text */
+        padding-left: 4px;
+        padding-right: 4px;
+      }
+      #membersTable th:nth-child(4)::after {
+        content: "📞";          /* keep icon hint */
+        font-size: 12px;
+      }
+    }
+
     /* ---- Dark mode: stat card decorative elements ---- */
     [data-bs-theme="dark"] .stat-indigo .stat-icon-wrapper { background: rgba(99, 102, 241, 0.18); }
     [data-bs-theme="dark"] .stat-emerald .stat-icon-wrapper { background: rgba(16, 185, 129, 0.18); }
@@ -1421,7 +1519,8 @@ onclick="openLeaderDetailsModal(this.dataset)">
               {{/each}}
             </select>
             <button id="regDownloadPdfBtn" class="btn btn-sm btn-danger rounded-3 text-nowrap" title="Download this list as PDF" disabled>
-              <i class="bi bi-file-earmark-arrow-down"></i></button>
+              <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+            </button>
             <button id="regRefreshBtn" class="btn btn-sm btn-light border rounded-3" title="Refresh">
               <i class="bi bi-arrow-clockwise"></i>
             </button>
