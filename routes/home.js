@@ -248,6 +248,12 @@ async function buildHomeData() {
    ROUTES
 ================================================================== */
 
+/* Inauguration call */
+router.get('/Inauguration', async function (req, res) {
+  res.render('Inauguration',);
+});
+
+
 /* Home page */
 router.get('/', async function (req, res) {
   var data;
@@ -354,5 +360,6 @@ module.exports.dummy = {
   COMMITTEE: COMMITTEE,
   NEWS: NEWS,
   CONTACT: CONTACT,
+
   EXTRA_STATS: EXTRA_STATS
 };
