@@ -262,12 +262,14 @@ router.post('/login', async function (req, res, next) {
   }
 
   try {
-    /* Case-insensitive exact name match */
-    var member = await MemberDetails
-      .findOne({ name: new RegExp('^' + escapeRegex(name) + '$', 'i') })
+    /* Case-insensitive exact name match.
+       Several members can share the same name, so fetch ALL of them and
+       resolve the account by password instead of taking the first hit. */
+    var members = await MemberDetails
+      .find({ name: new RegExp('^' + escapeRegex(name) + '$', 'i') })
       .lean();
 
-    if (!member) {
+    if (!members || members.length === 0) {
       return loginError('No account found with that name. Please check and try again.');
     }
 
@@ -276,11 +278,22 @@ router.post('/login', async function (req, res, next) {
        – Otherwise fall back to admissionNumber as the default/initial password.
        This means members with no custom password can log in using their
        admission number until they change it from the dashboard. */
-    var storedPassword = member.password ? member.password : member.admissionNumber;
+    var matches = members.filter(function (m) {
+      var storedPassword = m.password ? m.password : m.admissionNumber;
+      return storedPassword && password === String(storedPassword).trim();
+    });
 
-    if (password !== storedPassword) {
+    if (matches.length === 0) {
       return loginError('Incorrect password. Please try again.');
     }
+
+    if (matches.length > 1) {
+      return loginError(
+        'Multiple members share this name and password. Please contact the admin to update your password.'
+      );
+    }
+
+    var member = matches[0];
 
     /* Regenerate the session id first (prevents session fixation), then
        write the session details into the MongoDB "SESSIONS" collection. */
