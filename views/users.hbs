@@ -608,17 +608,17 @@
             {{#each galleryImages}}
             <div class="carousel-item {{#if @first}}active{{/if}}">
               {{#if this.hasImage}}
-              <img src="/admin/gallery/{{this._id}}/image"
+              <img src="/media/gallery/{{this._id}}"
                    class="d-block w-100"
                    alt="{{this.description}}"
                    data-gallery-popup
-                   data-img-src="/admin/gallery/{{this._id}}/image"
+                   data-img-src="/media/gallery/{{this._id}}"
                    data-img-desc="{{this.description}}">
               {{/if}}
               {{#if this.description}}
               <div class="carousel-caption d-none d-md-block"
                    data-gallery-popup
-                   data-img-src="/admin/gallery/{{this._id}}/image"
+                   data-img-src="/media/gallery/{{this._id}}"
                    data-img-desc="{{this.description}}">
                 <p class="m-0 small fw-semibold">{{this.description}}</p>
               </div>
