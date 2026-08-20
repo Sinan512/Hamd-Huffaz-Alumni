@@ -249,8 +249,8 @@ async function buildHomeData() {
 ================================================================== */
 
 /* Inauguration call */
-router.get('/Inauguration', async function (req, res) {
-  res.render('Inauguration',);
+router.get('/inauguration', async function (req, res) {
+  res.render('inauguration',);
 });
 
 
