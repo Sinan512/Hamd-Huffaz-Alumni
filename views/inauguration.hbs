@@ -11,17 +11,16 @@
     --sky-100:#e3f2fd;
     --sky:#38a9f5;
     --sky-deep:#0b74c4;
+    --sky-bright:#7fd2ff;
     --ink:#0f2337;
-    --muted:#6b8299;
+    --muted:#5b7d99;
     --ring:rgba(56,169,245,.35);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
   body{
     margin:0;
-    background:
-      radial-gradient(120vmax 90vmax at 50% -20%, var(--sky-100) 0%, #ffffff 60%),
-      #ffffff;
+    background:#eaf6ff;
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     display:flex;align-items:center;justify-content:center;
@@ -29,7 +28,49 @@
     overflow:hidden;
     padding:max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
   }
-  .stage{width:100%;max-width:min(92vw,860px);display:grid;place-items:center;position:relative}
+
+  /* ---------- animated sky background (steps 1 & 2 only) ---------- */
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;transition:opacity .5s ease}
+  .bg::before{
+    content:"";position:absolute;inset:-20%;
+    background:
+      radial-gradient(60vmax 45vmax at 20% 10%, #cbe9ff 0%, rgba(203,233,255,0) 60%),
+      radial-gradient(70vmax 50vmax at 85% 15%, #dff1ff 0%, rgba(223,241,255,0) 62%),
+      linear-gradient(160deg,#e9f6ff 0%,#f7fcff 45%,#dff0ff 100%);
+    background-size:200% 200%,200% 200%,180% 180%;
+    animation:driftGradient 22s ease-in-out infinite alternate;
+  }
+  @keyframes driftGradient{
+    0%{background-position:0% 0%,100% 0%,0% 50%}
+    100%{background-position:60% 40%,20% 60%,100% 50%}
+  }
+  .blob{
+    position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;
+    will-change:transform;
+  }
+  .blob.b1{width:46vmax;height:46vmax;left:-12vmax;top:-10vmax;
+    background:radial-gradient(circle at 30% 30%,#8ad4ff,rgba(138,212,255,0) 70%);
+    animation:float1 26s ease-in-out infinite}
+  .blob.b2{width:38vmax;height:38vmax;right:-10vmax;top:10vmax;
+    background:radial-gradient(circle at 60% 40%,#4fb6f7,rgba(79,182,247,0) 70%);
+    animation:float2 32s ease-in-out infinite}
+  .blob.b3{width:42vmax;height:42vmax;left:25vmax;bottom:-18vmax;
+    background:radial-gradient(circle at 50% 50%,#b8e6ff,rgba(184,230,255,0) 70%);
+    animation:float3 29s ease-in-out infinite}
+  @keyframes float1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(10vmax,6vmax,0) scale(1.15)}}
+  @keyframes float2{0%,100%{transform:translate3d(0,0,0) scale(1.05)}50%{transform:translate3d(-9vmax,10vmax,0) scale(.92)}}
+  @keyframes float3{0%,100%{transform:translate3d(0,0,0) scale(.95)}50%{transform:translate3d(-12vmax,-8vmax,0) scale(1.12)}}
+  .sweep{
+    position:absolute;inset:-40%;
+    background:linear-gradient(105deg,rgba(255,255,255,0) 35%,rgba(255,255,255,.55) 50%,rgba(255,255,255,0) 65%);
+    animation:sweep 11s linear infinite;
+  }
+  @keyframes sweep{0%{transform:translateX(-60%)}100%{transform:translateX(60%)}}
+
+  body.video-mode{background:#fff}
+  body.video-mode .bg{opacity:0}
+
+  .stage{width:100%;max-width:min(92vw,860px);display:grid;place-items:center;position:relative;z-index:1}
 
   /* ---------- shared step behaviour ---------- */
   .step{
@@ -39,73 +80,129 @@
   }
   .step.on{opacity:1;visibility:visible;transform:none}
 
-  /* ---------- step 1: publish ---------- */
+  /* ---------- step 1: logo + publish ---------- */
+  .brand{display:grid;place-items:center;gap:clamp(1.2rem,3vw,2rem)}
+  .logo-wrap{
+    position:relative;display:grid;place-items:center;
+    width:clamp(96px,20vw,148px);height:clamp(96px,20vw,148px);
+    border-radius:28px;
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(14px) saturate(150%);
+    box-shadow:0 20px 50px -22px rgba(11,116,196,.55), inset 0 0 0 1px rgba(255,255,255,.7);
+    animation:floatLogo 5.5s ease-in-out infinite;
+  }
+  .logo-wrap::after{
+    content:"";position:absolute;inset:-14px;border-radius:36px;
+    background:radial-gradient(circle,var(--ring) 0%,rgba(56,169,245,0) 70%);
+    animation:haloPulse 3.2s ease-in-out infinite;z-index:-1;
+  }
+  .logo-wrap img{width:74%;height:74%;object-fit:contain;display:block}
+  @keyframes floatLogo{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes haloPulse{0%,100%{opacity:.5;transform:scale(.95)}50%{opacity:1;transform:scale(1.06)}}
+
   .publish{
+    position:relative;overflow:hidden;
     border:0;cursor:pointer;
     font-size:clamp(1rem,1.1vw + .8rem,1.5rem);
     font-weight:650;letter-spacing:.02em;
     color:#fff;
     padding:clamp(.85rem,1.4vw,1.35rem) clamp(2.1rem,5vw,3.6rem);
     border-radius:999px;
-    background:linear-gradient(135deg,var(--sky) 0%,var(--sky-deep) 100%);
-    box-shadow:0 10px 30px -10px rgba(11,116,196,.65);
-    animation:pulse 2s ease-out infinite;
-    transition:transform .25s ease, box-shadow .25s ease;
+    background:linear-gradient(115deg,var(--sky-bright) 0%,var(--sky) 30%,var(--sky-deep) 55%,var(--sky) 80%,var(--sky-bright) 100%);
+    background-size:280% 100%;
+    box-shadow:0 12px 34px -12px rgba(11,116,196,.7), inset 0 1px 0 rgba(255,255,255,.45);
+    animation:gradientMove 6s linear infinite, pulse 2.4s ease-out infinite;
+    transition:transform .25s cubic-bezier(.22,.9,.25,1), box-shadow .25s ease;
   }
+  .publish::after{
+    content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,255,255,0));
+    transform:skewX(-18deg);transition:left .6s ease;
+  }
+  .publish:hover::after,.publish:focus-visible::after{left:120%}
   .publish:hover,.publish:focus-visible{
-    transform:translateY(-3px) scale(1.03);
-    box-shadow:0 18px 44px -12px rgba(11,116,196,.75);
+    transform:translateY(-3px) scale(1.04);
+    box-shadow:0 22px 48px -14px rgba(11,116,196,.8), inset 0 1px 0 rgba(255,255,255,.5);
     outline:none;
   }
-  .publish:active{transform:translateY(0) scale(.99)}
+  .publish:active{transform:translateY(1px) scale(.98)}
+  @keyframes gradientMove{0%{background-position:0% 50%}100%{background-position:280% 50%}}
   @keyframes pulse{
-    0%,100%{box-shadow:0 10px 30px -10px rgba(11,116,196,.65),0 0 0 0 var(--ring)}
-    50%{box-shadow:0 10px 30px -10px rgba(11,116,196,.65),0 0 0 18px rgba(56,169,245,0)}
+    0%,100%{box-shadow:0 12px 34px -12px rgba(11,116,196,.7),0 0 0 0 var(--ring)}
+    50%{box-shadow:0 12px 34px -12px rgba(11,116,196,.7),0 0 0 20px rgba(56,169,245,0)}
   }
 
   /* ---------- step 2: search bar ---------- */
   .bar{
+    position:relative;
     width:100%;
     display:flex;align-items:center;gap:clamp(.4rem,1vw,.8rem);
-    background:#fff;
-    border:1px solid #dbe8f3;
+    background:rgba(255,255,255,.62);
+    backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid rgba(255,255,255,.75);
     border-radius:999px;
     padding:clamp(.4rem,.8vw,.6rem) clamp(.5rem,1vw,.7rem) clamp(.4rem,.8vw,.6rem) clamp(.9rem,2vw,1.4rem);
-    box-shadow:0 14px 40px -22px rgba(15,35,55,.5);
+    box-shadow:0 24px 60px -26px rgba(11,116,196,.6), inset 0 1px 0 rgba(255,255,255,.8);
+    animation:barGlow 3.6s ease-in-out infinite;
   }
-  .glyph{width:clamp(16px,2.2vw,22px);height:auto;flex:none;color:var(--muted)}
+  @keyframes barGlow{
+    0%,100%{box-shadow:0 24px 60px -26px rgba(11,116,196,.6), inset 0 1px 0 rgba(255,255,255,.8), 0 0 0 0 rgba(56,169,245,.22)}
+    50%{box-shadow:0 24px 60px -26px rgba(11,116,196,.6), inset 0 1px 0 rgba(255,255,255,.8), 0 0 0 12px rgba(56,169,245,0)}
+  }
+  .glyph{width:clamp(16px,2.2vw,22px);height:auto;flex:none;color:var(--sky-deep)}
   .typed{
     flex:1;min-width:0;
     font-size:clamp(.95rem,1.1vw + .6rem,1.6rem);
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     white-space:nowrap;overflow:hidden;text-overflow:clip;
     padding:.2em 0;
+    color:var(--ink);
+    text-shadow:0 1px 12px rgba(56,169,245,.35);
   }
   .caret{
-    display:inline-block;width:.08em;min-width:1px;height:1.05em;
-    background:var(--sky-deep);vertical-align:-.16em;margin-left:.06em;
+    display:inline-block;width:.1em;min-width:2px;height:1.05em;border-radius:2px;
+    background:linear-gradient(180deg,var(--sky-bright),var(--sky-deep));
+    vertical-align:-.16em;margin-left:.06em;
+    box-shadow:0 0 10px rgba(56,169,245,.8);
     animation:blink 1s steps(1) infinite;
   }
   @keyframes blink{50%{opacity:0}}
   .enter{
+    position:relative;overflow:hidden;
     flex:none;border:0;cursor:pointer;color:#fff;
     font-weight:650;font-size:clamp(.85rem,.5vw + .75rem,1.1rem);
     padding:clamp(.55rem,1vw,.85rem) clamp(1.1rem,2.4vw,1.9rem);
     border-radius:999px;
-    background:linear-gradient(135deg,var(--sky) 0%,var(--sky-deep) 100%);
+    background:linear-gradient(115deg,var(--sky-bright) 0%,var(--sky) 30%,var(--sky-deep) 55%,var(--sky) 80%,var(--sky-bright) 100%);
+    background-size:280% 100%;
+    box-shadow:0 10px 26px -12px rgba(11,116,196,.7), inset 0 1px 0 rgba(255,255,255,.4);
+    animation:gradientMove 6s linear infinite;
     transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
   }
   .enter:hover,.enter:focus-visible{
     transform:translateY(-2px) scale(1.04);
-    box-shadow:0 14px 32px -12px rgba(11,116,196,.8);
+    box-shadow:0 16px 34px -12px rgba(11,116,196,.85);
     filter:brightness(1.06);outline:none;
   }
-  .enter.glow{animation:glow 1s ease-in-out infinite}
+  .enter.glow{animation:gradientMove 6s linear infinite, glow 1s ease-in-out infinite}
   @keyframes glow{
-    0%,100%{box-shadow:0 0 0 0 var(--ring)}
-    50%{box-shadow:0 0 0 14px rgba(56,169,245,0)}
+    0%,100%{box-shadow:0 10px 26px -12px rgba(11,116,196,.7),0 0 0 0 var(--ring)}
+    50%{box-shadow:0 10px 26px -12px rgba(11,116,196,.7),0 0 0 16px rgba(56,169,245,0)}
   }
-  .hint{margin-top:1.1rem;font-size:.85rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .hint{
+    margin-top:1.2rem;font-size:.8rem;color:var(--muted);
+    letter-spacing:.16em;text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;gap:.5rem;
+  }
+  .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--sky);box-shadow:0 0 0 0 var(--ring);
+    animation:dotPulse 1.6s ease-out infinite;
+  }
+  @keyframes dotPulse{
+    0%,100%{box-shadow:0 0 0 0 var(--ring);opacity:1}
+    50%{box-shadow:0 0 0 8px rgba(56,169,245,0);opacity:.75}
+  }
 
   /* ---------- step 3: video ---------- */
   #screen{
@@ -124,11 +221,11 @@
   }
   .loader{
     position:absolute;display:flex;align-items:center;gap:.6rem;
-    color:#cfe8fb;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;
+    color:#8fc4e8;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;
   }
   .spinner{
     width:18px;height:18px;border-radius:50%;
-    border:2px solid rgba(207,232,251,.25);border-top-color:#cfe8fb;
+    border:2px solid rgba(143,196,232,.25);border-top-color:#8fc4e8;
     animation:spin .9s linear infinite;
   }
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -144,15 +241,26 @@
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.01ms !important;animation-iteration-count:1 !important}
     .step{transition-duration:.2s}
+    .sweep,.blob{display:none}
   }
 </style>
 </head>
 <body>
 
+<div class="bg" aria-hidden="true">
+  <span class="blob b1"></span>
+  <span class="blob b2"></span>
+  <span class="blob b3"></span>
+  <span class="sweep"></span>
+</div>
+
 <main class="stage">
   <!-- Step 1 -->
   <section class="step on" id="step1">
-    <button class="publish" id="publishBtn" type="button">Publish</button>
+    <div class="brand">
+      <span class="logo-wrap"><img src="/logo/humd-full-white.png" alt="hamd-huffaz-alumni logo"></span>
+      <button class="publish" id="publishBtn" type="button">Publish</button>
+    </div>
   </section>
 
   <!-- Step 2 -->
@@ -163,7 +271,7 @@
         <div class="typed"><span id="typed"></span><span class="caret" id="caret"></span></div>
         <button class="enter" id="enterBtn" type="button">Enter</button>
       </div>
-      <p class="hint" style="text-align:center">Publish Started</p>
+      <p class="hint"><span class="dot"></span>Publish Started</p>
     </div>
   </section>
 </main>
@@ -238,6 +346,7 @@
     if (started) return; started = true;
     step2.classList.remove("on");
     step2.setAttribute("aria-hidden","true");
+    document.body.classList.add("video-mode");
     screenEl.classList.add("on");
 
     var failTimer = setTimeout(goHome, 20000); // never hang
