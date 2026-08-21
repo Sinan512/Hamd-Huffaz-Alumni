@@ -81,28 +81,26 @@
   .step.on{opacity:1;visibility:visible;transform:none}
 
   /* ---------- step 1: logo + publish ---------- */
-
-.logoimg{
-width:500px;
-}
-
-
   .brand{display:grid;place-items:center;gap:clamp(1.2rem,3vw,2rem)}
   .logo-wrap{
     position:relative;display:grid;place-items:center;
-    width:clamp(96px,20vw,148px);height:clamp(96px,20vw,148px);
-    border-radius:28px;
-    background:rgba(255,255,255,.72);
+    width:clamp(200px,42vw,300px);height:clamp(200px,42vw,300px);
+    border-radius:56px;
+    /* deep sky fill so the WHITE logo png is actually visible */
+    background:linear-gradient(150deg,var(--sky) 0%,var(--sky-deep) 70%,#075a9a 100%);
     backdrop-filter:blur(14px) saturate(150%);
-    box-shadow:0 20px 50px -22px rgba(11,116,196,.55), inset 0 0 0 1px rgba(255,255,255,.7);
+    box-shadow:0 30px 70px -26px rgba(11,116,196,.65), inset 0 0 0 1px rgba(255,255,255,.35);
     animation:floatLogo 5.5s ease-in-out infinite;
   }
   .logo-wrap::after{
-    content:"";position:absolute;inset:-14px;border-radius:36px;
+    content:"";position:absolute;inset:-26px;border-radius:74px;
     background:radial-gradient(circle,var(--ring) 0%,rgba(56,169,245,0) 70%);
     animation:haloPulse 3.2s ease-in-out infinite;z-index:-1;
   }
-  .logo-wrap img{width:74%;height:74%;object-fit:contain;display:block}
+  .logo-wrap img{
+    width:78%;height:78%;object-fit:contain;display:block;
+    filter:drop-shadow(0 6px 18px rgba(4,52,90,.45));
+  }
   @keyframes floatLogo{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
   @keyframes haloPulse{0%,100%{opacity:.5;transform:scale(.95)}50%{opacity:1;transform:scale(1.06)}}
 
@@ -264,7 +262,7 @@ width:500px;
   <!-- Step 1 -->
   <section class="step on" id="step1">
     <div class="brand">
-      <div class=""><img src="../public/logo/humd-full-light.png" alt="hamdlogo"></div>
+      <span class="logo-wrap"><img src="/logo/humd-full-white.png" alt="hamd-huffaz-alumni logo"></span>
       <button class="publish" id="publishBtn" type="button">Publish</button>
     </div>
   </section>
