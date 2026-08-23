@@ -129,6 +129,17 @@ function buildUserContext(doc) {
     skills:          doc.skills          || '',
     languages:       doc.languages       || '',
     orgRoles:        doc.orgRoles        || '',
+    supportNeeded:            doc.supportNeeded || '',
+    supportNeeded_degree:     doc.supportNeeded === 'Degree completion',
+    supportNeeded_higher:     doc.supportNeeded === 'Higher education',
+    supportNeeded_research:   doc.supportNeeded === 'Research',
+    supportNeeded_exams:      doc.supportNeeded === 'Competitive Exams',
+    supportNeeded_abroad:     doc.supportNeeded === 'Study Abroad opportunities',
+    supportNeeded_language:   doc.supportNeeded === 'English or Arabic language',
+    supportNeeded_computer:   doc.supportNeeded === 'Computer skills',
+    supportNeeded_online:     doc.supportNeeded === 'Online earning opportunities',
+    supportNeeded_other:      doc.supportNeeded === 'Other',
+
 
     /* ── family ── */
     familyCount:     doc.familyCount     != null ? doc.familyCount  : '',
@@ -365,7 +376,7 @@ router.post('/user/profile', requireAuth, async function (req, res) {
       'place', 'address', 'email', 'phone', 'whatsapp',
       'admYear', 'leaveYear', 'eduQual', 'religiousDegree', 'higherEdu',
       'currentStatus', 'workLocation', 'jobRole', 'college', 'course',
-      'skills', 'languages', 'orgRoles',
+      'skills', 'languages', 'orgRoles', 'supportNeeded',
       'familyCount', 'earningMembers', 'hasDependents', 'dependentsWho',
       'parentsDeceased', 'chronicIll', 'chronicIllDetails',
       'fatherName', 'motherName',

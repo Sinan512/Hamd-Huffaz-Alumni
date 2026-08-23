@@ -918,7 +918,7 @@ var MEMBER_TEXT_FIELDS = [
   'address', 'phone', 'whatsapp',
   'admYear', 'leaveYear', 'eduQual', 'religiousDegree', 'higherEdu',
   'currentStatus', 'workLocation', 'jobRole', 'college', 'course',
-  'skills', 'languages', 'orgRoles',
+  'skills', 'languages', 'orgRoles', 'supportNeeded',
   'earningMembers', 'hasDependents', 'dependentsWho', 'parentsDeceased',
   'chronicIll', 'chronicIllDetails',
   'fatherName', 'motherName',

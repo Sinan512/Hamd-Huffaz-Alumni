@@ -36,6 +36,7 @@ const memberDetailsSchema = new mongoose.Schema(
     skills:          { type: String, trim: true, default: '' },   // Creative Skills
     languages:       { type: String, trim: true, default: '' },   // Languages Known
     orgRoles:        { type: String, trim: true, default: '' },   // Organizational Roles
+    supportNeeded:   { type: String, trim: true, default: '' },   // Help needed in career/academic situation
 
     /* ── Family ── */
     familyCount:     { type: Number, default: null },

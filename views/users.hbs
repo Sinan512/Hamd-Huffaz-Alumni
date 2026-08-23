@@ -988,6 +988,24 @@
           </label>
           <input type="text" class="form-control" id="ep_orgRoles" name="orgRoles" value="{{user.orgRoles}}" placeholder="e.g. Secretary, President...">
         </div>
+                <div class="mb-4">
+          <label class="form-label-custom" for="ep_supportNeeded">
+            <span data-en="What help do you need in your current career/academic situation?"
+                  data-ml="നിലവിലെ നിങ്ങളുടെ career/academic situation-ൽ നിങ്ങൾക്ക് എന്ത് സഹായമാണ് ആവശ്യം?">What help do you need in your current career/academic situation?</span>
+          </label>
+          <select class="form-control" id="ep_supportNeeded" name="supportNeeded">
+            <option value="" {{#unless user.supportNeeded}}selected{{/unless}}>-- Select --</option>
+            <option value="Degree completion" {{#if user.supportNeeded_degree}}selected{{/if}}>Degree completion</option>
+            <option value="Higher education" {{#if user.supportNeeded_higher}}selected{{/if}}>Higher education</option>
+            <option value="Research" {{#if user.supportNeeded_research}}selected{{/if}}>Research</option>
+            <option value="Competitive Exams" {{#if user.supportNeeded_exams}}selected{{/if}}>Competitive Exams</option>
+            <option value="Study Abroad opportunities" {{#if user.supportNeeded_abroad}}selected{{/if}}>Study Abroad opportunities</option>
+            <option value="English or Arabic language" {{#if user.supportNeeded_language}}selected{{/if}}>English or Arabic language</option>
+            <option value="Computer skills" {{#if user.supportNeeded_computer}}selected{{/if}}>Computer skills</option>
+            <option value="Online earning opportunities" {{#if user.supportNeeded_online}}selected{{/if}}>Online earning opportunities</option>
+            <option value="Other" {{#if user.supportNeeded_other}}selected{{/if}}>Other</option>
+          </select>
+        </div>
 
 
         <!-- ── FAMILY DETAILS ── -->
