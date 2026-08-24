@@ -2,14 +2,138 @@ var express = require('express');
 var router  = express.Router();
 var mongoose = require('mongoose');
 
+var multer = require('multer');
+
 var MemberDetails = require('../models/MemberDetails');
 var EventDetails  = require('../models/EventDetails');
 var Gallery       = require('../models/Gallery');
+var PaymentSetup  = require('../models/PaymentSetup');
+var PaymentStatus = require('../models/PaymentStatus');
 const connectDB   = require('../config/db');
+
+var upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: function (req, file, cb) {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed for payment screenshot.'));
+    }
+    cb(null, true);
+  }
+});
 
 /* ================================================================== */
 /* HELPERS                                                             */
 /* ================================================================== */
+
+var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+async function getMemberContributionMonths(member) {
+  var now = new Date();
+  var currentYear = now.getFullYear();
+  var currentMonth = now.getMonth() + 1; // 1 to 12
+
+  var startYear, startMonth;
+  if (member && member.createdAt) {
+    var created = new Date(member.createdAt);
+    if (!isNaN(created.getTime())) {
+      startYear = created.getFullYear();
+      startMonth = created.getMonth() + 1;
+    }
+  }
+
+  // Fallback if createdAt missing: current year starting January
+  if (!startYear || !startMonth) {
+    startYear = currentYear;
+    startMonth = 1;
+  }
+
+  var paymentStatusDoc = await PaymentStatus.findOne({ memberId: member._id }).lean();
+  var submissions = (paymentStatusDoc && paymentStatusDoc.membersPayments) ? paymentStatusDoc.membersPayments : [];
+
+  var statusMap = {};
+  submissions.forEach(function (sub) {
+    var subStatus = sub.status || 'Pending';
+    if (typeof sub.month === 'number' && typeof sub.year === 'number') {
+      var key = sub.year + '-' + sub.month;
+      var existing = statusMap[key];
+      if (subStatus === 'Approved') {
+        statusMap[key] = 'Approved';
+      } else if (subStatus === 'Pending' && existing !== 'Approved') {
+        statusMap[key] = 'Pending';
+      } else if (subStatus === 'Rejected' && !existing) {
+        statusMap[key] = 'Rejected';
+      }
+    }
+    if (Array.isArray(sub.months)) {
+      sub.months.forEach(function (m) {
+        var key = m.year + '-' + m.month;
+        var existing = statusMap[key];
+        if (subStatus === 'Approved') {
+          statusMap[key] = 'Approved';
+        } else if (subStatus === 'Pending' && existing !== 'Approved') {
+          statusMap[key] = 'Pending';
+        } else if (subStatus === 'Rejected' && !existing) {
+          statusMap[key] = 'Rejected';
+        }
+      });
+    }
+  });
+
+  var monthsList = [];
+  var y = startYear;
+  var m = startMonth;
+
+  while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+    var key = y + '-' + m;
+    var rawStatus = statusMap[key] || 'UN PAID';
+
+    var displayStatus = 'UN PAID';
+    var badgeColor = 'bg-danger';
+    var isSelectable = true;
+
+    if (rawStatus === 'Approved') {
+      displayStatus = 'APPROVED';
+      badgeColor = 'bg-success';
+      isSelectable = false;
+    } else if (rawStatus === 'Pending') {
+      displayStatus = 'PENDING';
+      badgeColor = 'bg-warning text-dark';
+      isSelectable = false;
+    } else {
+      displayStatus = 'UN PAID';
+      badgeColor = 'bg-danger';
+      isSelectable = true;
+    }
+
+    monthsList.push({
+      year: y,
+      month: m,
+      key: key,
+      monthName: MONTH_NAMES[m - 1],
+      label: MONTH_NAMES[m - 1] + ' ' + y,
+      amount: 30,
+      status: displayStatus,
+      badgeColor: badgeColor,
+      isSelectable: isSelectable
+    });
+
+    m++;
+    if (m > 12) {
+      m = 1;
+      y++;
+    }
+  }
+
+  var unpaidList = monthsList.filter(function (item) { return item.status === 'UN PAID'; });
+
+  return {
+    months: monthsList,
+    hasUnpaidMonths: unpaidList.length > 0,
+    unpaidCount: unpaidList.length,
+    unpaidListLabels: unpaidList.map(function (item) { return item.label; }).join(', ')
+  };
+}
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -249,21 +373,35 @@ router.get('/', async function (req, res, next) {
     req.session.cookie.maxAge = SEVEN_DAYS_MS;
 
     var galleryImages = await getGalleryImages();
-var events = await getAllEvents();
+    var events = await getAllEvents();
 
-events.forEach(function (event) {
-  event.isRegistered = (member.registeredEvents || []).some(function (id) {
-    return id.toString() === event.id;
-  });
-});
+    events.forEach(function (event) {
+      event.isRegistered = (member.registeredEvents || []).some(function (id) {
+        return id.toString() === event.id;
+      });
+    });
 
-return res.render('users', {
-  layout: false,
-  title: 'Alumni Member Portal',
-  user: buildUserContext(member),
-  galleryImages: galleryImages,
-  events: events
-});
+    var paymentSetupDoc = await PaymentSetup.findOne({ singleton: true }).lean();
+    var paymentSetup = null;
+    if (paymentSetupDoc) {
+      paymentSetup = {
+        upiId: paymentSetupDoc.upiId || '',
+        gpayNumber: paymentSetupDoc.gpayNumber || '',
+        hasQrCode: !!(paymentSetupDoc.qrCode && paymentSetupDoc.qrCode.contentType)
+      };
+    }
+
+    var contribution = await getMemberContributionMonths(member);
+
+    return res.render('users', {
+      layout: false,
+      title: 'Alumni Member Portal',
+      user: buildUserContext(member),
+      galleryImages: galleryImages,
+      events: events,
+      paymentSetup: paymentSetup,
+      contribution: contribution
+    });
   } catch (err) {
     console.error('Dashboard load failed:', err.message);
     return next(err);
@@ -524,6 +662,123 @@ router.post('/user/register-event/:id', requireAuth, async function (req, res) {
       success: false,
       message: 'Could not register for this event. Please try again.'
     });
+  }
+});
+
+/* ================================================================== */
+/* GET /users/payment-setup/qr-code  – serve payment QR image        */
+/* ================================================================== */
+router.get('/payment-setup/qr-code', async function (req, res) {
+  await connectDB();
+  try {
+    var doc = await PaymentSetup.findOne({ singleton: true }, { 'qrCode.data': 1, 'qrCode.contentType': 1 }).lean();
+    if (!doc || !doc.qrCode || !doc.qrCode.data) {
+      return res.status(404).end();
+    }
+    res.set('Content-Type', doc.qrCode.contentType || 'image/png');
+    res.set('Cache-Control', 'no-store');
+    return res.send(doc.qrCode.data.buffer || doc.qrCode.data);
+  } catch (error) {
+    console.error('Serve QR code image failed:', error.message);
+    return res.status(500).end();
+  }
+});
+
+/* ================================================================== */
+/* POST /users/submit-contribution-payment                             */
+/* ================================================================== */
+router.post('/submit-contribution-payment', requireAuth, upload.single('paymentScreenshot'), async function (req, res) {
+  await connectDB();
+  try {
+    var rawMonths = req.body.months;
+    if (typeof rawMonths === 'string') {
+      try { rawMonths = JSON.parse(rawMonths); } catch (e) { rawMonths = [rawMonths]; }
+    }
+    if (!Array.isArray(rawMonths) || rawMonths.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please select at least one month to pay.' });
+    }
+
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ success: false, message: 'Please upload a screenshot of your payment receipt.' });
+    }
+
+    var parsedMonths = [];
+    rawMonths.forEach(function (str) {
+      var parts = String(str).split('-');
+      if (parts.length === 2) {
+        var y = Number(parts[0]);
+        var m = Number(parts[1]);
+        if (!isNaN(y) && !isNaN(m) && m >= 1 && m <= 12) {
+          parsedMonths.push({ year: y, month: m });
+        }
+      }
+    });
+
+    if (parsedMonths.length === 0) {
+      return res.status(400).json({ success: false, message: 'Invalid month selection.' });
+    }
+
+    // Verify selected months are not already pending/approved
+    var paymentStatusDoc = await PaymentStatus.findOne({ memberId: req.session.memberId }).lean();
+    var existingSubmissions = (paymentStatusDoc && paymentStatusDoc.membersPayments) ? paymentStatusDoc.membersPayments : [];
+
+    var alreadyPaid = false;
+    existingSubmissions.forEach(function (sub) {
+      if (sub.status === 'Approved' || sub.status === 'Pending') {
+        if (typeof sub.month === 'number' && typeof sub.year === 'number') {
+          parsedMonths.forEach(function (pM) {
+            if (sub.year === pM.year && sub.month === pM.month) {
+              alreadyPaid = true;
+            }
+          });
+        }
+        if (Array.isArray(sub.months)) {
+          sub.months.forEach(function (exM) {
+            parsedMonths.forEach(function (pM) {
+              if (exM.year === pM.year && exM.month === pM.month) {
+                alreadyPaid = true;
+              }
+            });
+          });
+        }
+      }
+    });
+
+    if (alreadyPaid) {
+      return res.status(400).json({ success: false, message: 'One or more selected months are already pending or paid.' });
+    }
+
+    var now = new Date();
+    var paymentItems = parsedMonths.map(function (m) {
+      return {
+        month: m.month,
+        year: m.year,
+        amount: 30,
+        screenShot: {
+          data: req.file.buffer,
+          contentType: req.file.mimetype
+        },
+        status: 'Pending',
+        approvedBy: '',
+        approvedAt: null,
+        rejectionReason: '',
+        submittedAt: now
+      };
+    });
+
+    await PaymentStatus.findOneAndUpdate(
+      { memberId: req.session.memberId },
+      { $push: { membersPayments: { $each: paymentItems } } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Payment details submitted successfully! Status updated to Pending.'
+    });
+  } catch (error) {
+    console.error('Submit contribution payment failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not submit payment. Please try again.' });
   }
 });
 

@@ -1073,7 +1073,9 @@
       <a href="#events-section"><i class="bi bi-calendar2-event-fill me-2"></i>Events</a>
       <a href="#registrations-section"><i class="bi bi-check2-square me-2"></i>Registrations</a>
       <a href="#articles-section"><i class="bi bi-journal-text me-2"></i>Articles</a>
+      <a href="#payment-section"><i class="bi bi-qr-code-scan me-2"></i>Payment Setup</a>
       <a href="#gallery-section"><i class="bi bi-images me-2"></i>Gallery</a>
+      <a href="#contributions-section"><i class="bi bi-wallet2 me-2"></i>Contributions</a>
     </div>
 
   </aside>
@@ -1728,6 +1730,66 @@
         </div>
       </div>
 
+      <!-- PAYMENT SETUP -->
+      <div class="card mb-4" id="payment-section">
+        <div class="card-header">
+          <span><i class="bi bi-qr-code-scan text-primary me-2"></i>Payment Details Setup</span>
+          <span class="badge bg-secondary">PAYMENT_SETUP</span>
+        </div>
+        <div class="card-body">
+          <form id="paymentSetupForm" enctype="multipart/form-data">
+            <div id="paymentSetupAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+
+            <div class="row g-4 align-items-start">
+              <!-- QR Code Upload & Preview -->
+              <div class="col-12 col-md-5 col-lg-4">
+                <label class="form-label fw-semibold mb-1">Payment QR Code</label>
+                <div class="border rounded-3 p-3 text-center bg-body-tertiary position-relative" style="min-height: 210px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                  <div id="qrCodePreviewContainer" class="{{#unless paymentSetup.hasQrCode}}d-none{{/unless}} mb-2 position-relative">
+                    <img id="qrCodePreviewImage" src="{{#if paymentSetup.hasQrCode}}/admin/payment-setup/qr-code{{/if}}" alt="QR Code Preview" class="rounded-3 border shadow-sm" style="max-height: 180px; max-width: 100%; object-fit: contain;">
+                  </div>
+                  <div id="qrCodePlaceholder" class="{{#if paymentSetup.hasQrCode}}d-none{{/if}} text-muted py-4">
+                    <i class="bi bi-qr-code fs-1 d-block mb-2 text-secondary"></i>
+                    <span class="small">No QR Code Image Saved</span>
+                  </div>
+                  <div class="w-100 mt-2">
+                    <input type="file" name="qrCode" id="qrCodeInput" class="form-control form-control-sm" accept="image/*">
+                    <div class="form-text text-muted small mt-1">Image size must be <strong>less than 2MB</strong>.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- UPI ID & GPay Number -->
+              <div class="col-12 col-md-7 col-lg-8">
+                <div class="mb-3">
+                  <label for="upiIdInput" class="form-label fw-semibold">UPI ID</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                    <input type="text" name="upiId" id="upiIdInput" class="form-control" placeholder="Enter UPI ID (e.g. name@upi)" value="{{paymentSetup.upiId}}">
+                  </div>
+                  <div class="form-text">Official UPI ID for accepting payments.</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="gpayNumberInput" class="form-label fw-semibold">GPay Number</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                    <input type="text" name="gpayNumber" id="gpayNumberInput" class="form-control" placeholder="Enter GPay Number (e.g. 9876543210)" value="{{paymentSetup.gpayNumber}}">
+                  </div>
+                  <div class="form-text">GPay phone number for accepting payments.</div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 mt-4">
+                  <button type="submit" id="savePaymentBtn" class="btn btn-primary rounded-3 px-4">
+                    <i class="bi bi-floppy me-1"></i>Save Payment Setup
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- GALLERY -->
       <div class="card" id="gallery-section">
 
@@ -1754,6 +1816,69 @@
           <div id="galleryEmpty" class="gallery-empty {{#if galleryImages.length}}d-none{{/if}}">
             <i class="bi bi-images fs-3 d-block mb-2"></i>
             No images yet. Use “Add Image” to upload the first one.
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTRIBUTIONS SECTION -->
+      <div class="card mt-4" id="contributions-section">
+        <div class="card-header flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-wallet2 text-primary me-1"></i>
+            <span>Alumni Contributions</span>
+            <span class="badge bg-primary rounded-pill ms-1" id="contribTotalBadge">{{contributions.counts.total}}</span>
+          </div>
+
+          <!-- Controls: Search, Status Filter, Export Excel -->
+          <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
+            <div class="search-box" style="max-width: 220px;">
+              <i class="bi bi-search"></i>
+              <input type="text" id="contribSearchInput" class="form-control form-control-sm" placeholder="Search member, batch...">
+            </div>
+
+            <select id="contribStatusFilter" class="form-select form-select-sm rounded-3" style="width: 140px;">
+              <option value="ALL">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="UN PAID">Unpaid</option>
+            </select>
+
+            <button type="button" id="contribExportExcelBtn" class="btn btn-sm btn-outline-success rounded-3">
+              <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <!-- Stats Pills -->
+          <div class="p-3 bg-body-tertiary border-bottom d-flex gap-2 flex-wrap text-center small">
+            <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill">Total: <strong id="cntAll">{{contributions.counts.total}}</strong></span>
+            <span class="badge bg-warning-subtle text-warning-emphasis px-3 py-2 rounded-pill">Pending: <strong id="cntPending">{{contributions.counts.pending}}</strong></span>
+            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Approved: <strong id="cntApproved">{{contributions.counts.approved}}</strong></span>
+            <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">Rejected: <strong id="cntRejected">{{contributions.counts.rejected}}</strong></span>
+            <span class="badge bg-danger text-white px-3 py-2 rounded-pill">Unpaid Months: <strong id="cntUnpaid">{{contributions.counts.unpaid}}</strong></span>
+          </div>
+
+          <!-- Table Area -->
+          <div class="table-responsive">
+            <table class="table custom-table align-middle m-0" id="contribTable">
+              <thead>
+                <tr>
+                  <th>Member Name</th>
+                  <th>Batch / Adm No</th>
+                  <th>Month &amp; Year</th>
+                  <th>Amount</th>
+                  <th>Screenshot</th>
+                  <th>Status</th>
+                  <th>Date &amp; Details</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="contribTableBody">
+                <!-- Populated via JavaScript dynamically -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -3635,6 +3760,92 @@
     })();
   </script>
 
+  <!-- ==================== PAYMENT SETUP SCRIPTS ==================== -->
+  <script>
+    (function () {
+      var form        = document.getElementById('paymentSetupForm');
+      var qrInput     = document.getElementById('qrCodeInput');
+      var previewBox  = document.getElementById('qrCodePreviewContainer');
+      var previewImg  = document.getElementById('qrCodePreviewImage');
+      var placeholder = document.getElementById('qrCodePlaceholder');
+      var alertBox    = document.getElementById('paymentSetupAlert');
+      var saveBtn     = document.getElementById('savePaymentBtn');
+
+      function showAlert(type, message) {
+        if (!alertBox) return;
+        alertBox.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-3';
+        alertBox.textContent = message;
+      }
+
+      function hideAlert() {
+        if (!alertBox) return;
+        alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-3';
+        alertBox.textContent = '';
+      }
+
+      if (qrInput) {
+        qrInput.addEventListener('change', function () {
+          var file = qrInput.files && qrInput.files[0];
+          if (!file) return;
+          if (file.size > 2 * 1024 * 1024) {
+            showAlert('danger', 'QR Code image must be less than 2MB.');
+            qrInput.value = '';
+            return;
+          }
+          hideAlert();
+          previewImg.src = URL.createObjectURL(file);
+          previewBox.classList.remove('d-none');
+          placeholder.classList.add('d-none');
+        });
+      }
+
+      if (form) {
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          hideAlert();
+
+          var file = qrInput.files && qrInput.files[0];
+          if (file && file.size > 2 * 1024 * 1024) {
+            showAlert('danger', 'QR Code image must be less than 2MB.');
+            return;
+          }
+
+          saveBtn.disabled = true;
+          var originalText = saveBtn.innerHTML;
+          saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+          var formData = new FormData(form);
+
+          fetch('/admin/payment-setup', {
+            method: 'POST',
+            body: formData
+          })
+            .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+            .then(function (result) {
+              if (!result.ok || !result.data.success) {
+                showAlert('danger', (result.data && result.data.message) || 'Could not save payment setup.');
+                return;
+              }
+              showAlert('success', result.data.message || 'Payment details saved successfully.');
+              if (result.data.paymentSetup && result.data.paymentSetup.hasQrCode) {
+                previewImg.src = '/admin/payment-setup/qr-code?t=' + Date.now();
+                previewBox.classList.remove('d-none');
+                placeholder.classList.add('d-none');
+              }
+              qrInput.value = '';
+            })
+            .catch(function () {
+              showAlert('danger', 'Network error while saving payment setup.');
+            })
+            .finally(function () {
+              saveBtn.disabled = false;
+              saveBtn.innerHTML = originalText;
+            });
+        });
+      }
+    })();
+  </script>
+
   <!-- ==================== GALLERY SCRIPTS ==================== -->
   <script>
     (function () {
@@ -4593,7 +4804,362 @@
   }
 })();
 </script>
+
+  <!-- ===== REJECT CONTRIBUTION MODAL ===== -->
+  <div class="modal fade" id="rejectContributionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-bottom px-4 py-3">
+          <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-circle me-2"></i>Reject Payment Submission</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body px-4 py-3">
+          <form id="rejectContributionForm">
+            <input type="hidden" id="rejectMemberId" value="">
+            <input type="hidden" id="rejectPaymentId" value="">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Select Rejection Reason:</label>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="rejectReasonOption" id="rrOpt1" value="screenshot not visible perfectly" checked>
+                <label class="form-check-label" for="rrOpt1">Screenshot not visible perfectly</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="rejectReasonOption" id="rrOpt2" value="the amount is less than 30">
+                <label class="form-check-label" for="rrOpt2">The amount is less than 30</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="rejectReasonOption" id="rrOpt3" value="other">
+                <label class="form-check-label" for="rrOpt3">Other (Custom input)</label>
+              </div>
+            </div>
+
+            <div class="mb-3 d-none" id="customReasonWrapper">
+              <label for="customRejectReason" class="form-label fw-semibold">Custom Rejection Reason:</label>
+              <textarea id="customRejectReason" class="form-control" rows="3" placeholder="Specify rejection reason..."></textarea>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" id="confirmRejectBtn" class="btn btn-danger rounded-3 px-4 fw-bold">Confirm Rejection</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW SCREENSHOT MODAL ===== -->
+  <div class="modal fade" id="viewContribScreenshotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-bottom px-4 py-3">
+          <h5 class="modal-title fw-bold" id="viewScreenshotModalTitle">Payment Receipt Screenshot</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center p-4">
+          <img id="contribModalImage" src="" alt="Payment Receipt" class="img-fluid rounded-3 border shadow-sm" style="max-height: 500px; object-fit: contain;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CONTRIBUTIONS ADMIN SCRIPT ==================== -->
+  <script>
+    (function () {
+      var submittedData = {{{contributionsJson}}}.submitted || [];
+      var unpaidData    = {{{contributionsJson}}}.unpaid || [];
+
+      var searchInput   = document.getElementById('contribSearchInput');
+      var statusFilter  = document.getElementById('contribStatusFilter');
+      var tbody         = document.getElementById('contribTableBody');
+      var exportBtn     = document.getElementById('contribExportExcelBtn');
+
+      var currentFiltered = [];
+
+      function escapeHtml(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function renderTable() {
+        if (!tbody) return;
+        var q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        var st = statusFilter ? statusFilter.value : 'ALL';
+
+        var list = [];
+        if (st === 'UN PAID') {
+          list = unpaidData;
+        } else {
+          list = submittedData.filter(function (item) {
+            if (st !== 'ALL' && item.status !== st) return false;
+            return true;
+          });
+        }
+
+        if (q) {
+          list = list.filter(function (item) {
+            var name = (item.memberName || '').toLowerCase();
+            var batch = (item.batch || '').toLowerCase();
+            var adm = (item.admissionNumber || '').toLowerCase();
+            var month = (item.monthLabel || '').toLowerCase();
+            return name.includes(q) || batch.includes(q) || adm.includes(q) || month.includes(q);
+          });
+        }
+
+        currentFiltered = list;
+
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No contribution records found.</td></tr>';
+          return;
+        }
+
+        if (st === 'UN PAID') {
+          tbody.innerHTML = list.map(function (item) {
+            return '<tr>' +
+              '<td><div class="fw-bold text-dark">' + escapeHtml(item.memberName) + '</div></td>' +
+              '<td><span class="badge bg-secondary-subtle text-secondary">Batch ' + escapeHtml(item.batch) + '</span> <small class="text-muted ms-1">' + escapeHtml(item.admissionNumber) + '</small></td>' +
+              '<td><span class="fw-bold text-primary">' + escapeHtml(item.monthLabel) + '</span></td>' +
+              '<td><span class="fw-bold">₹' + item.amount + '</span></td>' +
+              '<td><span class="text-muted small">N/A</span></td>' +
+              '<td><span class="badge bg-danger">UN PAID</span></td>' +
+              '<td><span class="text-muted small">Not Paid Yet</span></td>' +
+              '<td class="text-end"><span class="badge bg-light text-secondary border">Unpaid Month</span></td>' +
+            '</tr>';
+          }).join('');
+        } else {
+          tbody.innerHTML = list.map(function (item) {
+            var statusBadge = '<span class="badge ' + item.badgeColor + '">' + escapeHtml(item.status) + '</span>';
+
+            var imgHtml = item.hasScreenshot
+              ? '<button type="button" class="btn btn-xs btn-outline-primary rounded-2 view-screenshot-btn" data-img="/admin/contributions/image/' + item.memberId + '/' + item.paymentId + '" data-name="' + escapeHtml(item.memberName) + '"><i class="bi bi-image me-1"></i>View Image</button>'
+              : '<span class="text-muted small">No screenshot</span>';
+
+            var detailsHtml = '<div class="small text-muted">Submitted: ' + escapeHtml(item.submittedAtFormatted) + '</div>';
+            if (item.status === 'Approved' && item.approvedBy) {
+              detailsHtml += '<div class="small text-success">Approved by ' + escapeHtml(item.approvedBy) + ' (' + escapeHtml(item.approvedAtFormatted) + ')</div>';
+            } else if (item.status === 'Rejected') {
+              detailsHtml += '<div class="small text-danger">Reason: ' + escapeHtml(item.rejectionReason) + '</div>';
+            }
+
+            var actionsHtml = '';
+            if (item.status === 'Pending') {
+              actionsHtml = '<div class="btn-group btn-group-sm">' +
+                '<button type="button" class="btn btn-sm btn-success rounded-start-3 approve-btn" data-member="' + item.memberId + '" data-payment="' + item.paymentId + '"><i class="bi bi-check-lg me-1"></i>Approve</button>' +
+                '<button type="button" class="btn btn-sm btn-danger rounded-end-3 reject-btn" data-member="' + item.memberId + '" data-payment="' + item.paymentId + '"><i class="bi bi-x-lg me-1"></i>Reject</button>' +
+              '</div>';
+            } else {
+              actionsHtml = '<span class="small text-muted">Processed</span>';
+            }
+
+            return '<tr>' +
+              '<td><div class="fw-bold text-dark">' + escapeHtml(item.memberName) + '</div></td>' +
+              '<td><span class="badge bg-secondary-subtle text-secondary">Batch ' + escapeHtml(item.batch) + '</span> <small class="text-muted ms-1">' + escapeHtml(item.admissionNumber) + '</small></td>' +
+              '<td><span class="fw-bold text-primary">' + escapeHtml(item.monthLabel) + '</span></td>' +
+              '<td><span class="fw-bold">₹' + item.amount + '</span></td>' +
+              '<td>' + imgHtml + '</td>' +
+              '<td>' + statusBadge + '</td>' +
+              '<td>' + detailsHtml + '</td>' +
+              '<td class="text-end">' + actionsHtml + '</td>' +
+            '</tr>';
+          }).join('');
+        }
+      }
+
+      function refreshData() {
+        return fetch('/admin/contributions', { headers: { 'Accept': 'application/json' } })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data && data.success) {
+              submittedData = data.submitted || [];
+              unpaidData    = data.unpaid || [];
+              if (data.counts) {
+                if (document.getElementById('cntAll')) document.getElementById('cntAll').textContent = data.counts.total;
+                if (document.getElementById('cntPending')) document.getElementById('cntPending').textContent = data.counts.pending;
+                if (document.getElementById('cntApproved')) document.getElementById('cntApproved').textContent = data.counts.approved;
+                if (document.getElementById('cntRejected')) document.getElementById('cntRejected').textContent = data.counts.rejected;
+                if (document.getElementById('cntUnpaid')) document.getElementById('cntUnpaid').textContent = data.counts.unpaid;
+                if (document.getElementById('contribTotalBadge')) document.getElementById('contribTotalBadge').textContent = data.counts.total;
+              }
+              renderTable();
+            }
+          })
+          .catch(function () {});
+      }
+
+      if (searchInput) searchInput.addEventListener('input', renderTable);
+      if (statusFilter) statusFilter.addEventListener('change', renderTable);
+
+      if (tbody) {
+        tbody.addEventListener('click', function (e) {
+          var viewBtn = e.target.closest('.view-screenshot-btn');
+          if (viewBtn) {
+            var imgSrc = viewBtn.getAttribute('data-img');
+            var memberName = viewBtn.getAttribute('data-name');
+            var imgEl = document.getElementById('contribModalImage');
+            var titleEl = document.getElementById('viewScreenshotModalTitle');
+            if (imgEl) imgEl.src = imgSrc;
+            if (titleEl) titleEl.textContent = 'Payment Receipt - ' + memberName;
+            var modalEl = document.getElementById('viewContribScreenshotModal');
+            if (modalEl && window.bootstrap) {
+              var inst = window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl);
+              inst.show();
+            }
+            return;
+          }
+
+          var appBtn = e.target.closest('.approve-btn');
+          if (appBtn) {
+            var memberId = appBtn.getAttribute('data-member');
+            var paymentId = appBtn.getAttribute('data-payment');
+            if (!confirm('Approve this payment submission?')) return;
+            appBtn.disabled = true;
+
+            fetch('/admin/contributions/' + memberId + '/' + paymentId + '/approve', {
+              method: 'POST',
+              headers: { 'Accept': 'application/json' }
+            })
+              .then(function (res) { return res.json(); })
+              .then(function (resData) {
+                if (resData && resData.success) {
+                  refreshData();
+                } else {
+                  alert((resData && resData.message) || 'Approval failed.');
+                  appBtn.disabled = false;
+                }
+              })
+              .catch(function () { alert('Network error.'); appBtn.disabled = false; });
+            return;
+          }
+
+          var rejBtn = e.target.closest('.reject-btn');
+          if (rejBtn) {
+            var memberId = rejBtn.getAttribute('data-member');
+            var paymentId = rejBtn.getAttribute('data-payment');
+
+            document.getElementById('rejectMemberId').value = memberId;
+            document.getElementById('rejectPaymentId').value = paymentId;
+
+            var rForm = document.getElementById('rejectContributionForm');
+            if (rForm) rForm.reset();
+            document.getElementById('customReasonWrapper').classList.add('d-none');
+
+            var rejModalEl = document.getElementById('rejectContributionModal');
+            if (rejModalEl && window.bootstrap) {
+              var inst = window.bootstrap.Modal.getInstance(rejModalEl) || new window.bootstrap.Modal(rejModalEl);
+              inst.show();
+            }
+            return;
+          }
+        });
+      }
+
+      var rRadios = document.querySelectorAll('input[name="rejectReasonOption"]');
+      rRadios.forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          var customWrap = document.getElementById('customReasonWrapper');
+          if (customWrap) {
+            if (this.value === 'other') {
+              customWrap.classList.remove('d-none');
+            } else {
+              customWrap.classList.add('d-none');
+            }
+          }
+        });
+      });
+
+      var rForm = document.getElementById('rejectContributionForm');
+      if (rForm) {
+        rForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var memberId = document.getElementById('rejectMemberId').value;
+          var paymentId = document.getElementById('rejectPaymentId').value;
+
+          var selectedRadio = document.querySelector('input[name="rejectReasonOption"]:checked');
+          var reasonOption = selectedRadio ? selectedRadio.value : 'screenshot not visible perfectly';
+          var customReason = (document.getElementById('customRejectReason').value || '').trim();
+
+          if (reasonOption === 'other' && !customReason) {
+            alert('Please enter a custom rejection reason.');
+            return;
+          }
+
+          var confirmBtn = document.getElementById('confirmRejectBtn');
+          confirmBtn.disabled = true;
+
+          fetch('/admin/contributions/' + memberId + '/' + paymentId + '/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reasonOption: reasonOption, customReason: customReason })
+          })
+            .then(function (res) { return res.json(); })
+            .then(function (resData) {
+              if (resData && resData.success) {
+                var rejModalEl = document.getElementById('rejectContributionModal');
+                if (rejModalEl && window.bootstrap) {
+                  var inst = window.bootstrap.Modal.getInstance(rejModalEl);
+                  if (inst) inst.hide();
+                }
+                refreshData();
+              } else {
+                alert((resData && resData.message) || 'Rejection failed.');
+              }
+            })
+            .catch(function () { alert('Network error.'); })
+            .finally(function () { confirmBtn.disabled = false; });
+        });
+      }
+
+      if (exportBtn) {
+        exportBtn.addEventListener('click', function () {
+          if (!window.XLSX) {
+            alert('Excel library not loaded.');
+            return;
+          }
+          if (currentFiltered.length === 0) {
+            alert('No data to export.');
+            return;
+          }
+
+          var st = statusFilter ? statusFilter.value : 'ALL';
+          var excelRows = [];
+
+          if (st === 'UN PAID') {
+            excelRows = currentFiltered.map(function (i) {
+              return {
+                'Member Name': i.memberName,
+                'Admission No': i.admissionNumber,
+                'Batch': i.batch,
+                'Month & Year': i.monthLabel,
+                'Amount': i.amount,
+                'Status': i.status
+              };
+            });
+          } else {
+            excelRows = currentFiltered.map(function (i) {
+              return {
+                'Member Name': i.memberName,
+                'Admission No': i.admissionNumber,
+                'Batch': i.batch,
+                'Month & Year': i.monthLabel,
+                'Amount': i.amount,
+                'Status': i.status,
+                'Submitted At': i.submittedAtFormatted,
+                'Approved By': i.approvedBy,
+                'Approved At': i.approvedAtFormatted,
+                'Rejection Reason': i.rejectionReason
+              };
+            });
+          }
+
+          var worksheet = XLSX.utils.json_to_sheet(excelRows);
+          var workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Contributions');
+          XLSX.writeFile(workbook, 'Alumni_Contributions_' + st + '_' + Date.now() + '.xlsx');
+        });
+      }
+
+      renderTable();
+    })();
+  </script>
 </body>
-
-
 </html>

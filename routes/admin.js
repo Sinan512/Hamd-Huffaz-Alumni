@@ -11,6 +11,8 @@ var EventDetails  = require('../models/EventDetails');
 var Gallery       = require('../models/Gallery');
 var Article       = require('../models/Article');
 var AdminSecret   = require('../models/AdminSecret');
+var PaymentSetup  = require('../models/PaymentSetup');
+var PaymentStatus = require('../models/PaymentStatus');
 const connectDB   = require('../config/db');
 
 /* Multer: store uploaded files in memory as Buffer. */
@@ -519,6 +521,7 @@ router.get('/', async function (req, res, next) {
   var endedEvents = [];
   var galleryImages = [];
   var articles = [];
+  var paymentSetup = null;
 
   try {
     totalAlumni = await MemberDetails.countDocuments();
@@ -541,6 +544,17 @@ router.get('/', async function (req, res, next) {
 
     galleryImages = await getGalleryImages();
     articles = await getArticles();
+
+    var paymentSetupDoc = await PaymentSetup.findOne({ singleton: true }).lean();
+    if (paymentSetupDoc) {
+      paymentSetup = {
+        upiId: paymentSetupDoc.upiId || '',
+        gpayNumber: paymentSetupDoc.gpayNumber || '',
+        hasQrCode: !!(paymentSetupDoc.qrCode && paymentSetupDoc.qrCode.contentType)
+      };
+    }
+
+    var contributions = await getAllContributionsData();
 
     /* Collect sorted unique batch years from the member list */
     var yearSet = {};
@@ -581,7 +595,10 @@ router.get('/', async function (req, res, next) {
     hasEndedEvents: endedEvents.length > 0,
 
     galleryImages: galleryImages,
-    articles: articles
+    articles: articles,
+    paymentSetup: paymentSetup,
+    contributions: contributions,
+    contributionsJson: JSON.stringify(contributions)
   });
 });
 
@@ -1869,6 +1886,330 @@ router.delete('/articles/:id', async function (req, res) {
   } catch (error) {
     console.error('Delete article failed:', error.message);
     return res.status(500).json({ success: false, message: 'Could not delete the article.' });
+  }
+});
+
+/* ================================================================== */
+/* GET  /admin/payment-setup/qr-code  – serve stored payment QR image  */
+/* ================================================================== */
+router.get('/payment-setup/qr-code', async function (req, res) {
+  await connectDB();
+  try {
+    var doc = await PaymentSetup.findOne({ singleton: true }, { 'qrCode.data': 1, 'qrCode.contentType': 1 }).lean();
+    if (!doc || !doc.qrCode || !doc.qrCode.data) {
+      return res.status(404).end();
+    }
+    res.set('Content-Type', doc.qrCode.contentType || 'image/png');
+    res.set('Cache-Control', 'no-store');
+    return res.send(doc.qrCode.data.buffer || doc.qrCode.data);
+  } catch (error) {
+    console.error('Serve QR code image failed:', error.message);
+    return res.status(500).end();
+  }
+});
+
+/* ================================================================== */
+/* POST /admin/payment-setup  – save payment setup into PAYMENT_SETUP   */
+/* ================================================================== */
+router.post('/payment-setup', upload.single('qrCode'), async function (req, res) {
+  await connectDB();
+  try {
+    var upiId = (req.body.upiId || '').trim();
+    var gpayNumber = (req.body.gpayNumber || '').trim();
+
+    if (req.file) {
+      var maxBytes = 2 * 1024 * 1024; // 2 MB limit
+      if (req.file.size > maxBytes || (req.file.buffer && req.file.buffer.length > maxBytes)) {
+        return res.status(400).json({ success: false, message: 'QR Code image must be less than 2MB.' });
+      }
+    }
+
+    var update = {
+      upiId: upiId,
+      gpayNumber: gpayNumber
+    };
+
+    if (req.file && req.file.buffer) {
+      update.qrCode = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      };
+    } else if (req.body.removeQrCode === '1' || req.body.removeQrCode === 'true') {
+      update.qrCode = { data: null, contentType: null };
+    }
+
+    var doc = await PaymentSetup.findOneAndUpdate(
+      { singleton: true },
+      { $set: update },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Payment details saved successfully',
+      paymentSetup: {
+        upiId: doc.upiId || '',
+        gpayNumber: doc.gpayNumber || '',
+        hasQrCode: !!(doc.qrCode && doc.qrCode.contentType)
+      }
+    });
+  } catch (error) {
+    console.error('Save payment setup failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not save payment details. Please try again.' });
+  }
+});
+
+/* ================================================================== */
+/* HELPER: fetch all member contributions and calculate unpaid list   */
+/* ================================================================== */
+var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+async function getAllContributionsData() {
+  try {
+    var members = await MemberDetails.find({}, { name: 1, admissionNumber: 1, batch: 1, createdAt: 1 }).lean();
+    var memberMap = {};
+    members.forEach(function (m) { memberMap[String(m._id)] = m; });
+
+    var paymentDocs = await PaymentStatus.find({}).lean();
+
+    var submittedList = [];
+    var paidMonthSet = {};
+
+    paymentDocs.forEach(function (doc) {
+      var memberIdStr = String(doc.memberId);
+      var member = memberMap[memberIdStr] || { name: 'Unknown Member', admissionNumber: '', batch: '' };
+
+      (doc.membersPayments || []).forEach(function (item) {
+        var monthItems = [];
+        if (typeof item.month === 'number' && typeof item.year === 'number') {
+          monthItems.push({ month: item.month, year: item.year });
+        } else if (Array.isArray(item.months)) {
+          monthItems = item.months;
+        }
+
+        monthItems.forEach(function (mItem) {
+          var mKey = memberIdStr + '-' + mItem.year + '-' + mItem.month;
+          var itemStatus = item.status || 'Pending';
+
+          if (itemStatus === 'Approved') {
+            paidMonthSet[mKey] = 'Approved';
+          } else if (itemStatus === 'Pending' && paidMonthSet[mKey] !== 'Approved') {
+            paidMonthSet[mKey] = 'Pending';
+          }
+
+          var dSub = item.submittedAt ? new Date(item.submittedAt) : null;
+          var dApp = item.approvedAt ? new Date(item.approvedAt) : null;
+
+          submittedList.push({
+            paymentId: String(item._id),
+            memberId: memberIdStr,
+            memberName: member.name || 'Unnamed',
+            admissionNumber: member.admissionNumber || '',
+            batch: member.batch || '',
+            month: mItem.month,
+            year: mItem.year,
+            monthLabel: (MONTH_NAMES[mItem.month - 1] || '') + ' ' + mItem.year,
+            amount: item.amount || 30,
+            status: itemStatus,
+            badgeColor: itemStatus === 'Approved' ? 'bg-success' : (itemStatus === 'Pending' ? 'bg-warning text-dark' : 'bg-danger'),
+            hasScreenshot: !!(item.screenShot && item.screenShot.contentType),
+            approvedBy: item.approvedBy || '',
+            approvedAtFormatted: dApp ? dApp.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+            rejectionReason: item.rejectionReason || '',
+            submittedAtFormatted: dSub ? dSub.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+          });
+        });
+      });
+    });
+
+    submittedList.sort(function (a, b) {
+      return b.year - a.year || b.month - a.month;
+    });
+
+    var now = new Date();
+    var currentYear = now.getFullYear();
+    var currentMonth = now.getMonth() + 1;
+    var unpaidList = [];
+
+    members.forEach(function (member) {
+      var memberIdStr = String(member._id);
+      var startYear, startMonth;
+
+      if (member.createdAt) {
+        var created = new Date(member.createdAt);
+        if (!isNaN(created.getTime())) {
+          startYear = created.getFullYear();
+          startMonth = created.getMonth() + 1;
+        }
+      }
+      if (!startYear || !startMonth) {
+        startYear = currentYear;
+        startMonth = 1;
+      }
+
+      var y = startYear;
+      var m = startMonth;
+
+      while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+        var mKey = memberIdStr + '-' + y + '-' + m;
+        var status = paidMonthSet[mKey];
+
+        if (!status || status === 'Rejected') {
+          unpaidList.push({
+            memberId: memberIdStr,
+            memberName: member.name || 'Unnamed',
+            admissionNumber: member.admissionNumber || '',
+            batch: member.batch || '',
+            month: m,
+            year: y,
+            monthLabel: (MONTH_NAMES[m - 1] || '') + ' ' + y,
+            amount: 30,
+            status: 'UN PAID',
+            badgeColor: 'bg-danger'
+          });
+        }
+
+        m++;
+        if (m > 12) {
+          m = 1;
+          y++;
+        }
+      }
+    });
+
+    unpaidList.sort(function (a, b) {
+      if (b.year !== a.year) return b.year - a.year;
+      if (b.month !== a.month) return b.month - a.month;
+      return a.memberName.localeCompare(b.memberName);
+    });
+
+    return {
+      submitted: submittedList,
+      unpaid: unpaidList,
+      counts: {
+        total: submittedList.length,
+        pending: submittedList.filter(function (i) { return i.status === 'Pending'; }).length,
+        approved: submittedList.filter(function (i) { return i.status === 'Approved'; }).length,
+        rejected: submittedList.filter(function (i) { return i.status === 'Rejected'; }).length,
+        unpaid: unpaidList.length
+      }
+    };
+  } catch (err) {
+    console.error('Fetch all contributions failed:', err.message);
+    return { submitted: [], unpaid: [], counts: { total: 0, pending: 0, approved: 0, rejected: 0, unpaid: 0 } };
+  }
+}
+
+/* GET /admin/contributions – JSON list of all submitted and unpaid contributions */
+router.get('/contributions', async function (req, res) {
+  await connectDB();
+  try {
+    var data = await getAllContributionsData();
+    return res.json({ success: true, submitted: data.submitted, unpaid: data.unpaid, counts: data.counts });
+  } catch (error) {
+    console.error('List contributions failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load contributions data.' });
+  }
+});
+
+/* GET /admin/contributions/image/:memberId/:paymentId – serve payment screenshot image */
+router.get('/contributions/image/:memberId/:paymentId', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      return res.status(400).end();
+    }
+    var doc = await PaymentStatus.findOne({ memberId: req.params.memberId }, { membersPayments: 1 }).lean();
+    if (!doc || !doc.membersPayments) {
+      return res.status(404).end();
+    }
+    var targetId = String(req.params.paymentId);
+    var item = doc.membersPayments.find(function (p) { return String(p._id) === targetId; });
+    if (!item || !item.screenShot || !item.screenShot.data) {
+      return res.status(404).end();
+    }
+
+    res.set('Content-Type', item.screenShot.contentType || 'image/png');
+    res.set('Cache-Control', 'private, max-age=86400');
+    return res.send(item.screenShot.data.buffer || item.screenShot.data);
+  } catch (error) {
+    console.error('Serve contribution screenshot failed:', error.message);
+    return res.status(500).end();
+  }
+});
+
+/* POST /admin/contributions/:memberId/:paymentId/approve – approve payment */
+router.post('/contributions/:memberId/:paymentId/approve', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid member or payment id.' });
+    }
+
+    var adminName ='Hamd Admin';
+
+    var doc = await PaymentStatus.findOne({ memberId: req.params.memberId });
+    if (!doc || !doc.membersPayments) {
+      return res.status(404).json({ success: false, message: 'Payment record not found.' });
+    }
+
+    var targetId = String(req.params.paymentId);
+    var item = doc.membersPayments.id(targetId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Payment submission item not found.' });
+    }
+
+    item.status = 'Approved';
+    item.approvedBy = adminName;
+    item.approvedAt = new Date();
+    item.rejectionReason = '';
+
+    await doc.save();
+
+    return res.json({ success: true, message: 'Payment approved successfully.' });
+  } catch (error) {
+    console.error('Approve contribution payment failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not approve payment.' });
+  }
+});
+
+/* POST /admin/contributions/:memberId/:paymentId/reject – reject payment */
+router.post('/contributions/:memberId/:paymentId/reject', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid member or payment id.' });
+    }
+
+    var option = (req.body.reasonOption || '').trim();
+    var customReason = (req.body.customReason || '').trim();
+    var finalReason = option === 'other' ? customReason : option;
+    if (!finalReason) finalReason = 'Rejected by Admin';
+
+    var adminName ='Hamd Admin';
+
+    var doc = await PaymentStatus.findOne({ memberId: req.params.memberId });
+    if (!doc || !doc.membersPayments) {
+      return res.status(404).json({ success: false, message: 'Payment record not found.' });
+    }
+
+    var targetId = String(req.params.paymentId);
+    var item = doc.membersPayments.id(targetId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Payment submission item not found.' });
+    }
+
+    item.status = 'Rejected';
+    item.rejectionReason = finalReason;
+    item.approvedBy = adminName;
+    item.approvedAt = new Date();
+
+    await doc.save();
+
+    return res.json({ success: true, message: 'Payment rejected.' });
+  } catch (error) {
+    console.error('Reject contribution payment failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not reject payment.' });
   }
 });
 

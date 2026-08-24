@@ -760,6 +760,75 @@
       </div>
     </section>
 
+    <!-- ===== SECTION: MONTHLY CONTRIBUTION PAYMENT ===== -->
+    <section class="card-surface" id="contribution-section">
+      <div class="card-header-bar">
+        <span><i class="bi bi-wallet2 me-2" style="color:var(--primary);"></i>Monthly Contribution Payment</span>
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">₹30 / Month</span>
+      </div>
+      <div class="card-body-pad">
+        {{#if contribution.hasUnpaidMonths}}
+        <div class="alert alert-warning border-warning-subtle rounded-3 d-flex align-items-center mb-4 py-3 px-4 shadow-sm" role="alert">
+          <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+          <div>
+            <div class="fw-bold mb-1">Select month and pay 30 for each month</div>
+            <div class="small opacity-75">You have {{contribution.unpaidCount}} unpaid month(s): {{contribution.unpaidListLabels}}</div>
+          </div>
+        </div>
+        {{else}}
+        <div class="alert alert-success border-success-subtle rounded-3 d-flex align-items-center mb-4 py-3 px-4 shadow-sm" role="alert">
+          <i class="bi bi-check-circle-fill fs-4 me-3 text-success"></i>
+          <div>
+            <div class="fw-bold mb-1">All Up to Date!</div>
+            <div class="small opacity-75">You have paid all monthly contributions up to current month.</div>
+          </div>
+        </div>
+        {{/if}}
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-muted small text-uppercase" style="letter-spacing:0.5px;">Contribution Months Checklist</label>
+          <div class="row g-3" id="contributionMonthsGrid">
+            {{#each contribution.months}}
+            <div class="col-6 col-sm-4 col-md-3">
+              <div class="card h-100 border p-3 rounded-3 month-card {{#unless this.isSelectable}}bg-body-tertiary opacity-75{{/unless}}" style="transition: all 0.2s ease;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="form-check m-0">
+                    <input class="form-check-input month-checkbox" type="checkbox"
+                      value="{{this.key}}"
+                      id="mchk-{{this.key}}"
+                      data-month="{{this.month}}"
+                      data-year="{{this.year}}"
+                      data-label="{{this.label}}"
+                      data-amount="{{this.amount}}"
+                      {{#unless this.isSelectable}}disabled{{/unless}}>
+                    <label class="form-check-label fw-bold ms-1" for="mchk-{{this.key}}" style="cursor: pointer;">
+                      {{this.label}}
+                    </label>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mt-auto pt-2 border-top">
+                  <span class="fw-semibold text-secondary small">₹{{this.amount}}</span>
+                  <span class="badge {{this.badgeColor}} px-2 py-1" style="font-size: 11px;">{{this.status}}</span>
+                </div>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+
+        <!-- Selected Summary & Pay Action Bar -->
+        <div class="card bg-body-tertiary border rounded-3 p-3 mt-4 d-flex flex-row flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <div class="small text-muted fw-semibold">Selected Months: <span id="selectedMonthsCount">0</span></div>
+            <div class="fs-5 fw-extrabold text-primary">Total: ₹<span id="selectedTotalAmount">0</span></div>
+          </div>
+          <button type="button" id="openPayModalBtn" class="btn btn-primary rounded-3 px-4 py-2 fw-bold" disabled>
+            <i class="bi bi-credit-card me-1"></i>Pay Now
+          </button>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- FOOTER -->
@@ -1632,6 +1701,312 @@
       btn.textContent = origTxt;
     });
   }
+  </script>
+
+  <!-- ===== PAYMENT DETAILS MODAL ===== -->
+  <div class="modal fade" id="payContributionModal" tabindex="-1" aria-labelledby="payContributionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-bottom px-4 py-3">
+          <h5 class="modal-title fw-bold" id="payContributionModalLabel">
+            <i class="bi bi-qr-code-scan text-primary me-2"></i>Complete Contribution Payment
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body px-4 py-3">
+          <form id="submitContributionForm" enctype="multipart/form-data">
+            <div id="paymentModalAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+
+            <div class="row g-4">
+              <!-- Left Column: Summary & Payment Info -->
+              <div class="col-12 col-md-6">
+                <div class="p-3 bg-primary-subtle rounded-3 text-primary mb-3">
+                  <div class="small fw-bold text-uppercase opacity-75">Months Selected</div>
+                  <div class="fw-bold fs-6 mb-1 text-break" id="modalSelectedMonthsList">None</div>
+                  <div class="fs-4 fw-extrabold">Total Amount: ₹<span id="modalTotalAmount">0</span></div>
+                </div>
+
+                <!-- UPI & GPay Details -->
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small text-muted text-uppercase mb-1">GPay Number</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                    <input type="text" class="form-control fw-bold" id="gpayNumberCopyText" value="{{#if paymentSetup.gpayNumber}}{{paymentSetup.gpayNumber}}{{else}}Not set{{/if}}" readonly>
+                    <button type="button" class="btn btn-outline-secondary" onclick="copyTextFromInput('gpayNumberCopyText', 'GPay Number')">
+                      <i class="bi bi-copy me-1"></i>Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small text-muted text-uppercase mb-1">UPI ID</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                    <input type="text" class="form-control fw-bold" id="upiIdCopyText" value="{{#if paymentSetup.upiId}}{{paymentSetup.upiId}}{{else}}Not set{{/if}}" readonly>
+                    <button type="button" class="btn btn-outline-secondary" onclick="copyTextFromInput('upiIdCopyText', 'UPI ID')">
+                      <i class="bi bi-copy me-1"></i>Copy
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Proceed to UPI App Button -->
+                <div class="mt-4">
+                  <a href="#" id="proceedUpiLink" target="_blank" class="btn btn-success w-100 rounded-3 py-2 fw-bold shadow-sm">
+                    <i class="bi bi-box-arrow-up-right me-2"></i>Proceed to UPI App
+                  </a>
+                  <div class="form-text text-center small mt-1">Launches your UPI app (GPay / PhonePe / Paytm) with pre-filled amount.</div>
+                </div>
+              </div>
+
+              <!-- Right Column: QR Code & Screenshot Upload -->
+              <div class="col-12 col-md-6 border-start-md">
+                <div class="text-center mb-3">
+                  <label class="form-label fw-semibold small text-muted text-uppercase d-block mb-1">Scan QR Code to Pay</label>
+                  {{#if paymentSetup.hasQrCode}}
+                  <img src="/users/payment-setup/qr-code" alt="Payment QR Code" class="img-fluid rounded-3 border shadow-sm" style="max-height:180px; object-fit:contain;">
+                  {{else}}
+                  <div class="border rounded-3 p-4 bg-body-tertiary text-muted">
+                    <i class="bi bi-qr-code fs-1 d-block mb-1 text-secondary"></i>
+                    <span class="small">QR Code not uploaded by Admin</span>
+                  </div>
+                  {{/if}}
+                </div>
+
+                <div class="mb-3">
+                  <label for="paymentScreenshot" class="form-label fw-semibold">Upload Payment Screenshot <span class="text-danger">*</span></label>
+                  <input type="file" name="paymentScreenshot" id="paymentScreenshot" class="form-control" accept="image/*" required>
+                  <div class="form-text">Attach receipt/screenshot of the completed payment.</div>
+                </div>
+
+                <button type="submit" id="submitPaymentBtn" class="btn btn-primary w-100 rounded-3 py-2 fw-bold mt-3">
+                  <i class="bi bi-upload me-1"></i>Submit Payment Receipt
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UNPAID MONTHS POPUP MODAL ===== -->
+  {{#if contribution.hasUnpaidMonths}}
+  <div class="modal fade" id="unpaidMonthsPopupModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="unpaidMonthsPopupLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-bottom bg-warning-subtle text-warning-emphasis px-4 py-3">
+          <h5 class="modal-title fw-bold" id="unpaidMonthsPopupLabel">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Unpaid Monthly Contributions
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body px-4 py-3">
+          <p class="mb-2">You have <strong class="text-danger">{{contribution.unpaidCount}}</strong> unpaid monthly contribution(s) pending:</p>
+          <div class="p-3 bg-body-tertiary rounded-3 border mb-3 fw-bold text-dark text-break">
+            {{contribution.unpaidListLabels}}
+          </div>
+          <p class="small text-muted mb-0">Please clear your contribution payments to support alumni activities.</p>
+        </div>
+        <div class="modal-footer border-top px-4 py-3 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary rounded-3 px-4" data-bs-dismiss="modal">Pay Later</button>
+          <button type="button" class="btn btn-primary rounded-3 px-4 fw-bold" id="unpaidPayNowBtn">Pay Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- ===== CONTRIBUTION PAYMENT SCRIPT ===== -->
+  <script>
+    (function () {
+      var checkboxes = document.querySelectorAll('.month-checkbox');
+      var countEl = document.getElementById('selectedMonthsCount');
+      var totalEl = document.getElementById('selectedTotalAmount');
+      var payBtn = document.getElementById('openPayModalBtn');
+
+      var modalSelectedList = document.getElementById('modalSelectedMonthsList');
+      var modalTotalEl = document.getElementById('modalTotalAmount');
+      var proceedUpiLink = document.getElementById('proceedUpiLink');
+
+      var form = document.getElementById('submitContributionForm');
+      var alertBox = document.getElementById('paymentModalAlert');
+      var submitBtn = document.getElementById('submitPaymentBtn');
+
+      function getSelectedMonths() {
+        var selected = [];
+        checkboxes.forEach(function (cb) {
+          if (cb.checked && !cb.disabled) {
+            selected.push({
+              key: cb.value,
+              month: cb.getAttribute('data-month'),
+              year: cb.getAttribute('data-year'),
+              label: cb.getAttribute('data-label'),
+              amount: Number(cb.getAttribute('data-amount')) || 30
+            });
+          }
+        });
+        return selected;
+      }
+
+      function updateSummary() {
+        var selected = getSelectedMonths();
+        var count = selected.length;
+        var total = count * 30;
+
+        if (countEl) countEl.textContent = String(count);
+        if (totalEl) totalEl.textContent = String(total);
+        if (payBtn) payBtn.disabled = (count === 0);
+      }
+
+      checkboxes.forEach(function (cb) {
+        cb.addEventListener('change', updateSummary);
+      });
+
+      if (payBtn) {
+        payBtn.addEventListener('click', function () {
+          var selected = getSelectedMonths();
+          if (selected.length === 0) return;
+
+          var labels = selected.map(function (s) { return s.label; }).join(', ');
+          var total = selected.length * 30;
+
+          if (modalSelectedList) modalSelectedList.textContent = labels;
+          if (modalTotalEl) modalTotalEl.textContent = String(total);
+
+          var upiId = (document.getElementById('upiIdCopyText') ? document.getElementById('upiIdCopyText').value : '').trim();
+          if (proceedUpiLink) {
+            if (upiId && upiId !== 'Not set') {
+              proceedUpiLink.href = 'upi://pay?pa=' + encodeURIComponent(upiId) + '&pn=HAMD%20Alumni&am=' + total + '&cu=INR';
+            } else {
+              proceedUpiLink.href = '#';
+            }
+          }
+
+          var modalEl = document.getElementById('payContributionModal');
+          if (modalEl && window.bootstrap) {
+            var modalInst = window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl);
+            modalInst.show();
+          }
+        });
+      }
+
+      if (form) {
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          if (!alertBox) return;
+
+          alertBox.className = 'alert d-none rounded-3 py-2 px-3 small mb-3';
+          alertBox.textContent = '';
+
+          var selected = getSelectedMonths();
+          if (selected.length === 0) {
+            alertBox.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
+            alertBox.textContent = 'Please select at least one month to pay.';
+            return;
+          }
+
+          var fileInput = document.getElementById('paymentScreenshot');
+          var file = fileInput && fileInput.files && fileInput.files[0];
+          if (!file) {
+            alertBox.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
+            alertBox.textContent = 'Please select a payment screenshot image.';
+            return;
+          }
+
+          submitBtn.disabled = true;
+          var originalText = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting...';
+
+          var formData = new FormData();
+          var monthKeys = selected.map(function (s) { return s.key; });
+          formData.append('months', JSON.stringify(monthKeys));
+          formData.append('paymentScreenshot', file);
+
+          fetch('/users/submit-contribution-payment', {
+            method: 'POST',
+            body: formData
+          })
+            .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+            .then(function (result) {
+              if (!result.ok || !result.data.success) {
+                alertBox.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
+                alertBox.textContent = (result.data && result.data.message) || 'Could not submit payment.';
+                return;
+              }
+
+              alertBox.className = 'alert alert-success rounded-3 py-2 px-3 small mb-3';
+              alertBox.textContent = result.data.message || 'Payment submitted successfully!';
+
+              selected.forEach(function (s) {
+                var cb = document.getElementById('mchk-' + s.key);
+                if (cb) {
+                  cb.checked = false;
+                  cb.disabled = true;
+                  var card = cb.closest('.month-card');
+                  if (card) {
+                    card.classList.add('bg-body-tertiary', 'opacity-75');
+                    var badge = card.querySelector('.badge');
+                    if (badge) {
+                      badge.className = 'badge bg-warning text-dark px-2 py-1';
+                      badge.textContent = 'PENDING';
+                    }
+                  }
+                }
+              });
+
+              updateSummary();
+
+              setTimeout(function () {
+                var modalEl = document.getElementById('payContributionModal');
+                if (modalEl && window.bootstrap) {
+                  var inst = window.bootstrap.Modal.getInstance(modalEl);
+                  if (inst) inst.hide();
+                }
+                form.reset();
+              }, 1200);
+            })
+            .catch(function () {
+              alertBox.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
+              alertBox.textContent = 'Network error while submitting payment.';
+            })
+            .finally(function () {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalText;
+            });
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var unpaidModalEl = document.getElementById('unpaidMonthsPopupModal');
+        if (unpaidModalEl && window.bootstrap) {
+          var unpaidInst = new window.bootstrap.Modal(unpaidModalEl);
+          unpaidInst.show();
+
+          var payNowBtn = document.getElementById('unpaidPayNowBtn');
+          if (payNowBtn) {
+            payNowBtn.addEventListener('click', function () {
+              unpaidInst.hide();
+              var targetSec = document.getElementById('contribution-section');
+              if (targetSec) {
+                targetSec.scrollIntoView({ behavior: 'smooth' });
+              }
+            });
+          }
+        }
+      });
+    })();
+
+    function copyTextFromInput(inputId, labelName) {
+      var input = document.getElementById(inputId);
+      if (!input || !input.value || input.value === 'Not set') return;
+      navigator.clipboard.writeText(input.value.trim()).then(function () {
+        alert(labelName + ' copied to clipboard!');
+      }).catch(function () {
+        input.select();
+        document.execCommand('copy');
+        alert(labelName + ' copied to clipboard!');
+      });
+    }
   </script>
 
 </body>
