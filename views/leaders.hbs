@@ -253,7 +253,7 @@
     <div class="login-card">
       <div class="login-badge"><img src="/logo/hamd-icon-white.png" alt="HAMD Logo"></div>
       <h1 class="h4 fw-bold mb-1">Batch Leader Login</h1>
-      <p class="text-muted mb-4" style="font-size: 14px;">Sign in with your batch year, admission number and password.</p>
+      <p class="text-muted mb-4" style="font-size: 14px;">Sign in with your batch year and password.</p>
 
       <div id="loginError" class="alert alert-danger py-2 px-3 hidden" style="font-size: 13px; border-radius: 12px;"></div>
 
@@ -261,10 +261,6 @@
         <div class="mb-3">
           <label class="form-label" for="year">Batch Year</label>
           <input class="form-control" id="year" name="year" type="text" placeholder="e.g. 2021" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label" for="admissionNumber">Admission Number</label>
-          <input class="form-control" id="admissionNumber" name="admissionNumber" type="text" placeholder="e.g. ADM1023" required>
         </div>
         <div class="mb-4">
           <label class="form-label" for="password">Password</label>
@@ -288,7 +284,7 @@
           <div class="me-auto">
             <div class="fw-bold" style="font-size: 18px;" id="leaderName">Batch Leader</div>
             <div class="small opacity-75">
-              Batch <span id="leaderYear">-</span> &middot; Admission No. <span id="leaderAdm">-</span>
+              Batch <span id="leaderYear">-</span>
             </div>
           </div>
           <button class="theme-toggle" id="themeToggle" type="button" title="Toggle dark / light mode" aria-label="Toggle dark or light mode">
@@ -886,7 +882,6 @@
         document.getElementById('leaderInitials').textContent =
           name.trim().split(/\s+/).slice(0, 2).map(function (p) { return p.charAt(0).toUpperCase(); }).join('') || 'BL';
         document.getElementById('leaderYear').textContent = data.leader.year;
-        document.getElementById('leaderAdm').textContent = data.leader.admissionNumber;
         document.getElementById('statYear').textContent = data.leader.year;
         document.getElementById('statCount').textContent = (data.members || []).length;
 
@@ -950,7 +945,6 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               year: document.getElementById('year').value,
-              admissionNumber: document.getElementById('admissionNumber').value,
               password: document.getElementById('password').value
             })
           });

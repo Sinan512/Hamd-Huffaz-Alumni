@@ -32,9 +32,8 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- jsPDF + AutoTable (registered members PDF export) -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS (registered members Excel export) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 
   <style>
@@ -925,6 +924,24 @@
       border-top-color: var(--card-border) !important;
     }
 
+    /* ---- Registered members controls ---- */
+    #registrations-section .card-header { gap: 12px; }
+    .registration-controls,
+    .registration-actions { display: flex; align-items: center; gap: 8px; }
+    .registration-controls { min-width: 0; }
+    #regEventSelect { width: 220px; min-width: 0; }
+    #regDownloadExcelBtn,
+    #regRefreshBtn { margin: 0; white-space: nowrap; }
+
+    @media (max-width: 575.98px) {
+      #registrations-section .card-header { align-items: stretch; }
+      .registration-controls { width: 100%; flex-wrap: wrap; }
+      #regEventSelect { flex: 1 1 100%; width: 100%; }
+      .registration-actions { width: 100%; }
+      #regDownloadExcelBtn { flex: 1 1 auto; }
+      #regRefreshBtn { flex: 0 0 auto; }
+    }
+
     /* ---- Mobile fixes: All Registered Members table ---- */
     @media (max-width: 767px) {
 
@@ -1253,59 +1270,70 @@
       <div class="row g-4 mb-4" id="batch-leaders-section">
         <div class="col-12">
           <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
               <div class="d-flex align-items-center gap-2">
                 <i class="bi bi-person-badge-fill text-indigo"></i>
                 <span>Batch Leaders</span>
                 <span class="badge bg-indigo-soft text-indigo rounded-pill ms-1" style="font-size:11px;" id="batchLeaderCountBadge">{{batchLeadersList.length}}</span>
               </div>
+              <button class="btn btn-sm btn-primary rounded-3 text-white" data-bs-toggle="modal" data-bs-target="#assignLeaderModal">
+                <i class="bi bi-plus-lg me-1"></i>Setup Leader Login
+              </button>
             </div>
 
             <div class="table-responsive">
               <table class="custom-table" id="batchLeadersTable">
                 <thead>
                   <tr>
-                    <th>Leader Profile</th>
                     <th>Batch Year</th>
-                    <th>Assigned Date</th>
+                    <th>Password Status</th>
+                    <th>Date Set</th>
                     <th class="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="batchLeadersTableBody">
                   {{#each batchLeadersList}}
-                  <tr data-year="{{this.year}}" data-name="{{this.memberName}}">
+                  <tr data-year="{{this.year}}">
                     <td>
                       <div class="d-flex align-items-center gap-3">
                         <div class="member-avatar-wrapper">
                           <div class="member-avatar-icon">
-                            <i class="bi bi-person-badge"></i>
+                            <i class="bi bi-shield-lock"></i>
                           </div>
                         </div>
                         <div>
-                          <div class="fw-bold text-dark">{{this.memberName}}</div>
-                          <div class="text-muted small">Batch Leader</div>
+                          <div class="fw-bold text-dark">Batch {{this.year}}</div>
+                          <div class="text-muted small">Leader Credentials</div>
                         </div>
                       </div>
                     </td>
-                    <td><span class="batch-tag">{{this.year}}</span></td>
+                    <td>
+                      {{#if this.hasPassword}}
+                      <span class="badge bg-success-subtle text-success border">Configured</span>
+                      {{else}}
+                      <span class="badge bg-warning-subtle text-warning border">Pending Password</span>
+                      {{/if}}
+                    </td>
                     <td class="text-muted small fw-medium">{{this.assignedAt}}</td>
                     <td class="text-end">
-                      <button class="btn btn-sm btn-light border rounded-2 px-2 text-primary" title="View Leader Details"
-                              data-leader-id="{{this.id}}"
-                              data-leader-name="{{this.memberName}}"
-                              data-leader-year="{{this.year}}"
-                              data-leader-assigned="{{this.assignedAt}}"
-                              data-leader-admission="{{this.admissionNumber}}"
-data-leader-password="{{this.password}}"
-onclick="openLeaderDetailsModal(this.dataset)">
-                        <i class="bi bi-eye"></i>
-                      </button>
+                      <div class="d-flex gap-1 justify-content-end">
+                        <button class="btn btn-sm btn-light border rounded-2 px-2 text-primary" title="Edit Password"
+                                data-leader-id="{{this.id}}"
+                                data-leader-year="{{this.year}}"
+                                onclick="openLeaderCredentialsModal('{{this.id}}', '{{this.year}}')">
+                          <i class="bi bi-key"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light border rounded-2 px-2 text-danger" title="Remove Leader Setup"
+                                onclick="deleteLeaderSetup('{{this.id}}', '{{this.year}}')">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {{/each}}
                   {{#unless batchLeadersList}}
                   <tr id="batchLeadersEmptyRow">
-                    <td colspan="4" class="text-center text-muted py-4">No batch leaders assigned yet.</td>
+                    <td colspan="4" class="text-center text-muted py-4">No batch leader passwords set up yet.</td>
                   </tr>
                   {{/unless}}
                 </tbody>
@@ -1436,45 +1464,151 @@ onclick="openLeaderDetailsModal(this.dataset)">
         <!-- Right Side Widgets -->
         <div class="col-lg-4">
           
-          <!-- Upcoming Events -->
-          <div class="card mb-4" id="events-section">
-            <div class="card-header">
-              <span><i class="bi bi-calendar-event text-amber me-2"></i>Upcoming Events</span>
-              <button class="btn btn-sm btn-light text-muted p-0" data-bs-toggle="modal" data-bs-target="#createEventModal">
-                <i class="bi bi-plus-circle"></i>
-              </button>
-            </div>
-            <div style="max-height:440px;overflow-y:auto;">
-              {{#each upcomingEvents}}
-              <div class="event-item" data-event-id="{{this.id}}" style="cursor:pointer;"
-                   onclick="openEventDetail('{{this.id}}')">
-                <div class="event-date-box">
-                  <span class="event-date-month">{{this.month}}</span>
-                  <span class="event-date-day">{{this.day}}</span>
-                </div>
-                <div class="overflow-hidden flex-grow-1">
-                  <div class="fw-bold text-dark text-truncate small mb-1">{{this.title}}</div>
-                  <div class="text-muted" style="font-size: 11px;"><i class="bi bi-geo-alt me-1"></i>{{this.location}}</div>
-                </div>
-                <span class="badge {{this.badgeColor}} rounded-pill" style="font-size: 10px;">{{this.category}}</span>
-                <div class="d-flex gap-1 ms-2" onclick="event.stopPropagation()">
-                  <button class="btn btn-sm btn-light border rounded-2 px-2 text-primary" title="Edit Event"
-                          onclick="openEditEventModal('{{this.id}}')">
-                    <i class="bi bi-pencil" style="font-size:11px;"></i>
-                  </button>
-                  <button class="btn btn-sm btn-light border rounded-2 px-2 text-danger" title="Delete Event"
-                          data-event-id="{{this.id}}" data-event-title="{{this.title}}"
-                          onclick="openDeleteEventModal(this.dataset.eventId, this.dataset.eventTitle)">
-                    <i class="bi bi-trash" style="font-size:11px;"></i>
-                  </button>
-                </div>
-              </div>
-              {{/each}}
-              {{#unless upcomingEvents}}
-              <div class="px-4 py-3 text-muted small text-center">No events yet. Use "Create Event" to add one.</div>
-              {{/unless}}
-            </div>
-          </div>
+          <!-- Upcoming and ended events -->
+<div class="card mb-4" id="events-section">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">
+      <i class="bi bi-calendar-event text-amber me-2"></i>
+      Upcoming Events
+    </span>
+
+    <button
+      class="btn btn-sm btn-light text-muted"
+      type="button"
+      title="Create Event"
+      data-bs-toggle="modal"
+      data-bs-target="#createEventModal">
+      <i class="bi bi-plus-circle"></i>
+    </button>
+  </div>
+
+  <div class="overflow-auto" style="max-height: 440px;">
+
+    {{#each upcomingEvents}}
+    <div
+      class="event-item row g-2 align-items-center mx-0 px-3 py-2 border-bottom"
+      data-event-id="{{this.id}}"
+      role="button"
+      onclick="openEventDetail('{{this.id}}')">
+
+      <div class="col-auto">
+        <div class="event-date-box">
+          <span class="event-date-month">{{this.month}}</span>
+          <span class="event-date-day">{{this.day}}</span>
+        </div>
+      </div>
+
+      <div class="col overflow-hidden">
+        <div class="fw-bold text-dark text-truncate small mb-1">
+          {{this.title}}
+        </div>
+
+        <div class="text-muted small text-truncate">
+          <i class="bi bi-geo-alt me-1"></i>{{this.location}}
+        </div>
+      </div>
+
+      <div class="col-auto">
+        <span class="badge {{this.badgeColor}} rounded-pill">
+          {{this.category}}
+        </span>
+      </div>
+
+      <div class="col-auto" onclick="event.stopPropagation()">
+        <div class="d-flex gap-1">
+          <button
+            class="btn btn-sm btn-light border rounded-2 px-2 text-primary"
+            type="button"
+            title="Edit Event"
+            onclick="openEditEventModal('{{this.id}}')">
+            <i class="bi bi-pencil"></i>
+          </button>
+
+          <button
+            class="btn btn-sm btn-light border rounded-2 px-2 text-danger"
+            type="button"
+            title="Delete Event"
+            data-event-id="{{this.id}}"
+            data-event-title="{{this.title}}"
+            onclick="openDeleteEventModal(this.dataset.eventId, this.dataset.eventTitle)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+
+    {{#if endedEvents.length}}
+    <div class="sticky-top px-3 py-2 bg-light border-top border-bottom">
+      <small class="fw-semibold text-muted text-uppercase">
+        <i class="bi bi-clock-history me-1"></i>
+        Ended Events
+      </small>
+    </div>
+
+    {{#each endedEvents}}
+    <div
+      class="event-item row g-2 align-items-center mx-0 px-3 py-2 border-bottom bg-light-subtle opacity-75"
+      data-event-id="{{this.id}}"
+      role="button"
+      onclick="openEventDetail('{{this.id}}')">
+
+      <div class="col-auto">
+        <div class="event-date-box bg-secondary-subtle">
+          <span class="event-date-month text-muted">{{this.month}}</span>
+          <span class="event-date-day text-muted">{{this.day}}</span>
+        </div>
+      </div>
+
+      <div class="col overflow-hidden">
+        <div class="fw-bold text-dark text-truncate small mb-1">
+          {{this.title}}
+        </div>
+
+        <div class="text-muted small text-truncate">
+          <i class="bi bi-geo-alt me-1"></i>{{this.location}}
+        </div>
+      </div>
+
+      <div class="col-auto">
+        <div class="d-flex align-items-center gap-1">
+          <span class="badge bg-secondary rounded-pill">Ended</span>
+        </div>
+      </div>
+
+      <div class="col-auto" onclick="event.stopPropagation()">
+        <div class="d-flex gap-1">
+          <button
+            class="btn btn-sm btn-light border rounded-2 px-2 text-primary"
+            type="button"
+            title="Edit Event"
+            onclick="openEditEventModal('{{this.id}}')">
+            <i class="bi bi-pencil"></i>
+          </button>
+
+          <button
+            class="btn btn-sm btn-light border rounded-2 px-2 text-danger"
+            type="button"
+            title="Delete Event"
+            data-event-id="{{this.id}}"
+            data-event-title="{{this.title}}"
+            onclick="openDeleteEventModal(this.dataset.eventId, this.dataset.eventTitle)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+    {{/if}}
+
+    {{#unless hasEvents}}
+    <div class="px-4 py-4 text-center text-muted small">
+      No events yet. Use “Create Event” to add one.
+    </div>
+    {{/unless}}
+
+  </div>
+</div>
 
           <!-- Quick Actions -->
           <div class="card">
@@ -1507,23 +1641,25 @@ onclick="openLeaderDetailsModal(this.dataset)">
 
       <!-- REGISTERED MEMBERS PER EVENT -->
       <div class="card mb-4" id="registrations-section">
-        <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between">
           <span><i class="bi bi-people-fill text-emerald me-2"></i>Registered Members
             <span id="regCountBadge" class="badge bg-secondary rounded-pill ms-2">0</span>
           </span>
-          <div class="d-flex gap-2 align-items-center">
-            <select id="regEventSelect" class="form-select form-select-sm rounded-3" style="min-width:220px;">
+          <div class="registration-controls">
+            <select id="regEventSelect" class="form-select form-select-sm rounded-3">
               <option value="">All events</option>
               {{#each upcomingEvents}}
               <option value="{{this.id}}">{{this.title}}</option>
               {{/each}}
             </select>
-            <button id="regDownloadPdfBtn" class="btn btn-sm btn-danger rounded-3 text-nowrap" title="Download this list as PDF" disabled>
-              <i class="bi bi-file-earmark-arrow-down"></i>
-            </button>
-            <button id="regRefreshBtn" class="btn btn-sm btn-light border rounded-3" title="Refresh">
-              <i class="bi bi-arrow-clockwise"></i>
-            </button>
+            <div class="registration-actions">
+              <button id="regDownloadExcelBtn" class="btn btn-sm btn-success rounded-3 fw-semibold" title="Download this list as Excel" disabled>
+                <i class="bi bi-file-earmark-excel me-1"></i>Excel
+              </button>
+              <button id="regRefreshBtn" class="btn btn-sm btn-light border rounded-3" title="Refresh">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
 
           </div>
         </div>
@@ -1760,33 +1896,31 @@ onclick="openLeaderDetailsModal(this.dataset)">
     </div>
   </div>
 
-  <!-- Modal 3: Assign Leader -->
+  <!-- Modal 3: Batch Leader Setup -->
   <div class="modal fade" id="assignLeaderModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4 border-0 shadow-lg">
         <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-fw-bold"><i class="bi bi-person-badge text-purple me-2"></i>Assign Batch Leader</h5>
+          <h5 class="modal-fw-bold"><i class="bi bi-shield-lock text-purple me-2"></i>Setup Batch Leader Login</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
           <form id="assignLeaderForm">
             <div class="mb-3">
-              <label class="form-label small fw-bold">Select Batch</label>
+              <label class="form-label small fw-bold">Select Batch Year</label>
               <select class="form-select rounded-3" name="year" id="leaderBatchSelect" required>
                 <option value="">Loading batches...</option>
               </select>
             </div>
             <div class="mb-3">
-              <label class="form-label small fw-bold">Assign Member</label>
-              <select class="form-select rounded-3" name="memberId" id="leaderMemberSelect" required disabled>
-                <option value="">Select a batch first</option>
-              </select>
-              <div class="form-text small" id="leaderMemberHint">Members of the selected batch will appear here.</div>
+              <label class="form-label small fw-bold">Leader Password</label>
+              <input type="password" class="form-control rounded-3" name="password" id="leaderPasswordInput" placeholder="Enter password for leader login" required>
+              <div class="form-text small">This password allows login to batch leader dashboard for the selected year.</div>
             </div>
             <div id="assignLeaderAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3"></div>
             <div class="d-flex justify-content-end gap-2 mt-4">
               <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" id="assignLeaderSubmit" class="btn btn-purple rounded-3 px-4 text-white" style="background:#8b5cf6;">Assign Leader</button>
+              <button type="submit" id="assignLeaderSubmit" class="btn btn-purple rounded-3 px-4 text-white" style="background:#8b5cf6;">Save Leader Setup</button>
             </div>
           </form>
         </div>
@@ -2107,28 +2241,23 @@ onclick="openLeaderDetailsModal(this.dataset)">
     </div>
   </div>
 
-  <!-- Modal 9: Leader Credentials -->
+  <!-- Modal 9: Leader Password Update -->
   <div class="modal fade" id="leaderCredentialsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4 border-0 shadow-lg">
         <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-fw-bold"><i class="bi bi-key text-primary me-2"></i>Set Login Credentials</h5>
+          <h5 class="modal-fw-bold"><i class="bi bi-key text-primary me-2"></i>Update Leader Password</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
           <p class="text-muted small mb-3" id="leaderCredentialsSubtitle"></p>
-          <form id="leaderCredentialsForm">
+           <form id="leaderCredentialsForm">
             <input type="hidden" id="leaderCredentialsId">
             <div class="mb-3">
-              <label class="form-label small fw-bold">Admission Number</label>
-              <input type="text" name="admissionNumber" id="leaderCredentialsAdmission" class="form-control rounded-3"
-                     placeholder="Admission number" autocomplete="off" readonly>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Password</label>
+              <label class="form-label small fw-bold">New Password</label>
               <div class="input-group">
                 <input type="password" name="password" id="leaderCredentialsPassword" class="form-control rounded-start-3"
-                       placeholder="Enter password" autocomplete="new-password" required>
+                       placeholder="Enter new password" autocomplete="new-password" required>
                 <button type="button" class="btn btn-outline-secondary rounded-end-3" id="toggleCredPassword"
                         title="Show/Hide password">
                   <i class="bi bi-eye" id="toggleCredPasswordIcon"></i>
@@ -2138,83 +2267,9 @@ onclick="openLeaderDetailsModal(this.dataset)">
             <div id="leaderCredentialsAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0 mt-3"></div>
             <div class="d-flex justify-content-end gap-2 mt-4">
               <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" id="leaderCredentialsSubmit" class="btn btn-primary rounded-3 px-4">Save Credentials</button>
+              <button type="submit" id="leaderCredentialsSubmit" class="btn btn-primary rounded-3 px-4">Update Password</button>
             </div>
           </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 10: Leader Details (view info + credentials + change leader) -->
-  <div class="modal fade" id="leaderDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content rounded-4 border-0 shadow-lg">
-        <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-fw-bold"><i class="bi bi-person-badge text-primary me-2"></i>Leader Details</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-4">
-
-          <!-- Leader info card -->
-          <div class="p-3 rounded-3 mb-4 d-flex align-items-center gap-3" style=" [data-bs-theme="dark"] {
-      background: #1e293b;
-      color: #94a3b8;
-    }">
-            <div class="member-avatar-wrapper">
-              <div class="member-avatar-icon"><i class="bi bi-person-badge"></i></div>
-            </div>
-            <div>
-              <div class="fw-bold text-dark" id="ldName"></div>
-              <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
-                <span class="batch-tag" id="ldBatch"></span>
-                <span class="text-muted small" id="ldAssigned"></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Credentials section -->
-          <div class="fw-bold small text-muted text-uppercase mb-2" style="letter-spacing:.06em;">
-            <i class="bi bi-key me-1"></i>Login Credentials
-          </div>
-          <form id="ldCredentialsForm">
-            <input type="hidden" id="ldLeaderId">
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Admission Number</label>
-              <input type="text" name="admissionNumber" id="ldAdmission" class="form-control rounded-3" autocomplete="off" readonly>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Password</label>
-              <div class="input-group">
-                <input type="password" name="password" id="ldPassword" class="form-control rounded-start-3" autocomplete="new-password" placeholder="Enter new password" required>
-                <button type="button" class="btn btn-outline-secondary rounded-end-3" id="ldTogglePass">
-                  <i class="bi bi-eye" id="ldTogglePassIcon"></i>
-                </button>
-              </div>
-            </div>
-            <div id="ldCredAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0"></div>
-            <button type="submit" id="ldCredSubmit" class="btn btn-primary rounded-3 w-100 mt-3">Save Credentials</button>
-          </form>
-
-          <hr class="my-4">
-
-          <!-- Change leader section -->
-          <div class="fw-bold small text-muted text-uppercase mb-2" style="letter-spacing:.06em;">
-            <i class="bi bi-arrow-repeat me-1"></i>Change Leader
-          </div>
-          <form id="ldChangeLeaderForm">
-            <input type="hidden" name="year" id="ldYear">
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Select New Leader</label>
-              <select class="form-select rounded-3" name="memberId" id="ldMemberSelect" required>
-                <option value="">Loading members…</option>
-              </select>
-              <div class="form-text small" id="ldMemberHint"></div>
-            </div>
-            <div id="ldChangeAlert" class="alert d-none rounded-3 py-2 px-3 small mb-0"></div>
-            <button type="submit" id="ldChangeSubmit" class="btn rounded-3 w-100 mt-3 text-white" style="background:#8b5cf6;">Assign as New Leader</button>
-          </form>
-
         </div>
       </div>
     </div>
@@ -2952,8 +3007,6 @@ onclick="openLeaderDetailsModal(this.dataset)">
 
       var modalEl = document.getElementById('assignLeaderModal');
       var batchSelect = document.getElementById('leaderBatchSelect');
-      var memberSelect = document.getElementById('leaderMemberSelect');
-      var hint = document.getElementById('leaderMemberHint');
       var alertBox = document.getElementById('assignLeaderAlert');
       var submitBtn = document.getElementById('assignLeaderSubmit');
       var batchesLoaded = false;
@@ -2968,11 +3021,6 @@ onclick="openLeaderDetailsModal(this.dataset)">
         alertBox.textContent = '';
       }
 
-      function resetMembers(message) {
-        memberSelect.innerHTML = '<option value="">' + message + '</option>';
-        memberSelect.disabled = true;
-      }
-
       async function loadBatches() {
         try {
           var res = await fetch('/admin/batches');
@@ -2984,7 +3032,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
             return;
           }
 
-          batchSelect.innerHTML = '<option value="">Select a batch</option>' +
+          batchSelect.innerHTML = '<option value="">Select a batch year</option>' +
             years.map(function (y) { return '<option value="' + y + '">Batch ' + y + '</option>'; }).join('');
           batchesLoaded = true;
         } catch (err) {
@@ -2992,65 +3040,27 @@ onclick="openLeaderDetailsModal(this.dataset)">
         }
       }
 
-      async function loadMembers(year) {
-        resetMembers('Loading members...');
-        hint.textContent = 'Loading members of batch ' + year + '...';
-
-        try {
-          var res = await fetch('/admin/batches/' + year + '/members');
-          var result = await res.json();
-          var members = result.members || [];
-
-          if (!members.length) {
-            resetMembers('No members found in this batch');
-            hint.textContent = 'No members found in batch ' + year + '.';
-            return;
-          }
-
-          memberSelect.innerHTML = '<option value="">Select a member</option>' +
-            members.map(function (m) {
-              var label = m.name + (m.admissionNumber ? ' (' + m.admissionNumber + ')' : '');
-              return '<option value="' + m._id + '">' + label + '</option>';
-            }).join('');
-          memberSelect.disabled = false;
-          hint.textContent = members.length + (members.length === 1 ? ' member' : ' members') + ' in batch ' + year + '.';
-        } catch (err) {
-          resetMembers('Could not load members');
-          hint.textContent = 'Could not load the members of this batch.';
-        }
-      }
-
       if (modalEl) {
         modalEl.addEventListener('show.bs.modal', function () {
           hideAlert();
+          form.reset();
           if (!batchesLoaded) loadBatches();
         });
       }
-
-      batchSelect.addEventListener('change', function () {
-        hideAlert();
-        var year = batchSelect.value;
-        if (!year) {
-          resetMembers('Select a batch first');
-          hint.textContent = 'Members of the selected batch will appear here.';
-          return;
-        }
-        loadMembers(year);
-      });
 
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
         hideAlert();
 
         var data = Object.fromEntries(new FormData(form).entries());
-        if (!data.year || !data.memberId) {
-          showAlert('danger', 'Please select both a batch and a member.');
+        if (!data.year || !data.password) {
+          showAlert('danger', 'Please select a batch year and enter a password.');
           return;
         }
 
         submitBtn.disabled = true;
         var originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Assigning...';
+        submitBtn.textContent = 'Saving...';
 
         try {
           var res = await fetch('/admin/leaders', {
@@ -3061,17 +3071,17 @@ onclick="openLeaderDetailsModal(this.dataset)">
           var result = await res.json().catch(function () { return {}; });
 
           if (res.ok) {
-            showAlert('success', result.message || 'Batch leader assigned.');
+            showAlert('success', result.message || 'Batch leader password saved.');
             setTimeout(function () {
               var modal = bootstrap.Modal.getInstance(modalEl);
               if (modal) modal.hide();
               window.location.reload();
             }, 1200);
           } else {
-            showAlert('danger', result.message || 'Could not assign the leader, please try again.');
+            showAlert('danger', result.message || 'Could not save leader setup, please try again.');
           }
         } catch (err) {
-          showAlert('danger', 'Could not assign the leader, please try again.');
+          showAlert('danger', 'Could not save leader setup, please try again.');
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
@@ -3348,19 +3358,33 @@ onclick="openLeaderDetailsModal(this.dataset)">
     })();
   </script>
 
-  <!-- ===== LEADER CREDENTIALS ===== -->
+  <!-- ===== LEADER CREDENTIALS & DELETE ===== -->
   <script>
-    function openLeaderCredentialsModal(leaderId, leaderName, admissionNumber) {
-      document.getElementById('leaderCredentialsId').value      = leaderId   || '';
-      document.getElementById('leaderCredentialsSubtitle').textContent =
-        'Set a password for ' + (leaderName || 'this leader') + '.';
-      document.getElementById('leaderCredentialsAdmission').value = admissionNumber || '';
+    function openLeaderCredentialsModal(leaderId, year) {
+      document.getElementById('leaderCredentialsId').value = leaderId || '';
+       document.getElementById('leaderCredentialsSubtitle').textContent =
+        'Update password for Batch ' + (year || '') + ' leader login.';
       document.getElementById('leaderCredentialsPassword').value = '';
-      document.getElementById('leaderCredentialsPassword').type  = 'password';
+      document.getElementById('leaderCredentialsPassword').type = 'password';
       document.getElementById('toggleCredPasswordIcon').className = 'bi bi-eye';
       document.getElementById('leaderCredentialsAlert').className = 'alert d-none rounded-3 py-2 px-3 small mb-0 mt-3';
       document.getElementById('leaderCredentialsAlert').textContent = '';
       bootstrap.Modal.getOrCreateInstance(document.getElementById('leaderCredentialsModal')).show();
+    }
+
+    async function deleteLeaderSetup(leaderId, year) {
+      if (!confirm('Are you sure you want to remove leader login setup for Batch ' + year + '?')) return;
+      try {
+        var res = await fetch('/admin/leaders/' + leaderId, { method: 'DELETE' });
+        var result = await res.json();
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          alert(result.message || 'Could not remove leader setup.');
+        }
+      } catch (err) {
+        alert('Network error while removing leader setup.');
+      }
     }
 
     (function () {
@@ -3425,164 +3449,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
     })();
   </script>
 
-  <!-- ===== LEADER DETAILS MODAL ===== -->
-  <script>
-    function openLeaderDetailsModal(ds) {
-      var id       = ds.leaderId;
-      var name     = ds.leaderName;
-      var year     = ds.leaderYear;
-      var assigned = ds.leaderAssigned;
-      var admissionNumber = ds.leaderAdmission;
-      var password = ds.leaderPassword;
 
-      /* Info card */
-      document.getElementById('ldName').textContent     = name     || '';
-      document.getElementById('ldBatch').textContent    = 'Batch ' + (year || '');
-      document.getElementById('ldAssigned').textContent = assigned ? 'Assigned ' + assigned : '';
-
-      /* Credentials form */
-      document.getElementById('ldLeaderId').value          = id       || '';
-      document.getElementById('ldAdmission').value         = admissionNumber || '';
-      document.getElementById('ldPassword').value = password || '';
-      document.getElementById('ldPassword').type           = 'password';
-      document.getElementById('ldTogglePassIcon').className = 'bi bi-eye';
-      var credAlert = document.getElementById('ldCredAlert');
-      credAlert.className   = 'alert d-none rounded-3 py-2 px-3 small mb-0';
-      credAlert.textContent = '';
-
-      /* Change leader form */
-      document.getElementById('ldYear').value = year || '';
-      var changeAlert = document.getElementById('ldChangeAlert');
-      changeAlert.className   = 'alert d-none rounded-3 py-2 px-3 small mb-0';
-      changeAlert.textContent = '';
-      var memberSelect = document.getElementById('ldMemberSelect');
-      var hint         = document.getElementById('ldMemberHint');
-      memberSelect.innerHTML = '<option value="">Loading members…</option>';
-      memberSelect.disabled  = true;
-      hint.textContent       = '';
-
-      /* Load members for this batch */
-      if (year) {
-        fetch('/admin/batches/' + year + '/members')
-          .then(function (r) { return r.json(); })
-          .then(function (result) {
-            var members = result.members || [];
-            if (!members.length) {
-              memberSelect.innerHTML = '<option value="">No members found in this batch</option>';
-              hint.textContent = 'No members found in batch ' + year + '.';
-              return;
-            }
-            memberSelect.innerHTML = '<option value="">Select a member</option>' +
-              members.map(function (m) {
-                var label = m.name + (m.admissionNumber ? ' (' + m.admissionNumber + ')' : '');
-                return '<option value="' + m._id + '">' + label + '</option>';
-              }).join('');
-            memberSelect.disabled = false;
-            hint.textContent = members.length + (members.length === 1 ? ' member' : ' members') + ' in batch ' + year + '.';
-          })
-          .catch(function () {
-            memberSelect.innerHTML = '<option value="">Could not load members</option>';
-            hint.textContent = 'Could not load members for this batch.';
-          });
-      }
-
-      bootstrap.Modal.getOrCreateInstance(document.getElementById('leaderDetailsModal')).show();
-    }
-
-    (function () {
-      /* Toggle password visibility */
-      var toggleBtn  = document.getElementById('ldTogglePass');
-      var passInput  = document.getElementById('ldPassword');
-      var toggleIcon = document.getElementById('ldTogglePassIcon');
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', function () {
-          var show = passInput.type === 'password';
-          passInput.type       = show ? 'text' : 'password';
-          toggleIcon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
-        });
-      }
-
-      /* Credentials form submit */
-      var credForm = document.getElementById('ldCredentialsForm');
-      if (credForm) {
-        credForm.addEventListener('submit', async function (e) {
-          e.preventDefault();
-          var id       = document.getElementById('ldLeaderId').value;
-          var data     = Object.fromEntries(new FormData(credForm).entries());
-          var alertEl  = document.getElementById('ldCredAlert');
-          var submitBtn = document.getElementById('ldCredSubmit');
-
-          submitBtn.disabled    = true;
-          var orig = submitBtn.textContent;
-          submitBtn.textContent = 'Saving…';
-          alertEl.className     = 'alert d-none rounded-3 py-2 px-3 small mb-0';
-
-          try {
-            var res    = await fetch('/admin/leaders/' + id + '/credentials', {
-              method:  'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body:    JSON.stringify(data)
-            });
-            var result = await res.json().catch(function () { return {}; });
-            alertEl.className   = 'alert alert-' + (res.ok ? 'success' : 'danger') + ' rounded-3 py-2 px-3 small mb-0';
-            alertEl.textContent = result.message || (res.ok ? 'Credentials saved.' : 'Could not save credentials.');
-          } catch (err) {
-            alertEl.className   = 'alert alert-danger rounded-3 py-2 px-3 small mb-0';
-            alertEl.textContent = 'Could not save credentials. Please try again.';
-          } finally {
-            submitBtn.disabled    = false;
-            submitBtn.textContent = orig;
-          }
-        });
-      }
-
-      /* Change leader form submit */
-      var changeForm = document.getElementById('ldChangeLeaderForm');
-      if (changeForm) {
-        changeForm.addEventListener('submit', async function (e) {
-          e.preventDefault();
-          var data     = Object.fromEntries(new FormData(changeForm).entries());
-          var alertEl  = document.getElementById('ldChangeAlert');
-          var submitBtn = document.getElementById('ldChangeSubmit');
-
-          if (!data.year || !data.memberId) {
-            alertEl.className   = 'alert alert-danger rounded-3 py-2 px-3 small mb-0';
-            alertEl.textContent = 'Please select a member to assign as leader.';
-            return;
-          }
-
-          submitBtn.disabled    = true;
-          var orig = submitBtn.textContent;
-          submitBtn.textContent = 'Assigning…';
-          alertEl.className     = 'alert d-none rounded-3 py-2 px-3 small mb-0';
-
-          try {
-            var res    = await fetch('/admin/leaders', {
-              method:  'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body:    JSON.stringify(data)
-            });
-            var result = await res.json().catch(function () { return {}; });
-            alertEl.className   = 'alert alert-' + (res.ok ? 'success' : 'danger') + ' rounded-3 py-2 px-3 small mb-0';
-            alertEl.textContent = result.message || (res.ok ? 'Leader changed.' : 'Could not change leader.');
-            if (res.ok) {
-              setTimeout(function () {
-                var modal = bootstrap.Modal.getInstance(document.getElementById('leaderDetailsModal'));
-                if (modal) modal.hide();
-                window.location.reload();
-              }, 1200);
-            }
-          } catch (err) {
-            alertEl.className   = 'alert alert-danger rounded-3 py-2 px-3 small mb-0';
-            alertEl.textContent = 'Could not change the leader. Please try again.';
-          } finally {
-            submitBtn.disabled    = false;
-            submitBtn.textContent = orig;
-          }
-        });
-      }
-    })();
-  </script>
 
   <!-- DARK MODE TOGGLE -->
   <script>
@@ -3902,18 +3769,16 @@ onclick="openLeaderDetailsModal(this.dataset)">
     })();
   </script>
 
-
 <script>
-/* ================= Registered members per event ================= */
+/* ================= Registered members per event (Excel Export) ================= */
 (function () {
   var selectEl  = document.getElementById('regEventSelect');
   var bodyEl    = document.getElementById('regMembersBody');
   var countEl   = document.getElementById('regCountBadge');
   var refreshEl = document.getElementById('regRefreshBtn');
-  var pdfEl     = document.getElementById('regDownloadPdfBtn');
+  var excelEl   = document.getElementById('regDownloadExcelBtn');
   var currentMembers = [];
   if (!selectEl || !bodyEl) return;
-
 
   function esc(v) {
     return String(v == null ? '' : v)
@@ -3973,7 +3838,7 @@ onclick="openLeaderDetailsModal(this.dataset)">
       : '/admin/registrations';
 
     currentMembers = [];
-    setPdfEnabled(false);
+    setExcelEnabled(false);
 
     bodyEl.innerHTML = '<tr><td colspan="6" class="text-center py-4">' +
       '<span class="spinner-border spinner-border-sm text-secondary me-2"></span>' +
@@ -3989,20 +3854,20 @@ onclick="openLeaderDetailsModal(this.dataset)">
           return;
         }
         currentMembers = data.members;
-        setPdfEnabled(true);
+        setExcelEnabled(true);
         bodyEl.innerHTML = data.members.map(row).join('');
       })
       .catch(function (err) {
         countEl.textContent = '0';
         currentMembers = [];
-        setPdfEnabled(false);
+        setExcelEnabled(false);
         bodyEl.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4 small">' + esc(err.message) + '</td></tr>';
       });
   }
 
-  /* ---------------- PDF export ---------------- */
-  function setPdfEnabled(on) {
-    if (pdfEl) pdfEl.disabled = !on;
+  /* ---------------- Excel export ---------------- */
+  function setExcelEnabled(on) {
+    if (excelEl) excelEl.disabled = !on;
   }
 
   function selectedEventTitle() {
@@ -4024,42 +3889,26 @@ onclick="openLeaderDetailsModal(this.dataset)">
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   }
 
-  function downloadPdf() {
+  function downloadExcel() {
     if (!currentMembers.length) return;
 
-    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
-    if (!jsPDFCtor) {
-      alert('PDF library could not be loaded. Please check your internet connection and try again.');
+    if (typeof XLSX === 'undefined') {
+      alert('Excel library could not be loaded. Please check your internet connection and try again.');
       return;
     }
 
     var eventTitle = selectedEventTitle();
-    var heading    = eventTitle || 'All Registered Members';
     var perEvent   = !!selectEl.value;
 
-    var doc = new jsPDFCtor({ orientation: perEvent ? 'p' : 'l', unit: 'pt', format: 'a4' });
-    var pageWidth = doc.internal.pageSize.getWidth();
+    var headers = perEvent
+      ? ['#', 'Name', 'Admission No', 'Place', 'Batch', 'Phone', 'WhatsApp']
+      : ['#', 'Name', 'Admission No', 'Place', 'Batch', 'Phone', 'WhatsApp', 'Registered Events'];
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text('HAMD Alumni', 40, 46);
+    var rows = [headers];
 
-    doc.setFontSize(14);
-    doc.setTextColor(17, 24, 39);
-    doc.text(heading, 40, 68, { maxWidth: pageWidth - 80 });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(107, 114, 128);
-    doc.text('Registered members: ' + currentMembers.length + '   |   Generated: ' + new Date().toLocaleString(), 40, 86);
-
-    var head = perEvent
-      ? [['#', 'Name', 'Admission No', 'Place', 'Batch', 'Phone', 'WhatsApp']]
-      : [['#', 'Name', 'Admission No', 'Place', 'Batch', 'Phone', 'WhatsApp', 'Registered Events']];
-
-    var body = currentMembers.map(function (m, i) {
-      var base = [
-        String(i + 1),
+    currentMembers.forEach(function (m, i) {
+      var rowData = [
+        i + 1,
         m.name || '—',
         m.admissionNumber || '—',
         m.place || '—',
@@ -4068,37 +3917,40 @@ onclick="openLeaderDetailsModal(this.dataset)">
         m.whatsapp || '—'
       ];
       if (!perEvent) {
-        base.push(Array.isArray(m.events) && m.events.length ? m.events.join(', ') : '—');
+        rowData.push(Array.isArray(m.events) && m.events.length ? m.events.join(', ') : '—');
       }
-      return base;
+      rows.push(rowData);
     });
 
-    doc.autoTable({
-      head: head,
-      body: body,
-      startY: 100,
-      styles: { fontSize: 9, cellPadding: 5, overflow: 'linebreak', textColor: [31, 41, 55] },
-      headStyles: { fillColor: [16, 138, 96], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [244, 247, 246] },
-      columnStyles: { 0: { cellWidth: 28, halign: 'right' } },
-      margin: { left: 40, right: 40, bottom: 40 },
-      didDrawPage: function (data) {
-        var page = doc.internal.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text('Page ' + page, pageWidth - 60, doc.internal.pageSize.getHeight() - 20);
-      }
-    });
+    var ws = XLSX.utils.aoa_to_sheet(rows);
 
-    doc.save('registrations-' + slugify(eventTitle || 'all-events') + '-' + todayStamp() + '.pdf');
+    /* Set column widths */
+    var cols = [
+      { wch: 6 },  // #
+      { wch: 26 }, // Name
+      { wch: 16 }, // Admission No
+      { wch: 18 }, // Place
+      { wch: 12 }, // Batch
+      { wch: 16 }, // Phone
+      { wch: 16 }  // WhatsApp
+    ];
+    if (!perEvent) {
+      cols.push({ wch: 35 }); // Events
+    }
+    ws['!cols'] = cols;
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Registered Members');
+
+    var fileName = 'registrations-' + slugify(eventTitle || 'all-events') + '-' + todayStamp() + '.xlsx';
+    XLSX.writeFile(wb, fileName);
   }
 
   selectEl.addEventListener('change', load);
   if (refreshEl) refreshEl.addEventListener('click', load);
-  if (pdfEl) pdfEl.addEventListener('click', downloadPdf);
+  if (excelEl) excelEl.addEventListener('click', downloadExcel);
   load();
 })();
-
 </script>
 
 <!-- ==================== MEMBER DETAILS (VIEW / EDIT) ==================== -->

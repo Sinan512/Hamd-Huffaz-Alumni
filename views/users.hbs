@@ -650,6 +650,7 @@
       <div class="card-body-pad">
         {{#if events.length}}
         {{#each events}}
+        {{#unless this.isEnded}}
         <div class="event-block">
           <div class="d-flex gap-3 align-items-start">
 
@@ -663,9 +664,11 @@
             <div class="flex-grow-1 min-w-0">
               <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
                 <div class="event-title">{{this.title}}</div>
-                {{#if this.category}}
-                <span class="event-cat-badge {{this.badgeColor}}">{{this.category}}</span>
-                {{/if}}
+                <div>
+                  {{#if this.category}}
+                  <span class="event-cat-badge {{this.badgeColor}}">{{this.category}}</span>
+                  {{/if}}
+                </div>
               </div>
               <div class="event-meta">
                 {{#if this.location}}<i class="bi bi-geo-alt me-1"></i>{{this.location}}<br>{{/if}}
@@ -694,6 +697,59 @@
 
           </div>
         </div>
+        {{/unless}}
+        {{/each}}
+
+        {{#each events}}
+        {{#if this.isEnded}}
+        {{#if @first}}
+        <div class="fw-bold small text-muted text-uppercase mb-3 mt-4 pt-3 border-top" style="letter-spacing: .06em;">
+          <i class="bi bi-clock-history me-1"></i>Ended Events
+        </div>
+        {{/if}}
+        <div class="event-block opacity-75">
+          <div class="d-flex gap-3 align-items-start">
+
+            <!-- Date box -->
+            <div class="event-date-box opacity-75">
+              <div class="event-date-month text-muted">{{this.month}}</div>
+              <div class="event-date-day text-muted">{{this.day}}</div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
+                <div class="event-title">{{this.title}}</div>
+                <div class="d-flex gap-1 align-items-center">
+                  <span class="event-cat-badge bg-secondary text-white">Ended</span>
+                  {{#if this.category}}
+                  <span class="event-cat-badge {{this.badgeColor}}">{{this.category}}</span>
+                  {{/if}}
+                </div>
+              </div>
+              <div class="event-meta">
+                {{#if this.location}}<i class="bi bi-geo-alt me-1"></i>{{this.location}}<br>{{/if}}
+              </div>
+              {{#if this.description}}
+              <p class="mb-3 mt-1 small" style="color:var(--text-primary); opacity:0.85; line-height:1.6;">{{this.description}}</p>
+              {{/if}}
+
+              {{#if this.registration}}
+                {{#if this.isRegistered}}
+                <button type="button" class="btn-registered" disabled>
+                  <i class="bi bi-check-circle-fill me-1"></i>Registered (Ended)
+                </button>
+                {{else}}
+                <span class="badge bg-light text-muted border py-2 px-3 fw-normal" style="font-size:12px;">
+                  <i class="bi bi-x-circle me-1"></i>Registration Closed
+                </span>
+                {{/if}}
+              {{/if}}
+            </div>
+
+          </div>
+        </div>
+        {{/if}}
         {{/each}}
         {{else}}
         <div class="empty-state">

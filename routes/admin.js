@@ -372,35 +372,58 @@ async function getUpcomingEvents(limit) {
 }
 
 /* ================================================================== */
-/* HELPER: fetch ALL events (no date filter, no limit)                */
+/* HELPER: fetch ALL events (upcoming first by date asc, ended bottom) */
 /* ================================================================== */
 async function getAllEvents() {
   try {
     var docs = await EventDetails
       .find({}, { title: 1, date: 1, category: 1, location: 1,
-                  description: 1, 'image.contentType': 1 })
-      .sort({ date: -1 })
+                  description: 1, registration: 1, 'image.contentType': 1 })
       .lean();
 
+    var now = new Date();
+    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN',
                   'JUL','AUG','SEP','OCT','NOV','DEC'];
 
-    return docs.map(function (doc) {
+    var upcoming = [];
+    var ended = [];
+
+    docs.forEach(function (doc) {
       var d   = new Date(doc.date);
       var mon = MONTHS[d.getUTCMonth()] || '';
       var day = String(d.getUTCDate()).padStart(2, '0');
-      return {
+      var isEnded = isNaN(d.getTime()) ? false : (d < todayStart);
+
+      var item = {
         id:          String(doc._id),
         title:       doc.title       || '',
+        rawDate:     d,
+        dateLabel:   isNaN(d.getTime()) ? '' : (day + ' ' + mon + ' ' + d.getUTCFullYear()),
         month:       mon,
         day:         day,
         location:    doc.location    || '',
         category:    doc.category    || 'General',
         description: doc.description || '',
+        registration: !!doc.registration,
         badgeColor:  categoryBadge(doc.category),
-        hasImage:    !!(doc.image && doc.image.contentType)
+        hasImage:    !!(doc.image && doc.image.contentType),
+        isEnded:     isEnded
       };
+
+      if (isEnded) {
+        ended.push(item);
+      } else {
+        upcoming.push(item);
+      }
     });
+
+    /* Upcoming: order by date ascending (soonest first) */
+    upcoming.sort(function (a, b) { return a.rawDate - b.rawDate; });
+    /* Ended: order by date descending (most recently ended first) */
+    ended.sort(function (a, b) { return b.rawDate - a.rawDate; });
+
+    return upcoming.concat(ended);
   } catch (error) {
     console.error('All events lookup failed:', error.message);
     return [];
@@ -483,53 +506,80 @@ async function getArticles() {
 
 router.get('/', async function (req, res, next) {
   await connectDB();
-  var totalAlumni  = 0;
+
+  var totalAlumni = 0;
   var totalBatches = 0;
   var batchLeaders = 0;
-  var allMembers   = [];
+  var allMembers = [];
   var allBatchLeaders = [];
-  var batchYears   = [];
-  var batchChart   = { labels: [], values: [], batchCount: 0 };
+  var batchYears = [];
+  var batchChart = { labels: [], values: [], batchCount: 0 };
+  var allEvents = [];
   var upcomingEvents = [];
-  var galleryImages  = [];
-  var articles       = [];
+  var endedEvents = [];
+  var galleryImages = [];
+  var articles = [];
 
   try {
-    totalAlumni     = await MemberDetails.countDocuments();
-    batchLeaders    = await getBatchLeaderCount();
-    allMembers      = await getAllMembers();
+    totalAlumni = await MemberDetails.countDocuments();
+    batchLeaders = await getBatchLeaderCount();
+    allMembers = await getAllMembers();
     allBatchLeaders = await getAllBatchLeaders();
-    batchChart      = await getMembersPerBatch();
-    totalBatches   = batchChart.batchCount;
-    upcomingEvents = await getAllEvents();
-    galleryImages  = await getGalleryImages();
-    articles       = await getArticles();
+    batchChart = await getMembersPerBatch();
+    totalBatches = batchChart.batchCount;
+
+    allEvents = await getAllEvents();
+
+    // getAllEvents() already sorts upcoming first and ended last.
+    upcomingEvents = allEvents.filter(function (event) {
+      return !event.isEnded;
+    });
+
+    endedEvents = allEvents.filter(function (event) {
+      return event.isEnded;
+    });
+
+    galleryImages = await getGalleryImages();
+    articles = await getArticles();
+
     /* Collect sorted unique batch years from the member list */
     var yearSet = {};
-    allMembers.forEach(function (m) { if (m.batch) yearSet[m.batch] = true; });
-    batchYears = Object.keys(yearSet).sort(function (a, b) { return Number(b) - Number(a); });
+    allMembers.forEach(function (member) {
+      if (member.batch) yearSet[member.batch] = true;
+    });
+
+    batchYears = Object.keys(yearSet).sort(function (a, b) {
+      return Number(b) - Number(a);
+    });
   } catch (error) {
     console.error('Dashboard stats failed:', error.message);
   }
 
   res.render('admin', {
     layout: false,
-    title:     'Alumni Admin Dashboard',
-    admin:     serialiseAdmin(req.admin),
+    title: 'Alumni Admin Dashboard',
+    admin: serialiseAdmin(req.admin),
     adminName: (req.admin && req.admin.displayName) || 'Super Admin',
 
     stats: {
-      totalAlumni:    totalAlumni.toLocaleString('en-US'),
-      alumniGrowth:   'registered',
-      totalBatches:   String(totalBatches),
-      batchLeaders:   String(batchLeaders),
+      totalAlumni: totalAlumni.toLocaleString('en-US'),
+      alumniGrowth: 'registered',
+      totalBatches: String(totalBatches),
+      batchLeaders: String(batchLeaders),
       upcomingEvents: String(upcomingEvents.length)
     },
+
     batchChartData: JSON.stringify(batchChart),
-    allMembers:       allMembers,
+    allMembers: allMembers,
     batchLeadersList: allBatchLeaders,
-    batchYears:       batchYears,
+    batchYears: batchYears,
+
+    // Event sections
     upcomingEvents: upcomingEvents,
+    endedEvents: endedEvents,
+    hasEvents: allEvents.length > 0,
+    hasEndedEvents: endedEvents.length > 0,
+
     galleryImages: galleryImages,
     articles: articles
   });
@@ -823,8 +873,7 @@ router.patch('/leaders/:id/credentials', async function (req, res) {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ success: false, message: 'Invalid leader id.' });
     }
-    var admissionNumber = (req.body.admissionNumber || '').trim();
-    var password = (req.body.password || '').trim();
+     var password = (req.body.password || '').trim();
 
     if (!password) {
       return res.status(400).json({ success: false, message: 'Password is required.' });
@@ -836,7 +885,6 @@ router.patch('/leaders/:id/credentials', async function (req, res) {
       req.params.id,
       {
         $set: {
-          admissionNumber: admissionNumber,
           salt: leaderSalt,
           passwordHash: sha256(leaderSalt, password),
           password: '',
@@ -848,7 +896,7 @@ router.patch('/leaders/:id/credentials', async function (req, res) {
     if (!leader) {
       return res.status(404).json({ success: false, message: 'Leader not found.' });
     }
-    return res.json({ success: true, message: 'Credentials updated for ' + (leader.memberName || 'leader') + '.' });
+    return res.json({ success: true, message: 'Password updated for Batch ' + leader.year + ' leader.' });
   } catch (error) {
     console.error('Update leader credentials failed:', error.message);
     return res.status(500).json({ success: false, message: 'Could not update credentials. Please try again.' });
@@ -1472,35 +1520,57 @@ router.post('/leaders', async function (req, res) {
   await connectDB();
   try {
     var year     = batchYear(req.body.year);
-    var memberId = String(req.body.memberId || '').trim();
+    var password = String(req.body.password || '').trim();
 
     if (!/^\d{4}$/.test(year)) {
-      return res.status(400).json({ success: false, message: 'Please select a valid batch year.' });
+      return res.status(400).json({ success: false, message: 'Please select a valid 4-digit batch year.' });
     }
-    if (!mongoose.Types.ObjectId.isValid(memberId)) {
-      return res.status(400).json({ success: false, message: 'Please select a member to assign.' });
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Please enter a password for the batch leader.' });
     }
-    var member = await MemberDetails.findById(memberId).lean();
-    if (!member) {
-      return res.status(404).json({ success: false, message: 'That member no longer exists.' });
-    }
-    if (batchYear(member.batch) !== year) {
-      return res.status(400).json({ success: false, message: 'That member does not belong to batch ' + year + '.' });
-    }
+
+    var leaderSalt = makeSalt();
     var batch  = await BatchDetails.findOne({ year: year }).lean();
     var leader = await BatchLeader.findOneAndUpdate(
       { year: year },
-      { $set: { year, batchId: batch ? batch._id : undefined, memberId: member._id, memberName: member.name || '', assignedAt: new Date() } },
+      {
+        $set: {
+          year: year,
+          batchId: batch ? batch._id : undefined,
+          salt: leaderSalt,
+          passwordHash: sha256(leaderSalt, password),
+          password: '',
+          passwordUpdatedAt: new Date(),
+          assignedAt: new Date()
+        }
+      },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
     return res.status(201).json({
       success: true,
-      message: (member.name || 'Member') + ' is now the leader of batch ' + year + '.',
+      message: 'Leader password set for Batch ' + year + '.',
       leader: leader
     });
   } catch (error) {
-    console.error('Assign batch leader failed:', error.message);
-    return res.status(500).json({ success: false, message: 'Could not assign the leader. Please try again.' });
+    console.error('Save batch leader password failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not save leader setup. Please try again.' });
+  }
+});
+
+router.delete('/leaders/:id', async function (req, res) {
+  await connectDB();
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid leader id.' });
+    }
+    var deleted = await BatchLeader.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Leader setup not found.' });
+    }
+    return res.json({ success: true, message: 'Batch leader setup removed.' });
+  } catch (error) {
+    console.error('Delete batch leader setup failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not remove leader setup.' });
   }
 });
 
@@ -1520,20 +1590,14 @@ function formatJoinedDate(date) {
 /* All batch leaders, newest-assigned first – used by the dashboard batch leaders table. */
 async function getAllBatchLeaders() {
   try {
-    var docs = await BatchLeader.find({}).sort({ assignedAt: -1, _id: -1 }).lean();
-    var memberIds = docs.map(function (d) { return d.memberId; }).filter(Boolean);
-    var members = await MemberDetails.find({ _id: { $in: memberIds } }, { admissionNumber: 1 }).lean();
-    var admissionById = {};
-    members.forEach(function (m) { admissionById[String(m._id)] = m.admissionNumber || ''; });
+    var docs = await BatchLeader.find({}).sort({ year: -1, _id: -1 }).lean();
     return docs.map(function (doc) {
-       return {
-    id:         String(doc._id),
-    memberName: doc.memberName || '',
-    year:       batchYear(doc.year),
-    assignedAt: formatJoinedDate(doc.assignedAt),
-    admissionNumber: doc.admissionNumber || admissionById[String(doc.memberId)] || '',
-    password:   doc.password || ''
-};
+      return {
+        id:          String(doc._id),
+        year:        batchYear(doc.year),
+        assignedAt:  formatJoinedDate(doc.passwordUpdatedAt || doc.assignedAt || doc.createdAt),
+        hasPassword: !!(doc.passwordHash || doc.password)
+      };
     });
   } catch (error) {
     console.error('All batch leaders lookup failed:', error.message);

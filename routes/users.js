@@ -47,7 +47,7 @@ async function getGalleryImages() {
   }
 }
 
-/* Fetch all events sorted soonest first */
+/* Fetch all events: upcoming sorted by date asc first, ended events at the bottom */
 async function getAllEvents() {
   try {
     var docs = await EventDetails
@@ -55,27 +55,48 @@ async function getAllEvents() {
         title: 1, date: 1, category: 1, location: 1,
         description: 1, registration: 1, 'image.contentType': 1
       })
-      .sort({ date: 1 })
       .lean();
 
+    var now = new Date();
+    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN',
                   'JUL','AUG','SEP','OCT','NOV','DEC'];
 
-    return docs.map(function (doc) {
+    var upcoming = [];
+    var ended = [];
+
+    docs.forEach(function (doc) {
       var d = new Date(doc.date);
-      return {
+      var mon = MONTHS[d.getUTCMonth()] || '';
+      var day = String(d.getUTCDate()).padStart(2, '0');
+      var isEnded = isNaN(d.getTime()) ? false : (d < todayStart);
+
+      var item = {
         id:           String(doc._id),
         title:        doc.title        || '',
-        month:        MONTHS[d.getUTCMonth()] || '',
-        day:          String(d.getUTCDate()).padStart(2, '0'),
+        rawDate:      d,
+        month:        mon,
+        day:          day,
         location:     doc.location     || '',
         category:     doc.category     || 'General',
         description:  doc.description  || '',
         registration: !!doc.registration,
         badgeColor:   categoryBadge(doc.category),
-        hasImage:     !!(doc.image && doc.image.contentType)
+        hasImage:     !!(doc.image && doc.image.contentType),
+        isEnded:      isEnded
       };
+
+      if (isEnded) {
+        ended.push(item);
+      } else {
+        upcoming.push(item);
+      }
     });
+
+    upcoming.sort(function (a, b) { return a.rawDate - b.rawDate; });
+    ended.sort(function (a, b) { return b.rawDate - a.rawDate; });
+
+    return upcoming.concat(ended);
   } catch (err) {
     console.error('Events fetch failed:', err.message);
     return [];

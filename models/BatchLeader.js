@@ -18,8 +18,7 @@ var batchLeaderSchema = new mongoose.Schema(
     },
     memberId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'MemberDetails',
-      required: true
+      ref: 'MemberDetails'
     },
     memberName: {
       type: String,

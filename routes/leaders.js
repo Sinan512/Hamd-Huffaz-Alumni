@@ -93,9 +93,8 @@ router.get('/session', async function (req, res) {
       success: true,
       authenticated: true,
       leader: {
-        name: leader.memberName || 'Batch Leader',
-        year: leader.year,
-        admissionNumber: (leader.admissionNumber || '').trim()
+        name: 'Batch ' + leader.year + ' Leader',
+        year: leader.year
       },
       members: members
     });
@@ -105,24 +104,23 @@ router.get('/session', async function (req, res) {
   }
 });
 
-/* POST /leaders/login – validate batch year + admission number + password */
+/* POST /leaders/login – validate batch year + password */
 router.post('/login', async function (req, res) {
   try {
     await connectDB();
 
     var year = (req.body.year || '').trim();
-    var admissionNumber = (req.body.admissionNumber || '').trim();
     var password = (req.body.password || '').trim();
 
     var invalid = {
       success: false,
-      message: 'Invalid batch year, admission number or password.'
+      message: 'Invalid batch year or password.'
     };
 
-    if (!year || !admissionNumber || !password) {
+    if (!year || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Batch year, admission number and password are all required.'
+        message: 'Batch year and password are required.'
       });
     }
 
@@ -134,20 +132,15 @@ router.post('/login', async function (req, res) {
       return res.status(401).json(invalid);
     }
 
-    var storedAdmission = (leader.admissionNumber || '').trim();
     var storedHash = (leader.passwordHash || '').trim();
     var storedSalt = (leader.salt || '').trim();
     var legacyPassword = (leader.password || '').trim();
 
-    if (!storedAdmission || (!storedHash && !legacyPassword)) {
+    if (!storedHash && !legacyPassword) {
       return res.status(401).json({
         success: false,
-        message: 'Login is not set up for this batch yet. Please contact the admin.'
+        message: 'Login password is not set up for this batch yet. Please contact the admin.'
       });
-    }
-
-    if (storedAdmission.toLowerCase() !== admissionNumber.toLowerCase()) {
-      return res.status(401).json(invalid);
     }
 
     var passwordOk = false;
@@ -180,9 +173,8 @@ router.post('/login', async function (req, res) {
       success: true,
       authenticated: true,
       leader: {
-        name: leader.memberName || 'Batch Leader',
-        year: leader.year,
-        admissionNumber: storedAdmission
+        name: 'Batch ' + leader.year + ' Leader',
+        year: leader.year
       },
       members: members
     };
@@ -196,8 +188,7 @@ router.post('/login', async function (req, res) {
 
       req.session.leaderId = String(leader._id);
       req.session.leaderYear = leader.year;
-      req.session.leaderName = leader.memberName || 'Batch Leader';
-      req.session.leaderAdmission = storedAdmission;
+      req.session.leaderName = 'Batch ' + leader.year + ' Leader';
       req.session.cookie.maxAge = SEVEN_DAYS_MS;
 
       req.session.save(function (saveError) {
