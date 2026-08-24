@@ -6,6 +6,7 @@ var mongoose = require('mongoose');
 var BatchLeader = require('../models/BatchLeader');
 var MemberDetails = require('../models/MemberDetails');
 var LeaderTask = require('../models/LeaderTask');
+var PaymentStatus = require('../models/PaymentStatus');
 var connectDB = require('../config/db');
 
 /* Leader sessions live in the "SESSIONS" collection (see app.js) and are
@@ -443,6 +444,346 @@ router.delete('/tasks/:id', requireLeader, async function (req, res) {
   } catch (error) {
     console.error('Leader task delete failed:', error.message);
     return res.status(500).json({ success: false, message: 'Could not delete the task.' });
+  }
+});
+
+/* ==================== CONTRIBUTIONS (PAYMENT_STATUS collection) ==================== */
+
+var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+async function getLeaderContributionsData(leaderYear) {
+  var members = await MemberDetails.find({
+    batch: new RegExp('^' + escapeRegex(leaderYear) + '$', 'i')
+  }).lean();
+
+  var memberIds = members.map(function (m) { return m._id; });
+  var memberMap = {};
+  members.forEach(function (m) { memberMap[String(m._id)] = m; });
+
+  var paymentDocs = await PaymentStatus.find({ memberId: { $in: memberIds } }).lean();
+
+  var submittedList = [];
+  var paidMonthSet = {};
+
+  paymentDocs.forEach(function (doc) {
+    var memberIdStr = String(doc.memberId);
+    var member = memberMap[memberIdStr] || { name: 'Unknown Member', admissionNumber: '', batch: leaderYear };
+
+    (doc.membersPayments || []).forEach(function (item) {
+      var monthItems = [];
+      if (typeof item.month === 'number' && typeof item.year === 'number') {
+        monthItems.push({ month: item.month, year: item.year });
+      } else if (Array.isArray(item.months)) {
+        monthItems = item.months;
+      }
+
+      monthItems.forEach(function (mItem) {
+        var mKey = memberIdStr + '-' + mItem.year + '-' + mItem.month;
+        var itemStatus = item.status || 'Pending';
+
+        if (itemStatus === 'Approved') {
+          paidMonthSet[mKey] = 'Approved';
+        } else if (itemStatus === 'Pending' && paidMonthSet[mKey] !== 'Approved') {
+          paidMonthSet[mKey] = 'Pending';
+        }
+
+        var dSub = item.submittedAt ? new Date(item.submittedAt) : null;
+        var dApp = item.approvedAt ? new Date(item.approvedAt) : null;
+
+        submittedList.push({
+          paymentId: String(item._id),
+          memberId: memberIdStr,
+          memberName: member.name || 'Unnamed',
+          admissionNumber: member.admissionNumber || '',
+          batch: member.batch || leaderYear,
+          month: mItem.month,
+          year: mItem.year,
+          monthLabel: (MONTH_NAMES[mItem.month - 1] || '') + ' ' + mItem.year,
+          amount: item.amount || 30,
+          status: itemStatus,
+          badgeColor: itemStatus === 'Approved' ? 'bg-success' : (itemStatus === 'Pending' ? 'bg-warning text-dark' : 'bg-danger'),
+          hasScreenshot: !!(item.screenShot && item.screenShot.contentType),
+          approvedBy: item.approvedBy || '',
+          approvedAtFormatted: dApp ? dApp.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+          rejectionReason: item.rejectionReason || '',
+          submittedAtFormatted: dSub ? dSub.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+        });
+      });
+    });
+  });
+
+  submittedList.sort(function (a, b) {
+    return b.year - a.year || b.month - a.month;
+  });
+
+  var now = new Date();
+  var currentYear = now.getFullYear();
+  var currentMonth = now.getMonth() + 1;
+  var unpaidList = [];
+
+  members.forEach(function (member) {
+    var memberIdStr = String(member._id);
+    var startYear, startMonth;
+
+    if (member.createdAt) {
+      var created = new Date(member.createdAt);
+      if (!isNaN(created.getTime())) {
+        startYear = created.getFullYear();
+        startMonth = created.getMonth() + 1;
+      }
+    }
+    if (!startYear || !startMonth) {
+      startYear = currentYear;
+      startMonth = 1;
+    }
+
+    var y = startYear;
+    var m = startMonth;
+
+    while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+      var mKey = memberIdStr + '-' + y + '-' + m;
+      var status = paidMonthSet[mKey];
+
+      if (!status || status === 'Rejected') {
+        unpaidList.push({
+          memberId: memberIdStr,
+          memberName: member.name || 'Unnamed',
+          admissionNumber: member.admissionNumber || '',
+          batch: member.batch || leaderYear,
+          month: m,
+          year: y,
+          monthLabel: (MONTH_NAMES[m - 1] || '') + ' ' + y,
+          amount: 30,
+          status: 'UN PAID',
+          badgeColor: 'bg-danger'
+        });
+      }
+
+      m++;
+      if (m > 12) {
+        m = 1;
+        y++;
+      }
+    }
+  });
+
+  unpaidList.sort(function (a, b) {
+    if (b.year !== a.year) return b.year - a.year;
+    if (b.month !== a.month) return b.month - a.month;
+    return a.memberName.localeCompare(b.memberName);
+  });
+
+  return {
+    submitted: submittedList,
+    unpaid: unpaidList,
+    counts: {
+      total: submittedList.length,
+      pending: submittedList.filter(function (i) { return i.status === 'Pending'; }).length,
+      approved: submittedList.filter(function (i) { return i.status === 'Approved'; }).length,
+      rejected: submittedList.filter(function (i) { return i.status === 'Rejected'; }).length,
+      unpaid: unpaidList.length
+    }
+  };
+}
+
+/* GET /leaders/contributions – JSON list of batch submitted and unpaid contributions */
+router.get('/contributions', requireLeader, async function (req, res) {
+  try {
+    await connectDB();
+    var data = await getLeaderContributionsData(req.session.leaderYear);
+    return res.json({ success: true, submitted: data.submitted, unpaid: data.unpaid, counts: data.counts });
+  } catch (error) {
+    console.error('Leader list contributions failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not load contributions data.' });
+  }
+});
+
+/* GET /leaders/contributions/image/:memberId/:paymentId – serve payment screenshot image */
+router.get('/contributions/image/:memberId/:paymentId', requireLeader, async function (req, res) {
+  try {
+    await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      return res.status(400).end();
+    }
+
+    var member = await MemberDetails.findOne({
+      _id: req.params.memberId,
+      batch: new RegExp('^' + escapeRegex(req.session.leaderYear) + '$', 'i')
+    }).lean();
+
+    if (!member) {
+      return res.status(403).end();
+    }
+
+    var doc = await PaymentStatus.findOne({ memberId: req.params.memberId }, { membersPayments: 1 }).lean();
+    if (!doc || !doc.membersPayments) {
+      return res.status(404).end();
+    }
+    var targetId = String(req.params.paymentId);
+    var item = doc.membersPayments.find(function (p) { return String(p._id) === targetId; });
+    if (!item || !item.screenShot || !item.screenShot.data) {
+      return res.status(404).end();
+    }
+
+    res.set('Content-Type', item.screenShot.contentType || 'image/png');
+    res.set('Cache-Control', 'private, max-age=86400');
+    return res.send(item.screenShot.data.buffer || item.screenShot.data);
+  } catch (error) {
+    console.error('Serve leader contribution screenshot failed:', error.message);
+    return res.status(500).end();
+  }
+});
+
+/* POST /leaders/contributions/:memberId/:paymentId/approve – approve payment */
+router.post('/contributions/:memberId/:paymentId/approve', requireLeader, async function (req, res) {
+  try {
+    await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid member or payment id.' });
+    }
+
+    var member = await MemberDetails.findOne({
+      _id: req.params.memberId,
+      batch: new RegExp('^' + escapeRegex(req.session.leaderYear) + '$', 'i')
+    }).lean();
+
+    if (!member) {
+      return res.status(403).json({ success: false, message: 'Member does not belong to your batch.' });
+    }
+
+    var leaderName = req.session.leaderName || ('Batch ' + req.session.leaderYear + ' Leader');
+
+    var doc = await PaymentStatus.findOne({ memberId: req.params.memberId });
+    if (!doc || !doc.membersPayments) {
+      return res.status(404).json({ success: false, message: 'Payment record not found.' });
+    }
+
+    var targetId = String(req.params.paymentId);
+    var item = doc.membersPayments.id(targetId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Payment submission item not found.' });
+    }
+
+    item.status = 'Approved';
+    item.approvedBy = leaderName;
+    item.approvedAt = new Date();
+    item.rejectionReason = '';
+
+    await doc.save();
+
+    return res.json({ success: true, message: 'Payment approved successfully.' });
+  } catch (error) {
+    console.error('Leader approve payment failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not approve payment.' });
+  }
+});
+
+/* POST /leaders/contributions/:memberId/:paymentId/reject – reject payment */
+router.post('/contributions/:memberId/:paymentId/reject', requireLeader, async function (req, res) {
+  try {
+    await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid member or payment id.' });
+    }
+
+    var member = await MemberDetails.findOne({
+      _id: req.params.memberId,
+      batch: new RegExp('^' + escapeRegex(req.session.leaderYear) + '$', 'i')
+    }).lean();
+
+    if (!member) {
+      return res.status(403).json({ success: false, message: 'Member does not belong to your batch.' });
+    }
+
+    var option = (req.body.reasonOption || '').trim();
+    var customReason = (req.body.customReason || '').trim();
+    var finalReason = option === 'other' ? customReason : option;
+    if (!finalReason) finalReason = 'Rejected by Leader';
+
+    var leaderName = req.session.leaderName || ('Batch ' + req.session.leaderYear + ' Leader');
+
+    var doc = await PaymentStatus.findOne({ memberId: req.params.memberId });
+    if (!doc || !doc.membersPayments) {
+      return res.status(404).json({ success: false, message: 'Payment record not found.' });
+    }
+
+    var targetId = String(req.params.paymentId);
+    var item = doc.membersPayments.id(targetId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Payment submission item not found.' });
+    }
+
+    item.status = 'Rejected';
+    item.rejectionReason = finalReason;
+    item.approvedBy = leaderName;
+    item.approvedAt = new Date();
+
+    await doc.save();
+
+    return res.json({ success: true, message: 'Payment rejected successfully.' });
+  } catch (error) {
+    console.error('Leader reject payment failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not reject payment.' });
+  }
+});
+
+/* PUT /leaders/contributions/:memberId/:paymentId – edit payment data */
+router.put('/contributions/:memberId/:paymentId', requireLeader, async function (req, res) {
+  try {
+    await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid member or payment id.' });
+    }
+
+    var member = await MemberDetails.findOne({
+      _id: req.params.memberId,
+      batch: new RegExp('^' + escapeRegex(req.session.leaderYear) + '$', 'i')
+    }).lean();
+
+    if (!member) {
+      return res.status(403).json({ success: false, message: 'Member does not belong to your batch.' });
+    }
+
+    var doc = await PaymentStatus.findOne({ memberId: req.params.memberId });
+    if (!doc || !doc.membersPayments) {
+      return res.status(404).json({ success: false, message: 'Payment record not found.' });
+    }
+
+    var targetId = String(req.params.paymentId);
+    var item = doc.membersPayments.id(targetId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Payment submission item not found.' });
+    }
+
+    if (typeof req.body.amount !== 'undefined') {
+      var amt = Number(req.body.amount);
+      if (!isNaN(amt) && amt >= 0) item.amount = amt;
+    }
+    if (typeof req.body.status !== 'undefined') {
+      var st = String(req.body.status).trim();
+      if (['Pending', 'Approved', 'Rejected'].indexOf(st) !== -1) {
+        item.status = st;
+      }
+    }
+    if (typeof req.body.rejectionReason !== 'undefined') {
+      item.rejectionReason = String(req.body.rejectionReason).trim();
+    }
+    if (typeof req.body.month !== 'undefined') {
+      var m = Number(req.body.month);
+      if (!isNaN(m) && m >= 1 && m <= 12) item.month = m;
+    }
+    if (typeof req.body.year !== 'undefined') {
+      var y = Number(req.body.year);
+      if (!isNaN(y) && y >= 2000 && y <= 2100) item.year = y;
+    }
+
+    item.approvedBy = req.session.leaderName || ('Batch ' + req.session.leaderYear + ' Leader');
+    await doc.save();
+
+    return res.json({ success: true, message: 'Payment updated successfully.' });
+  } catch (error) {
+    console.error('Leader update payment failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not update payment.' });
   }
 });
 

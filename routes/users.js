@@ -28,6 +28,19 @@ var upload = multer({
 
 var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+function formatContributionDate(value) {
+  if (!value) return '';
+  var date = new Date(value);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
 async function getMemberContributionMonths(member) {
   var now = new Date();
   var currentYear = now.getFullYear();
@@ -52,30 +65,36 @@ async function getMemberContributionMonths(member) {
   var submissions = (paymentStatusDoc && paymentStatusDoc.membersPayments) ? paymentStatusDoc.membersPayments : [];
 
   var statusMap = {};
+  function addSubmissionStatus(key, sub, subStatus) {
+    var entry = {
+      status: subStatus,
+      rejectionReason: sub.rejectionReason || '',
+      approvedBy: sub.approvedBy || '',
+      approvedAt: sub.approvedAt || null,
+      submittedAt: sub.submittedAt || null,
+      paymentId: sub._id ? String(sub._id) : '',
+      amount: Number(sub.amount) || 30
+    };
+    var existing = statusMap[key];
+
+    /* Approved is final. A pending resubmission supersedes an old rejection. */
+    if (!existing || subStatus === 'Approved' ||
+        (subStatus === 'Pending' && existing.status !== 'Approved') ||
+        (subStatus === 'Rejected' && existing.status === 'Rejected')) {
+      statusMap[key] = entry;
+    }
+  }
+
   submissions.forEach(function (sub) {
     var subStatus = sub.status || 'Pending';
     if (typeof sub.month === 'number' && typeof sub.year === 'number') {
       var key = sub.year + '-' + sub.month;
-      var existing = statusMap[key];
-      if (subStatus === 'Approved') {
-        statusMap[key] = 'Approved';
-      } else if (subStatus === 'Pending' && existing !== 'Approved') {
-        statusMap[key] = 'Pending';
-      } else if (subStatus === 'Rejected' && !existing) {
-        statusMap[key] = 'Rejected';
-      }
+      addSubmissionStatus(key, sub, subStatus);
     }
     if (Array.isArray(sub.months)) {
       sub.months.forEach(function (m) {
         var key = m.year + '-' + m.month;
-        var existing = statusMap[key];
-        if (subStatus === 'Approved') {
-          statusMap[key] = 'Approved';
-        } else if (subStatus === 'Pending' && existing !== 'Approved') {
-          statusMap[key] = 'Pending';
-        } else if (subStatus === 'Rejected' && !existing) {
-          statusMap[key] = 'Rejected';
-        }
+        addSubmissionStatus(key, sub, subStatus);
       });
     }
   });
@@ -86,7 +105,8 @@ async function getMemberContributionMonths(member) {
 
   while (y < currentYear || (y === currentYear && m <= currentMonth)) {
     var key = y + '-' + m;
-    var rawStatus = statusMap[key] || 'UN PAID';
+    var statusEntry = statusMap[key] || { status: 'UN PAID' };
+    var rawStatus = statusEntry.status;
 
     var displayStatus = 'UN PAID';
     var badgeColor = 'bg-danger';
@@ -100,6 +120,10 @@ async function getMemberContributionMonths(member) {
       displayStatus = 'PENDING';
       badgeColor = 'bg-warning text-dark';
       isSelectable = false;
+    } else if (rawStatus === 'Rejected') {
+      displayStatus = 'REJECTED';
+      badgeColor = 'bg-danger';
+      isSelectable = false;
     } else {
       displayStatus = 'UN PAID';
       badgeColor = 'bg-danger';
@@ -112,10 +136,16 @@ async function getMemberContributionMonths(member) {
       key: key,
       monthName: MONTH_NAMES[m - 1],
       label: MONTH_NAMES[m - 1] + ' ' + y,
-      amount: 30,
+      amount: statusEntry.amount || 30,
       status: displayStatus,
+      isApproved: rawStatus === 'Approved',
       badgeColor: badgeColor,
-      isSelectable: isSelectable
+      isSelectable: isSelectable,
+      rejectionReason: statusEntry.rejectionReason || '',
+      approvedBy: statusEntry.approvedBy || '',
+      approvedAt: formatContributionDate(statusEntry.approvedAt),
+      submittedAt: formatContributionDate(statusEntry.submittedAt),
+      paymentId: statusEntry.paymentId || ''
     });
 
     m++;
@@ -125,7 +155,9 @@ async function getMemberContributionMonths(member) {
     }
   }
 
-  var unpaidList = monthsList.filter(function (item) { return item.status === 'UN PAID'; });
+  var unpaidList = monthsList.filter(function (item) {
+    return item.status === 'UN PAID' || item.status === 'REJECTED';
+  });
 
   return {
     months: monthsList,
@@ -718,8 +750,9 @@ router.post('/submit-contribution-payment', requireAuth, upload.single('paymentS
       return res.status(400).json({ success: false, message: 'Invalid month selection.' });
     }
 
-    // Verify selected months are not already pending/approved
-    var paymentStatusDoc = await PaymentStatus.findOne({ memberId: req.session.memberId }).lean();
+    // Verify selected months are not already pending/approved.
+    // Rejected months are intentionally allowed so they can be updated in place.
+    var paymentStatusDoc = await PaymentStatus.findOne({ memberId: req.session.memberId });
     var existingSubmissions = (paymentStatusDoc && paymentStatusDoc.membersPayments) ? paymentStatusDoc.membersPayments : [];
 
     var alreadyPaid = false;
@@ -749,28 +782,57 @@ router.post('/submit-contribution-payment', requireAuth, upload.single('paymentS
     }
 
     var now = new Date();
-    var paymentItems = parsedMonths.map(function (m) {
-      return {
+    var screenshot = {
+      data: req.file.buffer,
+      contentType: req.file.mimetype
+    };
+    var paymentItems = [];
+
+    parsedMonths.forEach(function (m) {
+      var rejectedSubmission = existingSubmissions.find(function (sub) {
+        return sub.status === 'Rejected' &&
+          typeof sub.month === 'number' &&
+          typeof sub.year === 'number' &&
+          sub.month === m.month &&
+          sub.year === m.year;
+      });
+
+      if (rejectedSubmission) {
+        /* Resubmission replaces the rejected record instead of adding a duplicate. */
+        rejectedSubmission.amount = 30;
+        rejectedSubmission.screenShot = screenshot;
+        rejectedSubmission.status = 'Pending';
+        rejectedSubmission.approvedBy = '';
+        rejectedSubmission.approvedAt = null;
+        rejectedSubmission.rejectionReason = '';
+        rejectedSubmission.submittedAt = now;
+        return;
+      }
+
+      paymentItems.push({
         month: m.month,
         year: m.year,
         amount: 30,
-        screenShot: {
-          data: req.file.buffer,
-          contentType: req.file.mimetype
-        },
+        screenShot: screenshot,
         status: 'Pending',
         approvedBy: '',
         approvedAt: null,
         rejectionReason: '',
         submittedAt: now
-      };
+      });
     });
 
-    await PaymentStatus.findOneAndUpdate(
-      { memberId: req.session.memberId },
-      { $push: { membersPayments: { $each: paymentItems } } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    if (paymentStatusDoc) {
+      if (paymentItems.length) {
+        paymentStatusDoc.membersPayments.push.apply(paymentStatusDoc.membersPayments, paymentItems);
+      }
+      await paymentStatusDoc.save();
+    } else {
+      await PaymentStatus.create({
+        memberId: req.session.memberId,
+        membersPayments: paymentItems
+      });
+    }
 
     return res.json({
       success: true,

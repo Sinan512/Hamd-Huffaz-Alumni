@@ -761,7 +761,8 @@
     </section>
 
     <!-- ===== SECTION: MONTHLY CONTRIBUTION PAYMENT ===== -->
-    <section class="card-surface" id="contribution-section">
+    <section class="card-surface" id="contribution-section"
+      data-member-name="{{user.name}}" data-member-admission="{{user.admissionNumber}}">
       <div class="card-header-bar">
         <span><i class="bi bi-wallet2 me-2" style="color:var(--primary);"></i>Monthly Contribution Payment</span>
         <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">₹30 / Month</span>
@@ -810,6 +811,28 @@
                   <span class="fw-semibold text-secondary small">₹{{this.amount}}</span>
                   <span class="badge {{this.badgeColor}} px-2 py-1" style="font-size: 11px;">{{this.status}}</span>
                 </div>
+                {{#if this.rejectionReason}}
+                <div class="small text-danger mt-2">
+                  <strong>Reason:</strong> {{this.rejectionReason}}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-3 w-100 mt-2 resubmit-month-btn"
+                  data-month-key="{{this.key}}" data-month-label="{{this.label}}">
+                  <i class="bi bi-arrow-repeat me-1"></i>Submit Again
+                </button>
+                {{/if}}
+                {{#if this.isApproved}}
+                <button type="button" class="btn btn-sm btn-outline-success rounded-3 w-100 mt-2 download-receipt-btn"
+                  data-receipt-name="{{../../user.name}}"
+                  data-receipt-admission="{{../../user.admissionNumber}}"
+                  data-receipt-month="{{this.label}}"
+                  data-receipt-amount="{{this.amount}}"
+                  data-receipt-approved-by="{{this.approvedBy}}"
+                  data-receipt-time="{{this.approvedAt}}"
+                  data-receipt-submitted-time="{{this.submittedAt}}"
+                  data-receipt-payment-id="{{this.paymentId}}">
+                  <i class="bi bi-download me-1"></i>Download Receipt
+                </button>
+                {{/if}}
               </div>
             </div>
             {{/each}}
@@ -1858,8 +1881,96 @@
         if (payBtn) payBtn.disabled = (count === 0);
       }
 
+      function drawReceiptLine(ctx, label, value, y) {
+        ctx.font = '600 22px Arial';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(label, 90, y);
+        ctx.font = '600 22px Arial';
+        ctx.fillStyle = '#172033';
+        ctx.fillText(value || '—', 330, y);
+      }
+
+      function downloadReceipt(button) {
+        var canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 900;
+        var ctx = canvas.getContext('2d');
+        var contributionSection = document.getElementById('contribution-section');
+        var memberName = button.getAttribute('data-receipt-name') ||
+          (contributionSection && contributionSection.getAttribute('data-member-name')) || '';
+        var admissionNumber = button.getAttribute('data-receipt-admission') ||
+          (contributionSection && contributionSection.getAttribute('data-member-admission')) || '';
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#4f46e5';
+        ctx.fillRect(0, 0, canvas.width, 150);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 38px Arial';
+        ctx.fillText('HAMD Alumni Association', 90, 70);
+        ctx.font = '500 23px Arial';
+        ctx.fillText('Monthly Contribution Receipt', 90, 112);
+
+        ctx.fillStyle = '#16a34a';
+        ctx.beginPath();
+        ctx.arc(1040, 75, 42, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 48px Arial';
+        ctx.fillText('✓', 1025, 91);
+
+        ctx.fillStyle = '#172033';
+        ctx.font = '700 28px Arial';
+        ctx.fillText('Payment completed', 90, 220);
+        drawReceiptLine(ctx, 'Member name', memberName, 285);
+        drawReceiptLine(ctx, 'Admission no.', admissionNumber, 335);
+        drawReceiptLine(ctx, 'Contribution month', button.getAttribute('data-receipt-month'), 385);
+        drawReceiptLine(ctx, 'Amount paid', '₹' + (button.getAttribute('data-receipt-amount') || '30'), 435);
+        drawReceiptLine(ctx, 'Approved by', button.getAttribute('data-receipt-approved-by'), 485);
+        drawReceiptLine(ctx, 'Completed at', button.getAttribute('data-receipt-time'), 535);
+        drawReceiptLine(ctx, 'Submitted at', button.getAttribute('data-receipt-submitted-time'), 585);
+        drawReceiptLine(ctx, 'Payment reference', button.getAttribute('data-receipt-payment-id'), 635);
+
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(90, 700);
+        ctx.lineTo(1110, 700);
+        ctx.stroke();
+        ctx.fillStyle = '#64748b';
+        ctx.font = '500 18px Arial';
+        ctx.fillText('This is a digitally generated confirmation of the approved contribution.', 90, 755);
+        ctx.fillText('Thank you for supporting HAMD alumni activities.', 90, 790);
+
+        var link = document.createElement('a');
+        var month = button.getAttribute('data-receipt-month') || 'contribution';
+        link.download = 'HAMD-Contribution-Receipt-' + month.replace(/[^a-z0-9]+/gi, '-') + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+
       checkboxes.forEach(function (cb) {
         cb.addEventListener('change', updateSummary);
+      });
+
+      document.querySelectorAll('.resubmit-month-btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var key = button.getAttribute('data-month-key');
+          var checkbox = document.getElementById('mchk-' + key);
+          if (!checkbox || !payBtn) return;
+          checkbox.disabled = false;
+          checkbox.checked = true;
+          var card = checkbox.closest('.month-card');
+          if (card) card.classList.remove('opacity-75');
+          updateSummary();
+          payBtn.click();
+        });
+      });
+
+      document.querySelectorAll('.download-receipt-btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+          downloadReceipt(button);
+        });
       });
 
       if (payBtn) {
