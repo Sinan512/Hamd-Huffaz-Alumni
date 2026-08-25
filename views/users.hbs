@@ -1769,21 +1769,66 @@
                   <button type="button" id="proceedUpiBtn" class="btn btn-success w-100 rounded-3 py-2 fw-bold shadow-sm">
                     <i class="bi bi-box-arrow-up-right me-2"></i>Proceed to UPI App
                   </button>
-                  <div class="form-text text-center small mt-1">Copies GPay number &amp; opens your UPI app (GPay / PhonePe / Paytm).</div>
+                  <div class="form-text text-center small mt-1">Copies GPay number &amp; opens your UPI app to paste &amp; pay.</div>
                 </div>
 
-                <!-- Copy-then-open popup -->
-                <div id="upiCopyPopup" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
-                  <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:16px; padding:28px 24px; max-width:320px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.22);">
-                    <div style="font-size:36px; margin-bottom:12px;">📋</div>
-                    <div class="fw-bold mb-2" style="font-size:16px; color:var(--text-primary);">GPay number copied!</div>
+                <!-- UPI App Picker Popup -->
+                <div id="upiCopyPopup" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
+                  <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:20px; padding:24px 20px; max-width:340px; width:92%; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.28);">
+                    <div style="font-size:32px; margin-bottom:8px;">📋</div>
+                    <div class="fw-bold mb-1" style="font-size:16px; color:var(--text-primary);">GPay number copied!</div>
                     <div class="small mb-4" style="color:var(--text-muted); line-height:1.6;">
-                      Open your UPI app and <strong>paste</strong> the copied number in the recipient field to complete payment.
+                      Choose your UPI app below. <strong>Paste</strong> the copied number in the recipient / search field.
                     </div>
-                    <button type="button" id="upiCopyPopupContinue" class="btn btn-success w-100 rounded-3 fw-bold py-2">
-                      <i class="bi bi-box-arrow-up-right me-2"></i>Continue to App
-                    </button>
-                    <button type="button" id="upiCopyPopupCancel" class="btn btn-link w-100 mt-2 small text-muted">Cancel</button>
+
+                    <!-- App Grid -->
+                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
+
+                      <!-- Google Pay -->
+                      <button type="button" class="upi-app-btn" data-scheme="gpay://upi/ui/v2" data-fallback="tez://upi/ui/v2"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 6px;border-radius:14px;border:1.5px solid var(--border-color);background:var(--surface-alt);cursor:pointer;transition:all 0.18s ease;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" alt="GPay" style="width:36px;height:36px;object-fit:contain;border-radius:8px;">
+                        <span style="font-size:11px;font-weight:700;color:var(--text-primary);">GPay</span>
+                      </button>
+
+                      <!-- PhonePe -->
+                      <button type="button" class="upi-app-btn" data-scheme="phonepe://pay" data-fallback="phonepe://main"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 6px;border-radius:14px;border:1.5px solid var(--border-color);background:var(--surface-alt);cursor:pointer;transition:all 0.18s ease;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" alt="PhonePe" style="width:36px;height:36px;object-fit:contain;border-radius:8px;">
+                        <span style="font-size:11px;font-weight:700;color:var(--text-primary);">PhonePe</span>
+                      </button>
+
+                      <!-- Paytm -->
+                      <button type="button" class="upi-app-btn" data-scheme="paytmmp://pay" data-fallback="paytm://"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 6px;border-radius:14px;border:1.5px solid var(--border-color);background:var(--surface-alt);cursor:pointer;transition:all 0.18s ease;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/512px-Paytm_Logo_%28standalone%29.svg.png" alt="Paytm" style="width:36px;height:36px;object-fit:contain;border-radius:8px;">
+                        <span style="font-size:11px;font-weight:700;color:var(--text-primary);">Paytm</span>
+                      </button>
+
+                      <!-- BHIM -->
+                      <button type="button" class="upi-app-btn" data-scheme="bhim://pay" data-fallback="bhim://"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 6px;border-radius:14px;border:1.5px solid var(--border-color);background:var(--surface-alt);cursor:pointer;transition:all 0.18s ease;">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/BHIM_logo.svg/512px-BHIM_logo.svg.png" alt="BHIM" style="width:36px;height:36px;object-fit:contain;border-radius:8px;">
+                        <span style="font-size:11px;font-weight:700;color:var(--text-primary);">BHIM</span>
+                      </button>
+
+                      <!-- Amazon Pay -->
+                      <button type="button" class="upi-app-btn" data-scheme="amazonpay://pay" data-fallback="amazonpay://"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 6px;border-radius:14px;border:1.5px solid var(--border-color);background:var(--surface-alt);cursor:pointer;transition:all 0.18s ease;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/512px-Amazon_logo.svg.png" alt="Amazon Pay" style="width:36px;height:36px;object-fit:contain;border-radius:8px;">
+                        <span style="font-size:11px;font-weight:700;color:var(--text-primary);">Amazon Pay</span>
+                      </button>
+
+                      <!-- Other / Generic -->
+                      <button type="button" class="upi-app-btn" data-scheme="upi://pay" data-fallback="upi://pay"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 6px;border-radius:14px;border:1.5px solid var(--border-color);background:var(--surface-alt);cursor:pointer;transition:all 0.18s ease;">
+                        <span style="font-size:28px;line-height:1;">💳</span>
+                        <span style="font-size:11px;font-weight:700;color:var(--text-primary);">Other App</span>
+                      </button>
+
+                    </div>
+
+                    <button type="button" id="upiCopyPopupCancel" class="btn btn-link w-100 small text-muted" style="font-size:13px;">Cancel</button>
                   </div>
                 </div>
               </div>
@@ -1858,8 +1903,6 @@
       var modalTotalEl = document.getElementById('modalTotalAmount');
       var proceedUpiBtn = document.getElementById('proceedUpiBtn');
       var upiCopyPopup = document.getElementById('upiCopyPopup');
-      var upiCopyPopupContinue = document.getElementById('upiCopyPopupContinue');
-      var upiCopyPopupCancel = document.getElementById('upiCopyPopupCancel');
 
       var form = document.getElementById('submitContributionForm');
       var alertBox = document.getElementById('paymentModalAlert');
@@ -2002,69 +2045,89 @@
         });
       }
 
-      // ── Proceed to UPI App: copy GPay number then show popup ──
-      if (proceedUpiBtn && upiCopyPopup && upiCopyPopupContinue && upiCopyPopupCancel) {
+      // ── Proceed to UPI App: copy GPay number then show app picker ──
+      function copyGpayNumber() {
+        var gpayInput = document.getElementById('gpayNumberCopyText');
+        var gpayNumber = gpayInput ? gpayInput.value.trim() : '';
+        if (!gpayNumber || gpayNumber === 'Not set') return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(gpayNumber).catch(function () {
+            try {
+              var tmp = document.createElement('input');
+              tmp.value = gpayNumber;
+              document.body.appendChild(tmp);
+              tmp.select();
+              tmp.setSelectionRange(0, 99999);
+              document.execCommand('copy');
+              document.body.removeChild(tmp);
+            } catch (e) {}
+          });
+        } else {
+          try {
+            var tmp = document.createElement('input');
+            tmp.value = gpayNumber;
+            document.body.appendChild(tmp);
+            tmp.select();
+            tmp.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            document.body.removeChild(tmp);
+          } catch (e) {}
+        }
+      }
+
+      if (proceedUpiBtn && upiCopyPopup) {
+        // "Proceed to UPI App" — copy number immediately (direct gesture = iOS safe), then show picker
         proceedUpiBtn.addEventListener('click', function () {
-          var gpayInput = document.getElementById('gpayNumberCopyText');
-          var gpayNumber = gpayInput ? gpayInput.value.trim() : '';
-
-          function showPopupAndOpenApp() {
-            upiCopyPopup.style.display = 'flex';
-          }
-
-          function openUpiApp() {
-            // Open generic UPI intent — works on Android & iOS
-            window.location.href = 'upi://pay';
-          }
-
-          if (gpayNumber && gpayNumber !== 'Not set') {
-            // Copy to clipboard on the direct user gesture (required for iOS Safari)
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(gpayNumber).then(function () {
-                showPopupAndOpenApp();
-              }).catch(function () {
-                // Fallback for browsers that reject clipboard on non-HTTPS or denied permission
-                try {
-                  var tmp = document.createElement('input');
-                  tmp.value = gpayNumber;
-                  document.body.appendChild(tmp);
-                  tmp.select();
-                  tmp.setSelectionRange(0, 99999);
-                  document.execCommand('copy');
-                  document.body.removeChild(tmp);
-                } catch (e) {}
-                showPopupAndOpenApp();
-              });
-            } else {
-              // Older browser fallback
-              try {
-                var tmp = document.createElement('input');
-                tmp.value = gpayNumber;
-                document.body.appendChild(tmp);
-                tmp.select();
-                tmp.setSelectionRange(0, 99999);
-                document.execCommand('copy');
-                document.body.removeChild(tmp);
-              } catch (e) {}
-              showPopupAndOpenApp();
-            }
-          } else {
-            // No GPay number set — just show popup without copy message
-            upiCopyPopup.style.display = 'flex';
-          }
+          copyGpayNumber();
+          upiCopyPopup.style.display = 'flex';
         });
 
-        upiCopyPopupContinue.addEventListener('click', function () {
-          upiCopyPopup.style.display = 'none';
-          // upi://pay opens the UPI app chooser on Android; on iOS it opens GPay if installed
-          window.location.href = 'upi://pay';
+        // Each app button — open that app's URI scheme
+        upiCopyPopup.querySelectorAll('.upi-app-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            upiCopyPopup.style.display = 'none';
+            var scheme = btn.getAttribute('data-scheme');
+            var fallback = btn.getAttribute('data-fallback') || scheme;
+
+            // Try primary scheme; if the app isn't installed the browser won't navigate.
+            // We use a short timeout: if the page is still visible after ~1.5s the app
+            // likely wasn't installed — nothing more we can do on mobile browsers.
+            var didLeave = false;
+            window.addEventListener('blur', function onBlur() {
+              didLeave = true;
+              window.removeEventListener('blur', onBlur);
+            });
+
+            window.location.href = scheme;
+
+            // On iOS, if the primary scheme fails silently, try the fallback after a delay
+            setTimeout(function () {
+              if (!didLeave && fallback !== scheme) {
+                window.location.href = fallback;
+              }
+            }, 1500);
+          });
+
+          // Hover/tap highlight
+          btn.addEventListener('mouseenter', function () {
+            btn.style.borderColor = 'var(--primary)';
+            btn.style.background = 'rgba(99,102,241,0.08)';
+          });
+          btn.addEventListener('mouseleave', function () {
+            btn.style.borderColor = 'var(--border-color)';
+            btn.style.background = 'var(--surface-alt)';
+          });
         });
 
-        upiCopyPopupCancel.addEventListener('click', function () {
-          upiCopyPopup.style.display = 'none';
-        });
+        // Cancel button
+        var upiCopyPopupCancel = document.getElementById('upiCopyPopupCancel');
+        if (upiCopyPopupCancel) {
+          upiCopyPopupCancel.addEventListener('click', function () {
+            upiCopyPopup.style.display = 'none';
+          });
+        }
 
-        // Close popup on backdrop tap
+        // Backdrop tap closes popup
         upiCopyPopup.addEventListener('click', function (e) {
           if (e.target === upiCopyPopup) {
             upiCopyPopup.style.display = 'none';
