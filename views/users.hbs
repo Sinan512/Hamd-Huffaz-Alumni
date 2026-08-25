@@ -1749,18 +1749,10 @@
                   <div class="fs-4 fw-extrabold">Total Amount: ₹<span id="modalTotalAmount">0</span></div>
                 </div>
 
-                <!-- UPI & GPay Details -->
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small text-muted text-uppercase mb-1">GPay Number</label>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                    <input type="text" class="form-control fw-bold" id="gpayNumberCopyText" value="{{#if paymentSetup.gpayNumber}}{{paymentSetup.gpayNumber}}{{else}}Not set{{/if}}" readonly>
-                    <button type="button" class="btn btn-outline-secondary" onclick="copyTextFromInput('gpayNumberCopyText', 'GPay Number')">
-                      <i class="bi bi-copy me-1"></i>Copy
-                    </button>
-                  </div>
-                </div>
+                <!-- Hidden: GPay number for JS clipboard use -->
+                <input type="hidden" id="gpayNumberCopyText" value="{{#if paymentSetup.gpayNumber}}{{paymentSetup.gpayNumber}}{{else}}Not set{{/if}}">
 
+                <!-- UPI & GPay Details -->
                 <div class="mb-3">
                   <label class="form-label fw-semibold small text-muted text-uppercase mb-1">UPI ID</label>
                   <div class="input-group">
@@ -1774,10 +1766,25 @@
 
                 <!-- Proceed to UPI App Button -->
                 <div class="mt-4">
-                  <a href="#" id="proceedUpiLink" target="_blank" class="btn btn-success w-100 rounded-3 py-2 fw-bold shadow-sm">
+                  <button type="button" id="proceedUpiBtn" class="btn btn-success w-100 rounded-3 py-2 fw-bold shadow-sm">
                     <i class="bi bi-box-arrow-up-right me-2"></i>Proceed to UPI App
-                  </a>
-                  <div class="form-text text-center small mt-1">Launches your UPI app (GPay / PhonePe / Paytm) with pre-filled amount.</div>
+                  </button>
+                  <div class="form-text text-center small mt-1">Copies GPay number &amp; opens your UPI app (GPay / PhonePe / Paytm).</div>
+                </div>
+
+                <!-- Copy-then-open popup -->
+                <div id="upiCopyPopup" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
+                  <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:16px; padding:28px 24px; max-width:320px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.22);">
+                    <div style="font-size:36px; margin-bottom:12px;">📋</div>
+                    <div class="fw-bold mb-2" style="font-size:16px; color:var(--text-primary);">GPay number copied!</div>
+                    <div class="small mb-4" style="color:var(--text-muted); line-height:1.6;">
+                      Open your UPI app and <strong>paste</strong> the copied number in the recipient field to complete payment.
+                    </div>
+                    <button type="button" id="upiCopyPopupContinue" class="btn btn-success w-100 rounded-3 fw-bold py-2">
+                      <i class="bi bi-box-arrow-up-right me-2"></i>Continue to App
+                    </button>
+                    <button type="button" id="upiCopyPopupCancel" class="btn btn-link w-100 mt-2 small text-muted">Cancel</button>
+                  </div>
                 </div>
               </div>
 
@@ -1849,7 +1856,10 @@
 
       var modalSelectedList = document.getElementById('modalSelectedMonthsList');
       var modalTotalEl = document.getElementById('modalTotalAmount');
-      var proceedUpiLink = document.getElementById('proceedUpiLink');
+      var proceedUpiBtn = document.getElementById('proceedUpiBtn');
+      var upiCopyPopup = document.getElementById('upiCopyPopup');
+      var upiCopyPopupContinue = document.getElementById('upiCopyPopupContinue');
+      var upiCopyPopupCancel = document.getElementById('upiCopyPopupCancel');
 
       var form = document.getElementById('submitContributionForm');
       var alertBox = document.getElementById('paymentModalAlert');
@@ -1984,19 +1994,80 @@
           if (modalSelectedList) modalSelectedList.textContent = labels;
           if (modalTotalEl) modalTotalEl.textContent = String(total);
 
-          var upiId = (document.getElementById('upiIdCopyText') ? document.getElementById('upiIdCopyText').value : '').trim();
-          if (proceedUpiLink) {
-            if (upiId && upiId !== 'Not set') {
-              proceedUpiLink.href = 'upi://pay?pa=' + encodeURIComponent(upiId) + '&pn=HAMD%20Alumni&am=' + total + '&cu=INR';
-            } else {
-              proceedUpiLink.href = '#';
-            }
-          }
-
           var modalEl = document.getElementById('payContributionModal');
           if (modalEl && window.bootstrap) {
             var modalInst = window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl);
             modalInst.show();
+          }
+        });
+      }
+
+      // ── Proceed to UPI App: copy GPay number then show popup ──
+      if (proceedUpiBtn && upiCopyPopup && upiCopyPopupContinue && upiCopyPopupCancel) {
+        proceedUpiBtn.addEventListener('click', function () {
+          var gpayInput = document.getElementById('gpayNumberCopyText');
+          var gpayNumber = gpayInput ? gpayInput.value.trim() : '';
+
+          function showPopupAndOpenApp() {
+            upiCopyPopup.style.display = 'flex';
+          }
+
+          function openUpiApp() {
+            // Open generic UPI intent — works on Android & iOS
+            window.location.href = 'upi://pay';
+          }
+
+          if (gpayNumber && gpayNumber !== 'Not set') {
+            // Copy to clipboard on the direct user gesture (required for iOS Safari)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(gpayNumber).then(function () {
+                showPopupAndOpenApp();
+              }).catch(function () {
+                // Fallback for browsers that reject clipboard on non-HTTPS or denied permission
+                try {
+                  var tmp = document.createElement('input');
+                  tmp.value = gpayNumber;
+                  document.body.appendChild(tmp);
+                  tmp.select();
+                  tmp.setSelectionRange(0, 99999);
+                  document.execCommand('copy');
+                  document.body.removeChild(tmp);
+                } catch (e) {}
+                showPopupAndOpenApp();
+              });
+            } else {
+              // Older browser fallback
+              try {
+                var tmp = document.createElement('input');
+                tmp.value = gpayNumber;
+                document.body.appendChild(tmp);
+                tmp.select();
+                tmp.setSelectionRange(0, 99999);
+                document.execCommand('copy');
+                document.body.removeChild(tmp);
+              } catch (e) {}
+              showPopupAndOpenApp();
+            }
+          } else {
+            // No GPay number set — just show popup without copy message
+            upiCopyPopup.style.display = 'flex';
+          }
+        });
+
+        upiCopyPopupContinue.addEventListener('click', function () {
+          upiCopyPopup.style.display = 'none';
+          // upi://pay opens the UPI app chooser on Android; on iOS it opens GPay if installed
+          window.location.href = 'upi://pay';
+        });
+
+        upiCopyPopupCancel.addEventListener('click', function () {
+          upiCopyPopup.style.display = 'none';
+        });
+
+        // Close popup on backdrop tap
+        upiCopyPopup.addEventListener('click', function (e) {
+          if (e.target === upiCopyPopup) {
+            upiCopyPopup.style.display = 'none';
           }
         });
       }
