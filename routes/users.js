@@ -103,11 +103,17 @@ async function getMemberContributionMonths(member) {
   var y = startYear;
   var m = startMonth;
 
-  while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+  // Generate historical months + 24 upcoming future months for Pre-Payment options
+  var futureTotalMonths = currentMonth + 24;
+  var targetYear = currentYear + Math.floor((futureTotalMonths - 1) / 12);
+  var targetMonth = ((futureTotalMonths - 1) % 12) + 1;
+
+  while (y < targetYear || (y === targetYear && m <= targetMonth)) {
     var key = y + '-' + m;
     var statusEntry = statusMap[key] || { status: 'UN PAID' };
     var rawStatus = statusEntry.status;
 
+    var isUpcoming = (y > currentYear || (y === currentYear && m > currentMonth));
     var displayStatus = 'UN PAID';
     var badgeColor = 'bg-danger';
     var isSelectable = true;
@@ -125,9 +131,15 @@ async function getMemberContributionMonths(member) {
       badgeColor = 'bg-danger';
       isSelectable = false;
     } else {
-      displayStatus = 'UN PAID';
-      badgeColor = 'bg-danger';
-      isSelectable = true;
+      if (isUpcoming) {
+        displayStatus = 'UPCOMING';
+        badgeColor = 'bg-info text-primary border border-secondary';
+        isSelectable = true;
+      } else {
+        displayStatus = 'UN PAID';
+        badgeColor = 'bg-danger';
+        isSelectable = true;
+      }
     }
 
     monthsList.push({
@@ -138,6 +150,7 @@ async function getMemberContributionMonths(member) {
       label: MONTH_NAMES[m - 1] + ' ' + y,
       amount: statusEntry.amount || 30,
       status: displayStatus,
+      isUpcoming: isUpcoming,
       isApproved: rawStatus === 'Approved',
       badgeColor: badgeColor,
       isSelectable: isSelectable,
@@ -155,8 +168,9 @@ async function getMemberContributionMonths(member) {
     }
   }
 
+  // Calculate overdue unpaid months only up to current month for warning alert banner
   var unpaidList = monthsList.filter(function (item) {
-    return item.status === 'UN PAID' || item.status === 'REJECTED';
+    return !item.isUpcoming && (item.status === 'UN PAID' || item.status === 'REJECTED');
   });
 
   return {

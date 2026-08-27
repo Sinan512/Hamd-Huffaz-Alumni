@@ -35,7 +35,7 @@
       --bg-body: #f8fafc;
       --surface: #ffffff;
       --surface-alt: #f1f5f9;
-      --border-color: rgba(156, 156, 156, 0.8);
+      --border-color: rgba(146, 146, 146, 0.8);
       --text-primary: #1e293b;
       --text-muted: #64748b;
       --card-shadow: 0 4px 20px -2px rgba(0,0,0,0.04), 0 2px 6px -1px rgba(0,0,0,0.02);
@@ -58,7 +58,7 @@
       --bg-body: #0b0f19;
       --surface: #111827;
       --surface-alt: #151c2c;
-      --border-color: rgba(148, 163, 184, 0.16);
+      --border-color: rgba(155, 155, 155, 0.16);
       --text-primary: #e2e8f0;
       --text-muted: #94a3b8;
       --card-shadow: 0 4px 20px -2px rgba(0,0,0,0.5), 0 2px 6px -1px rgba(0,0,0,0.3);
@@ -785,16 +785,66 @@
           </div>
         </div>
         {{/if}}
+         <!-- ===== SECTION: PRE-PAYMENT OPTIONS (6 MONTH, 1 YEAR) ===== -->
+        <div class="card border rounded-3 p-3 p-md-4 mb-4" style="background: var(--surface-alt, #c1c0c0);">
+          <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <div>
+              <h6 class="fw-bold m-0 d-flex align-items-center" style="color:var(--primary);">
+                <i class="bi bi-lightning-charge-fill me-2 fs-5"></i>Pre-Payment Options
+              </h6>
+              <div class="small text-muted mt-1">Pay ahead for upcoming months in advance (₹30 / Month)</div>
+            </div>
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold">
+              <i class="bi bi-shield-check me-1"></i>Clears Dues Sequentially
+            </span>
+          </div>
+
+          <div class="row g-3" id="prepaymentOptionsRow">
+            <!-- Grid 1: 6 Month Pre-Payment -->
+            <div class="col-12 col-md-6">
+              <div class="card h-100 border-secondary p-3 rounded-3 prepay-card text-center cursor-pointer shadow-sm position-relative" id="prepayCard6" data-plan="6" style="cursor: pointer; transition: all 0.2s ease;">
+                <div class="form-check position-absolute top-0 end-0 m-3">
+                  <input class="form-check-input prepay-radio" type="radio" name="prepaymentPlan" id="planRadio6" value="6">
+                </div>
+                <div class="my-2">
+                  <i class="bi bi-calendar-range text-primary fs-2"></i>
+                </div>
+                <h6 class="fw-bold mb-1">6 Month Pre-Payment</h6>
+                <div class="small text-muted mb-2">Pay next 6 months</div>
+                <div class="fs-4 fw-extrabold text-primary mb-1">₹180</div>
+                <div class="small text-secondary">6 × ₹30 / month</div>
+              </div>
+            </div>
+
+            <!-- Grid 2: 1 Year Pre-Payment -->
+            <div class="col-12 col-md-6">
+              <div class="card h-100 border-secondary p-3 rounded-3 prepay-card text-center cursor-pointer shadow-sm position-relative" id="prepayCard12" data-plan="12" style="cursor: pointer; transition: all 0.2s ease;">
+                <div class="form-check position-absolute top-0 end-0 m-3">
+                  <input class="form-check-input prepay-radio" type="radio" name="prepaymentPlan" id="planRadio12" value="12">
+                </div>
+                <div class="my-2">
+                  <i class="bi bi-calendar-check text-success fs-2"></i>
+                </div>
+                <h6 class="fw-bold mb-1">1 Year Pre-Payment</h6>
+                <div class="small text-muted mb-2">Pay next 12 months</div>
+                <div class="fs-4 fw-extrabold text-success mb-1">₹360</div>
+                <div class="small text-secondary">12 × ₹30 / month</div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
 
         <div class="mb-3">
           <label class="form-label fw-bold text-muted small text-uppercase" style="letter-spacing:0.5px;">Contribution Months Checklist</label>
           <div class="row g-3" id="contributionMonthsGrid">
             {{#each contribution.months}}
             <div class="col-6 col-sm-4 col-md-3">
-              <div class="card h-100 border p-3 rounded-3 month-card {{#unless this.isSelectable}}bg-body-tertiary opacity-75{{/unless}}" style="transition: all 0.2s ease;">
+              <div class="card h-100 border-secondary p-3 rounded-3 month-card {{#unless this.isSelectable}}bg-body-tertiary opacity-75{{/unless}}" style="transition: all 0.2s ease;">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <div class="form-check m-0">
-                    <input class="form-check-input month-checkbox" type="checkbox"
+                    <input class="form-check-input month-checkbox border-secondary" type="checkbox"
                       value="{{this.key}}"
                       id="mchk-{{this.key}}"
                       data-month="{{this.month}}"
@@ -807,9 +857,9 @@
                     </label>
                   </div>
                 </div>
-                <div class="d-flex align-items-center justify-content-between mt-auto pt-2 border-top">
+                <div class="d-flex align-items-center justify-content-between mt-auto pt-2 border-top border-secondary">
                   <span class="fw-semibold text-secondary small">₹{{this.amount}}</span>
-                  <span class="badge {{this.badgeColor}} px-2 py-1" style="font-size: 11px;">{{this.status}}</span>
+                  <span class="badge {{this.badgeColor}} px-2 py-1" style="font-size: 11px; border-color: #9d9d9d;">{{this.status}}</span>
                 </div>
                 {{#if this.rejectionReason}}
                 <div class="small text-danger mt-2">
@@ -1877,7 +1927,7 @@
         </div>
         <div class="modal-body px-4 py-3">
           <p class="mb-2">You have <strong class="text-danger">{{contribution.unpaidCount}}</strong> unpaid monthly contribution(s) pending:</p>
-          <div class="p-3 bg-body-tertiary rounded-3 border mb-3 fw-bold text-break" style="color: #828282;">
+          <div class="p-3 bg-body-tertiary rounded-3 border border-secondary mb-3 fw-bold text-break" style="color: #828282;">
             {{contribution.unpaidListLabels}}
           </div>
           <p class="small text-muted mb-0">Please clear your contribution payments to support alumni activities.</p>
@@ -2002,8 +2052,72 @@
         link.click();
       }
 
+       // ── PRE-PAYMENT OPTIONS LOGIC (6 Month, 1 Year) ──
+      var prepayCards = document.querySelectorAll('.prepay-card');
+      var prepayRadios = document.querySelectorAll('.prepay-radio');
+
+      function getSelectableCheckboxes() {
+        var list = [];
+        document.querySelectorAll('.month-checkbox').forEach(function (cb) {
+          if (!cb.disabled) {
+            list.push(cb);
+          }
+        });
+        return list;
+      }
+
+      function clearPrepaymentRadioSelection() {
+        prepayRadios.forEach(function (r) { r.checked = false; });
+        prepayCards.forEach(function (card) {
+          card.classList.remove('border-primary', 'bg-primary-subtle');
+          card.style.borderColor = '';
+        });
+      }
+
+      function applyPrepaymentPlan(plan) {
+        var selectables = getSelectableCheckboxes();
+        if (selectables.length === 0) return;
+
+        checkboxes.forEach(function (cb) {
+          if (!cb.disabled) cb.checked = false;
+        });
+
+        if (plan === '6') {
+          var count6 = Math.min(6, selectables.length);
+          for (var i = 0; i < count6; i++) {
+            selectables[i].checked = true;
+          }
+        } else if (plan === '12') {
+          var count12 = Math.min(12, selectables.length);
+          for (var j = 0; j < count12; j++) {
+            selectables[j].checked = true;
+          }
+        }
+
+        updateSummary();
+      }
+
+      prepayCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+          var plan = card.getAttribute('data-plan');
+          var radio = card.querySelector('.prepay-radio');
+          if (radio) radio.checked = true;
+
+          prepayCards.forEach(function (c) {
+            c.classList.remove('border-primary', 'bg-primary-subtle');
+            c.style.borderColor = '';
+          });
+          card.classList.add('border-primary', 'bg-primary-subtle');
+
+          applyPrepaymentPlan(plan);
+        });
+      });
+
       checkboxes.forEach(function (cb) {
-        cb.addEventListener('change', updateSummary);
+        cb.addEventListener('change', function () {
+          clearPrepaymentRadioSelection();
+          updateSummary();
+        });
       });
 
       document.querySelectorAll('.resubmit-month-btn').forEach(function (button) {
