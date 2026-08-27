@@ -1993,64 +1993,307 @@
         ctx.fillText(value || '—', 330, y);
       }
 
-      function downloadReceipt(button) {
-        var canvas = document.createElement('canvas');
-        canvas.width = 1200;
-        canvas.height = 900;
-        var ctx = canvas.getContext('2d');
-        var contributionSection = document.getElementById('contribution-section');
-        var memberName = button.getAttribute('data-receipt-name') ||
-          (contributionSection && contributionSection.getAttribute('data-member-name')) || '';
-        var admissionNumber = button.getAttribute('data-receipt-admission') ||
-          (contributionSection && contributionSection.getAttribute('data-member-admission')) || '';
+      /* HAMD Alumni Association — Monthly Contribution Receipt (canvas PNG download)
+ * Matches the official receipt design. Vanilla JS, no dependencies.
+ * Usage: <button onclick="downloadReceipt(this)" data-receipt-name="..." ...>
+ */
+function downloadReceipt(button) {
+  var W = 1200;
+  var H = 1640;
+  var canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  var ctx = canvas.getContext('2d');
 
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#4f46e5';
-        ctx.fillRect(0, 0, canvas.width, 150);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '700 38px Arial';
-        ctx.fillText('HAMD Alumni Association', 90, 70);
-        ctx.font = '500 23px Arial';
-        ctx.fillText('Monthly Contribution Receipt', 90, 112);
+  var contributionSection = document.getElementById('contribution-section');
+  var memberName = button.getAttribute('data-receipt-name') ||
+    (contributionSection && contributionSection.getAttribute('data-member-name')) || '';
+  var admissionNumber = button.getAttribute('data-receipt-admission') ||
+    (contributionSection && contributionSection.getAttribute('data-member-admission')) || '';
+  var month = button.getAttribute('data-receipt-month') || '';
+  var amount = '₹' + (button.getAttribute('data-receipt-amount') || '30');
+  var approvedBy = button.getAttribute('data-receipt-approved-by') || '';
+  var completedAt = button.getAttribute('data-receipt-time') || '';
+  var submittedAt = button.getAttribute('data-receipt-submitted-time') || '';
+  var paymentRef = button.getAttribute('data-receipt-payment-id') || '';
+  var txnId = button.getAttribute('data-receipt-txn-id') || paymentRef || '';
 
-        ctx.fillStyle = '#16a34a';
-        ctx.beginPath();
-        ctx.arc(1040, 75, 42, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '700 48px Arial';
-        ctx.fillText('✓', 1025, 91);
+  // Palette
+  var TEAL_DARK = '#0b3d3a';
+  var TEAL = '#0f766e';
+  var TEAL_LIGHT = '#8fd3cb';
+  var TEAL_BOX = '#eef6f5';
+  var INK = '#0f172a';
+  var SLATE = '#64748b';
+  var BG = '#f8faf9';
+  var LINE = '#dbe7e5';
 
-        ctx.fillStyle = '#172033';
-        ctx.font = '700 28px Arial';
-        ctx.fillText('Payment completed', 90, 220);
-        drawReceiptLine(ctx, 'Member name', memberName, 285);
-        drawReceiptLine(ctx, 'Admission no.', admissionNumber, 335);
-        drawReceiptLine(ctx, 'Contribution month', button.getAttribute('data-receipt-month'), 385);
-        drawReceiptLine(ctx, 'Amount paid', '₹' + (button.getAttribute('data-receipt-amount') || '30'), 435);
-        drawReceiptLine(ctx, 'Approved by', button.getAttribute('data-receipt-approved-by'), 485);
-        drawReceiptLine(ctx, 'Completed at', button.getAttribute('data-receipt-time'), 535);
-        drawReceiptLine(ctx, 'Submitted at', button.getAttribute('data-receipt-submitted-time'), 585);
-        drawReceiptLine(ctx, 'Payment reference', button.getAttribute('data-receipt-payment-id'), 635);
+  function roundedRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
 
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(90, 700);
-        ctx.lineTo(1110, 700);
-        ctx.stroke();
-        ctx.fillStyle = '#64748b';
-        ctx.font = '500 18px Arial';
-        ctx.fillText('This is a digitally generated confirmation of the approved contribution.', 90, 755);
-        ctx.fillText('Thank you for supporting HAMD alumni activities.', 90, 790);
+  function iconCircle(cx, cy) {
+    ctx.fillStyle = TEAL;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+    ctx.fill();
+    // simple white dot-glyph
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-        var link = document.createElement('a');
-        var month = button.getAttribute('data-receipt-month') || 'contribution';
-        link.download = 'HAMD-Contribution-Receipt-' + month.replace(/[^a-z0-9]+/gi, '-') + '.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+  function drawField(colX, y, label, value) {
+    iconCircle(colX + 26, y + 26);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = SLATE;
+    ctx.font = '500 20px Arial';
+    ctx.fillText(label, colX + 70, y + 18);
+    ctx.fillStyle = INK;
+    ctx.font = '700 27px Arial';
+    ctx.fillText(value, colX + 70, y + 52);
+    // dashed divider
+    ctx.strokeStyle = LINE;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 5]);
+    ctx.beginPath();
+    ctx.moveTo(colX + 70, y + 78);
+    ctx.lineTo(colX + 480, y + 78);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function render(logoImg) {
+    // Background
+    ctx.fillStyle = '#e8efee';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = BG;
+    roundedRect(20, 20, W - 40, H - 40, 28);
+    ctx.fill();
+
+    // Clip inner card
+    ctx.save();
+    roundedRect(20, 20, W - 40, H - 40, 28);
+    ctx.clip();
+
+    // ---- Header band ----
+    ctx.fillStyle = TEAL_DARK;
+    ctx.fillRect(20, 20, W - 40, 250);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 52px Arial';
+    ctx.fillText('HAMD Alumni Malik Deenar', 90, 130);
+    ctx.fillStyle = TEAL_LIGHT;
+    ctx.font = '500 30px Arial';
+    ctx.fillText('Monthly Contribution Receipt', 90, 185);
+
+    // Logo panel (white rounded box on right)
+    ctx.fillStyle =TEAL_DARK;
+    roundedRect(830, 45, 300, 200, 20);
+    ctx.fill();
+    if (logoImg) {
+      // keep logo small, aspect preserved, max 150x110 inside the panel
+      var maxW = 280, maxH = 200;
+      var ratio = Math.min(maxW / logoImg.width, maxH / logoImg.height);
+      var lw = logoImg.width * ratio, lh = logoImg.height * ratio;
+      ctx.drawImage(logoImg, 880 + (300 - lw) / 2, 55 + (200 - lh) / 2 - 14, lw, lh);
+      ctx.textAlign = 'center';
+      ctx.font = '700 24px Arial';
+    } else {
+      ctx.fillStyle = TEAL;
+      ctx.textAlign = 'center';
+      ctx.font = '700 44px Arial';
+      ctx.fillText('HAMD', 980, 160);
+      ctx.font = '500 18px Arial';
+      ctx.fillText('Huffaz Alumni Malik Deenar', 980, 195);
+    }
+
+    // ---- Payment Successful ----
+    var cy = 380;
+    ctx.fillStyle = TEAL;
+    ctx.beginPath();
+    ctx.arc(450, cy, 32, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(434, cy);
+    ctx.lineTo(446, cy + 12);
+    ctx.lineTo(468, cy - 14);
+    ctx.stroke();
+    ctx.fillStyle = INK;
+    ctx.textAlign = 'left';
+    ctx.font = '700 44px Arial';
+    ctx.fillText('Payment Successful', 505, cy + 15);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = SLATE;
+    ctx.font = '400 24px Arial';
+    ctx.fillText('Thank you! Your contribution has been received and recorded successfully.', W / 2, cy + 70);
+
+    // divider with ornament
+    ctx.strokeStyle = LINE;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(150, cy + 115);
+    ctx.lineTo(W / 2 - 30, cy + 115);
+    ctx.moveTo(W / 2 + 30, cy + 115);
+    ctx.lineTo(W - 150, cy + 115);
+    ctx.stroke();
+    ctx.fillStyle = TEAL_LIGHT;
+    ctx.beginPath();
+    ctx.moveTo(W / 2, cy + 107);
+    ctx.lineTo(W / 2 + 10, cy + 115);
+    ctx.lineTo(W / 2, cy + 123);
+    ctx.lineTo(W / 2 - 10, cy + 115);
+    ctx.closePath();
+    ctx.fill();
+
+    // ---- Two-column fields ----
+    var leftX = 100, rightX = 640, startY = 545, step = 105;
+    // vertical divider
+    ctx.strokeStyle = LINE;
+    ctx.beginPath();
+    ctx.moveTo(600, startY - 10);
+    ctx.lineTo(600, startY + step * 3 + 70);
+    ctx.stroke();
+
+    drawField(leftX, startY, 'Member Name', memberName);
+    drawField(leftX, startY + step, 'Admission No.', admissionNumber);
+    drawField(leftX, startY + step * 2, 'Contribution Month', month);
+    drawField(leftX, startY + step * 3, 'Amount Paid', amount);
+
+    drawField(rightX, startY, 'Approved By', approvedBy);
+    drawField(rightX, startY + step, 'Completed At', completedAt);
+    drawField(rightX, startY + step * 2, 'Submitted At', submittedAt);
+    drawField(rightX, startY + step * 3, 'Payment Reference', paymentRef);
+
+    // ---- Transaction Summary ----
+    var boxY = 1035;
+    ctx.fillStyle = TEAL_BOX;
+    roundedRect(110, boxY, W - 220, 170, 18);
+    ctx.fill();
+    ctx.strokeStyle = LINE;
+    ctx.lineWidth = 2;
+    roundedRect(110, boxY, W - 220, 170, 18);
+    ctx.stroke();
+
+    iconCircle(160, boxY + 45);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = INK;
+    ctx.font = '700 26px Arial';
+    ctx.fillText('Transaction Summary', 200, boxY + 55);
+
+    var colY = boxY + 100;
+    var cols = [
+      { label: 'Payment Method', value: 'Online Payment', cx: 220 },
+      { label: 'Transaction ID', value: txnId, cx: 540 },
+      { label: 'Status', value: '', cx: 880 }
+    ];
+    ctx.textAlign = 'center';
+    cols.forEach(function (c, i) {
+      ctx.fillStyle = SLATE;
+      ctx.font = '400 20px Arial';
+      ctx.fillText(c.label, c.cx, colY);
+      if (i < 2) {
+        ctx.fillStyle = INK;
+        ctx.font = '700 24px Arial';
+        ctx.fillText(c.value, c.cx, colY + 38);
       }
+    });
+    // Status pill
+    ctx.fillStyle = TEAL;
+    roundedRect(800, colY + 12, 170, 42, 21);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 22px Arial';
+    ctx.fillText('Successful', 885, colY + 40);
+    // column separators
+    ctx.strokeStyle = LINE;
+    ctx.beginPath();
+    ctx.moveTo(420, colY - 15);
+    ctx.lineTo(420, colY + 55);
+    ctx.moveTo(730, colY - 15);
+    ctx.lineTo(730, colY + 55);
+    ctx.stroke();
+
+    // ---- Quote box ----
+    var qY = 1300;
+    ctx.fillStyle = TEAL_LIGHT;
+    ctx.textAlign = 'center';
+    ctx.font = '700 70px Georgia';
+    ctx.fillText('“', W / 2, qY + 10);
+    ctx.strokeStyle = LINE;
+    ctx.lineWidth = 2;
+    roundedRect(280, qY + 20, W - 560, 150, 14);
+    ctx.stroke();
+    ctx.fillStyle = SLATE;
+    ctx.font = '400 22px Arial';
+    ctx.fillText('This is a digitally generated confirmation', W / 2, qY + 75);
+    ctx.fillText('of the approved contribution.', W / 2, qY + 108);
+    ctx.fillStyle = INK;
+    ctx.font = '700 22px Arial';
+    ctx.fillText('Thank you for supporting HAMD alumni activities.', W / 2, qY + 145);
+
+    // ---- Footer band ----
+    var fY = H - 140;
+    ctx.fillStyle = TEAL_DARK;
+    ctx.fillRect(20, fY, W - 40, 120);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = TEAL_LIGHT;
+    ctx.font = '400 22px Arial';
+    ctx.fillText('Your support builds a stronger', 170, fY + 50);
+    ctx.fillText('community and a brighter future.', 170, fY + 82);
+    // shield icon
+    ctx.strokeStyle = TEAL_LIGHT;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(130, fY + 62, 20, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(122, fY + 62);
+    ctx.lineTo(128, fY + 68);
+    ctx.lineTo(139, fY + 55);
+    ctx.stroke();
+    // separator
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(600, fY + 25);
+    ctx.lineTo(600, fY + 95);
+    ctx.stroke();
+    // contact
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#e6f4f2';
+    ctx.font = '400 22px Arial';
+    ctx.fillText('hamd-huffaz-alumni-of-markaz-malik.vercel.app', 650, fY + 50);
+    ctx.fillText('huffazalumnimarkazmalikdeenar@gmail.com', 650, fY + 85);
+
+    ctx.restore();
+
+    // ---- Download ----
+    var link = document.createElement('a');
+    var fileMonth = month || 'contribution';
+    link.download = 'HAMD-Contribution-Receipt-' + fileMonth.replace(/[^a-z0-9]+/gi, '-') + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // Load logo, then render (fallback to text if missing)
+  var img = new Image();
+  img.onload = function () { render(img); };
+  img.onerror = function () { render(null); };
+  img.src = '/logo/hamd-full-white.png';
+}
+
 
        // ── PRE-PAYMENT OPTIONS LOGIC (6 Month, 1 Year) ──
       var prepayCards = document.querySelectorAll('.prepay-card');
