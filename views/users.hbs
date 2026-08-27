@@ -828,7 +828,7 @@
                 <h6 class="fw-bold mb-1">1 Year Pre-Payment</h6>
                 <div class="small text-muted mb-2">Pay next 12 months</div>
                 <div class="fs-4 fw-extrabold text-success mb-1">₹360</div>
-                <div class="small text-secondary">12 × ₹30 / month</div>
+                <div id="year-plan-calculation-text" class="small text-secondary">12 × ₹30 / month</div>
               </div>
             </div>
 
@@ -2345,7 +2345,7 @@
           if (payNowBtn) {
             payNowBtn.addEventListener('click', function () {
               unpaidInst.hide();
-              var targetSec = document.getElementById('month-checklist');
+              var targetSec = document.getElementById('year-plan-calculation-text');
               if (targetSec) {
                 targetSec.scrollIntoView({ behavior: 'smooth' });
               }
