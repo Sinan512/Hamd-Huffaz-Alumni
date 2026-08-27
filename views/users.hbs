@@ -836,7 +836,7 @@
 
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3" id="month-checklist">
           <label class="form-label fw-bold text-muted small text-uppercase" style="letter-spacing:0.5px;">Contribution Months Checklist</label>
           <div class="row g-3" id="contributionMonthsGrid">
             {{#each contribution.months}}
@@ -2345,7 +2345,7 @@
           if (payNowBtn) {
             payNowBtn.addEventListener('click', function () {
               unpaidInst.hide();
-              var targetSec = document.getElementById('contribution-section');
+              var targetSec = document.getElementById('month-checklist');
               if (targetSec) {
                 targetSec.scrollIntoView({ behavior: 'smooth' });
               }
