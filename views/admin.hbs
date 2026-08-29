@@ -1373,6 +1373,9 @@
                   <option value="completed">Completed</option>
                   <option value="incomplete">Incomplete</option>
                 </select>
+                <button type="button" id="membersDownloadExcelBtn" class="btn btn-sm btn-outline-success rounded-3 text-nowrap" title="Download the filtered member list as Excel">
+                  <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                </button>
                 <button class="btn btn-sm btn-link text-primary text-decoration-none fw-bold p-0 text-nowrap" data-bs-toggle="modal" data-bs-target="#addAlumniModal">
                   + Add Member
                 </button>
@@ -1392,7 +1395,7 @@
                 </thead>
                 <tbody id="membersTableBody">
                   {{#each allMembers}}
-                  <tr data-batch="{{this.batch}}" data-profile-complete="{{#if this.profileCompleted}}completed{{else}}incomplete{{/if}}" data-name="{{this.name}}" data-email="{{this.email}}" data-member-id="{{this.id}}">
+                  <tr data-batch="{{this.batch}}" data-profile-complete="{{#if this.profileCompleted}}completed{{else}}incomplete{{/if}}" data-name="{{this.name}}" data-email="{{this.email}}" data-phone="{{this.phone}}" data-whatsapp="{{this.whatsapp}}" data-member-id="{{this.id}}">
                     <td>
                       <div class="d-flex align-items-center gap-3">
                         <div class="member-avatar-wrapper">
@@ -1411,7 +1414,7 @@
                       {{#if this.profileCompleted}}
                       <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Completed</span>
                       {{else}}
-                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Incomplete</span>
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Incomplete · {{this.profileCompletionPercent}}%</span>
                       {{/if}}
                     </td>
                     <td class="text-center">
@@ -2427,6 +2430,7 @@
       var tbody      = document.getElementById('membersTableBody');
       var filterSel  = document.getElementById('batchFilterSelect');
       var profileFilterSel = document.getElementById('profileFilterSelect');
+      var downloadBtn = document.getElementById('membersDownloadExcelBtn');
       var prevBtn    = document.getElementById('membersPrevBtn');
       var nextBtn    = document.getElementById('membersNextBtn');
       var pageInfo   = document.getElementById('membersPageInfo');
@@ -2472,6 +2476,7 @@
         var to   = Math.min(end, total);
         pageInfo.textContent   = 'Showing ' + from + '–' + to + ' of ' + total + ' members';
         countBadge.textContent = total;
+        if (downloadBtn) downloadBtn.disabled = total === 0;
 
         /* Buttons */
         prevBtn.disabled = currentPage <= 1;
@@ -2516,6 +2521,44 @@
           render();
         });
       }
+
+      function todayStamp() {
+        var date = new Date();
+        function pad(n) { return n < 10 ? '0' + n : String(n); }
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+      }
+
+      function downloadFilteredMembers() {
+        var visible = getVisibleRows();
+        if (!visible.length) return;
+        if (typeof XLSX === 'undefined') {
+          alert('Excel export could not be loaded. Please check your internet connection and try again.');
+          return;
+        }
+
+        var rows = [['#', 'Name', 'Email', 'Batch', 'Profile Status', 'Phone', 'WhatsApp']];
+        visible.forEach(function (row, index) {
+          rows.push([
+            index + 1,
+            row.getAttribute('data-name') || '',
+            row.getAttribute('data-batch') || '',
+            row.getAttribute('data-profile-complete') === 'completed' ? 'Completed' : 'Incomplete',
+            row.getAttribute('data-phone') || '',
+            row.getAttribute('data-whatsapp') || ''
+          ]);
+        });
+
+        var sheet = XLSX.utils.aoa_to_sheet(rows);
+        sheet['!cols'] = [
+          { wch: 6 }, { wch: 28 }, { wch: 34 }, { wch: 12 },
+          { wch: 18 }, { wch: 18 }, { wch: 18 }
+        ];
+        var workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, sheet, 'Registered Members');
+        XLSX.writeFile(workbook, 'registered-members-' + todayStamp() + '.xlsx');
+      }
+
+      if (downloadBtn) downloadBtn.addEventListener('click', downloadFilteredMembers);
 
       prevBtn.addEventListener('click', function () { if (currentPage > 1) { currentPage--; render(); } });
       nextBtn.addEventListener('click', function () { currentPage++; render(); });
@@ -4504,6 +4547,8 @@
     row.setAttribute('data-batch', member.batch || '');
     row.setAttribute('data-name', member.name || '');
     row.setAttribute('data-email', member.email || '');
+    row.setAttribute('data-phone', member.phone || '');
+    row.setAttribute('data-whatsapp', member.whatsapp || '');
     row.setAttribute('data-profile-complete', member.profileCompleted ? 'completed' : 'incomplete');
     var nameEl  = row.querySelector('.fw-bold.text-dark');
     var mailEl  = row.querySelector('.text-muted.small');
@@ -4515,7 +4560,7 @@
     if (profileCell) {
       profileCell.innerHTML = member.profileCompleted
         ? '<span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Completed</span>'
-        : '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Incomplete</span>';
+        : '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Incomplete · ' + (member.profileCompletionPercent || 0) + '%</span>';
     }
     var delBtn = row.querySelector('[data-member-delete]');
     if (delBtn) delBtn.setAttribute('data-member-name', member.name || '');

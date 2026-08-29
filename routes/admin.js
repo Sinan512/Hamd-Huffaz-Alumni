@@ -1010,6 +1010,14 @@ function isProfileCompleted(doc) {
   });
 }
 
+function profileCompletionPercent(doc) {
+  var completedFields = PROFILE_DETAIL_FIELDS.filter(function (key) {
+    var value = doc[key];
+    return value !== undefined && value !== null && String(value).trim() !== '';
+  }).length;
+  return Math.round((completedFields / PROFILE_DETAIL_FIELDS.length) * 100);
+}
+
 function serialiseMember(doc) {
   var out = { _id: String(doc._id) };
   MEMBER_TEXT_FIELDS.forEach(function (key) { out[key] = doc[key] == null ? '' : String(doc[key]); });
@@ -1020,6 +1028,7 @@ function serialiseMember(doc) {
   out.updatedAt = doc.updatedAt ? new Date(doc.updatedAt).toISOString() : null;
   out.registeredEvents = Array.isArray(doc.registeredEvents) ? doc.registeredEvents.length : 0;
   out.profileCompleted = isProfileCompleted(doc);
+  out.profileCompletionPercent = profileCompletionPercent(doc);
   return out;
 }
 
@@ -1654,6 +1663,7 @@ async function getAllMembers() {
         email:      doc.email      || '',
         batch:      batchYear(doc.batch),
         profileCompleted: isProfileCompleted(doc),
+        profileCompletionPercent: profileCompletionPercent(doc),
         phone:      phone,
         telLink:    phone ? 'tel:' + phone.replace(/[^0-9+]/g, '') : '',
         whatsapp:   doc.whatsapp || '',
