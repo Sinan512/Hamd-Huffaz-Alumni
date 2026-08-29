@@ -34,9 +34,9 @@
   .bg::before{
     content:"";position:absolute;inset:-20%;
     background:
-      radial-gradient(60vmax 45vmax at 20% 10%, #cbe9ff 0%, rgba(203,233,255,0) 60%),
-      radial-gradient(70vmax 50vmax at 85% 15%, #dff1ff 0%, rgba(223,241,255,0) 62%),
-      linear-gradient(160deg,#e9f6ff 0%,#f7fcff 45%,#dff0ff 100%);
+      radial-gradient(60vmax 45vmax at 20% 10%, #f5f7f8 0%, rgba(203,233,255,0) 60%),
+      radial-gradient(70vmax 50vmax at 85% 15%, #edf1f5 0%, rgba(223,241,255,0) 62%),
+      linear-gradient(160deg,#e9f6ff 0%,#f7fcff 45%,#e8edf2 100%);
     background-size:200% 200%,200% 200%,180% 180%;
     animation:driftGradient 22s ease-in-out infinite alternate;
   }
@@ -84,22 +84,20 @@
   .brand{display:grid;place-items:center;gap:clamp(1.2rem,3vw,2rem)}
   .logo-wrap{
     position:relative;display:grid;place-items:center;
-    width:clamp(200px,42vw,300px);height:clamp(200px,42vw,300px);
+    width:clamp(500px,42vw,300px);height:clamp(200px,42vw,300px);
     border-radius:56px;
     /* deep sky fill so the WHITE logo png is actually visible */
-    background:linear-gradient(150deg,var(--sky) 0%,var(--sky-deep) 70%,#075a9a 100%);
-    backdrop-filter:blur(14px) saturate(150%);
-    box-shadow:0 30px 70px -26px rgba(11,116,196,.65), inset 0 0 0 1px rgba(255,255,255,.35);
+    background:white;
     animation:floatLogo 5.5s ease-in-out infinite;
   }
   .logo-wrap::after{
     content:"";position:absolute;inset:-26px;border-radius:74px;
-    background:radial-gradient(circle,var(--ring) 0%,rgba(56,169,245,0) 70%);
+    background:radial-gradient(circle,var(--ring) 0%,rgba(247, 248, 248, 0) 70%);
     animation:haloPulse 3.2s ease-in-out infinite;z-index:-1;
   }
   .logo-wrap img{
     width:78%;height:78%;object-fit:contain;display:block;
-    filter:drop-shadow(0 6px 18px rgba(4,52,90,.45));
+    filter:drop-shadow(0 6px 18px rgba(248, 249, 249, 0.45));
   }
   @keyframes floatLogo{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
   @keyframes haloPulse{0%,100%{opacity:.5;transform:scale(.95)}50%{opacity:1;transform:scale(1.06)}}
@@ -112,7 +110,7 @@
     color:#fff;
     padding:clamp(.85rem,1.4vw,1.35rem) clamp(2.1rem,5vw,3.6rem);
     border-radius:999px;
-    background:linear-gradient(115deg,var(--sky-bright) 0%,var(--sky) 30%,var(--sky-deep) 55%,var(--sky) 80%,var(--sky-bright) 100%);
+    background:linear-gradient(115deg,rgb(26, 61, 237) 0%,var(--sky) 30%,var(--sky-deep) 55%,rgb(4, 27, 195) 80%,var(--sky-bright) 100%);
     background-size:280% 100%;
     box-shadow:0 12px 34px -12px rgba(11,116,196,.7), inset 0 1px 0 rgba(255,255,255,.45);
     animation:gradientMove 6s linear infinite, pulse 2.4s ease-out infinite;
@@ -129,12 +127,7 @@
     box-shadow:0 22px 48px -14px rgba(11,116,196,.8), inset 0 1px 0 rgba(255,255,255,.5);
     outline:none;
   }
-  .publish:active{transform:translateY(1px) scale(.98)}
-  @keyframes gradientMove{0%{background-position:0% 50%}100%{background-position:280% 50%}}
-  @keyframes pulse{
-    0%,100%{box-shadow:0 12px 34px -12px rgba(11,116,196,.7),0 0 0 0 var(--ring)}
-    50%{box-shadow:0 12px 34px -12px rgba(11,116,196,.7),0 0 0 20px rgba(56,169,245,0)}
-  }
+  
 
   /* ---------- step 2: search bar ---------- */
   .bar{
@@ -177,7 +170,7 @@
     font-weight:650;font-size:clamp(.85rem,.5vw + .75rem,1.1rem);
     padding:clamp(.55rem,1vw,.85rem) clamp(1.1rem,2.4vw,1.9rem);
     border-radius:999px;
-    background:linear-gradient(115deg,var(--sky-bright) 0%,var(--sky) 30%,var(--sky-deep) 55%,var(--sky) 80%,var(--sky-bright) 100%);
+    background:linear-gradient(115deg,rgb(5, 72, 198) 0%,rgb(33, 104, 235) 30%,rgb(127, 183, 248) 55%,rgb(136, 213, 249) 80%,rgb(77, 169, 226) 100%);
     background-size:280% 100%;
     box-shadow:0 10px 26px -12px rgba(11,116,196,.7), inset 0 1px 0 rgba(255,255,255,.4);
     animation:gradientMove 6s linear infinite;
@@ -225,7 +218,7 @@
   }
   .loader{
     position:absolute;display:flex;align-items:center;gap:.6rem;
-    color:#8fc4e8;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;
+    color:#0f90e5;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;
   }
   .spinner{
     width:18px;height:18px;border-radius:50%;
@@ -243,7 +236,7 @@
   #flash.on{opacity:1}
 
   @media (prefers-reduced-motion:reduce){
-    *{animation-duration:.01ms !important;animation-iteration-count:1 !important}
+    *{animation-duration:3s !important;animation-iteration-count:infinite}
     .step{transition-duration:.2s}
     .sweep,.blob{display:none}
   }
@@ -262,7 +255,7 @@
   <!-- Step 1 -->
   <section class="step on" id="step1">
     <div class="brand">
-      <span class="logo-wrap"><img src="/logo/humd-full-white.png" alt="hamd-huffaz-alumni logo"></span>
+      <div class="logo-wrap"><img src='/logo/hamd-full-light.png' alt="hamd-huffaz-alumni"></div>
       <button class="publish" id="publishBtn" type="button">Publish</button>
     </div>
   </section>
