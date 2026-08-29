@@ -966,7 +966,8 @@
       }
 
       /* Batch filter select: grow to fill available space */
-      #batchFilterSelect {
+      #batchFilterSelect,
+      #profileFilterSelect {
         flex: 1 1 auto;
         min-width: 0;
         width: auto !important;
@@ -980,7 +981,7 @@
         font-size: 12px;
       }
 
-      /* Hide "Joined Date" column on small screens — least critical info */
+      /* Hide profile status column on small screens to preserve table space. */
       #membersTable th:nth-child(3),
       #membersTable td:nth-child(3) {
         display: none;
@@ -1222,6 +1223,7 @@
           </div>
         </div>
 
+
         <!-- Stat 4: Upcoming Events -->
         <div class="col-xl-3 col-md-6">
           <div class="card stat-card stat-amber h-100">
@@ -1366,6 +1368,11 @@
                   <option value="{{this}}">Batch {{this}}</option>
                   {{/each}}
                 </select>
+                <select id="profileFilterSelect" class="form-select form-select-sm rounded-3" style="width:auto;font-size:13px;" aria-label="Filter by profile completion">
+                  <option value="">All Profiles</option>
+                  <option value="completed">Completed</option>
+                  <option value="incomplete">Incomplete</option>
+                </select>
                 <button class="btn btn-sm btn-link text-primary text-decoration-none fw-bold p-0 text-nowrap" data-bs-toggle="modal" data-bs-target="#addAlumniModal">
                   + Add Member
                 </button>
@@ -1378,14 +1385,14 @@
                   <tr>
                     <th>Member Profile</th>
                     <th>Batch</th>
-                    <th>Joined Date</th>
+                    <th>Profile Status</th>
                     <th class="text-center">Contact</th>
                     <th class="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="membersTableBody">
                   {{#each allMembers}}
-                  <tr data-batch="{{this.batch}}" data-name="{{this.name}}" data-email="{{this.email}}" data-member-id="{{this.id}}">
+                  <tr data-batch="{{this.batch}}" data-profile-complete="{{#if this.profileCompleted}}completed{{else}}incomplete{{/if}}" data-name="{{this.name}}" data-email="{{this.email}}" data-member-id="{{this.id}}">
                     <td>
                       <div class="d-flex align-items-center gap-3">
                         <div class="member-avatar-wrapper">
@@ -1400,7 +1407,13 @@
                       </div>
                     </td>
                     <td><span class="batch-tag">{{this.batch}}</span></td>
-                    <td class="text-muted small fw-medium">{{this.joinedDate}}</td>
+                    <td>
+                      {{#if this.profileCompleted}}
+                      <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Completed</span>
+                      {{else}}
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Incomplete</span>
+                      {{/if}}
+                    </td>
                     <td class="text-center">
                       <div class="d-flex gap-1 justify-content-center">
                         {{#if this.waLink}}
@@ -1465,7 +1478,7 @@
 
         <!-- Right Side Widgets -->
         <div class="col-lg-4">
-          
+
           <!-- Upcoming and ended events -->
 <div class="card mb-4" id="events-section">
   <div class="card-header d-flex justify-content-between align-items-center">
@@ -2409,9 +2422,11 @@
       var PAGE_SIZE = 10;
       var currentPage = 1;
       var activeBatch = '';
+      var activeProfileStatus = '';
 
       var tbody      = document.getElementById('membersTableBody');
       var filterSel  = document.getElementById('batchFilterSelect');
+      var profileFilterSel = document.getElementById('profileFilterSelect');
       var prevBtn    = document.getElementById('membersPrevBtn');
       var nextBtn    = document.getElementById('membersNextBtn');
       var pageInfo   = document.getElementById('membersPageInfo');
@@ -2427,9 +2442,10 @@
       function getVisibleRows() {
         return allRows.filter(function (row) {
           var batchMatch = !activeBatch || row.getAttribute('data-batch') === activeBatch;
+          var profileMatch = !activeProfileStatus || row.getAttribute('data-profile-complete') === activeProfileStatus;
           var query      = (document.getElementById('memberSearchInput') || {}).value || '';
           var textMatch  = !query || row.innerText.toLowerCase().includes(query.toLowerCase().trim());
-          return batchMatch && textMatch;
+          return batchMatch && profileMatch && textMatch;
         });
       }
 
@@ -2488,6 +2504,14 @@
       if (filterSel) {
         filterSel.addEventListener('change', function () {
           activeBatch = filterSel.value;
+          currentPage = 1;
+          render();
+        });
+      }
+
+      if (profileFilterSel) {
+        profileFilterSel.addEventListener('change', function () {
+          activeProfileStatus = profileFilterSel.value;
           currentPage = 1;
           render();
         });
@@ -4194,7 +4218,7 @@
         <button type="button" class="btn btn-outline-primary rounded-3 d-none" id="memberEditToggleBtn">
           <i class="bi bi-pencil me-1"></i>Edit
         </button>
-        <button type="button" class="btn btn-light border rounded-3 d-none" id="memberCancelEditBtn">Cancel</button>
+        <button type="button" class="btn btn-light border rounded-3 d-none" id="memberCancelEditBtn">Back</button>
         <button type="button" class="btn btn-primary rounded-3 d-none" id="memberSaveBtn">Save changes</button>
       </div>
     </div>
@@ -4480,12 +4504,19 @@
     row.setAttribute('data-batch', member.batch || '');
     row.setAttribute('data-name', member.name || '');
     row.setAttribute('data-email', member.email || '');
+    row.setAttribute('data-profile-complete', member.profileCompleted ? 'completed' : 'incomplete');
     var nameEl  = row.querySelector('.fw-bold.text-dark');
     var mailEl  = row.querySelector('.text-muted.small');
     var batchEl = row.querySelector('.batch-tag');
     if (nameEl)  nameEl.textContent  = member.name  || '';
     if (mailEl)  mailEl.textContent  = member.email || '';
     if (batchEl) batchEl.textContent = member.batch || '';
+    var profileCell = row.children[2];
+    if (profileCell) {
+      profileCell.innerHTML = member.profileCompleted
+        ? '<span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Completed</span>'
+        : '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Incomplete</span>';
+    }
     var delBtn = row.querySelector('[data-member-delete]');
     if (delBtn) delBtn.setAttribute('data-member-name', member.name || '');
 

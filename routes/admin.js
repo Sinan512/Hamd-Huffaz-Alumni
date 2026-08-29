@@ -991,6 +991,24 @@ var MEMBER_TEXT_FIELDS = [
 ];
 var MEMBER_NUMBER_FIELDS = ['familyCount', 'childrenCount'];
 var MEMBER_YESNO_FIELDS = ['higherEdu', 'hasDependents', 'parentsDeceased', 'chronicIll', 'ownHouse', 'married'];
+var PROFILE_DETAIL_FIELDS = [
+  'address', 'phone', 'whatsapp',
+  'admYear', 'leaveYear', 'eduQual', 'religiousDegree', 'higherEdu',
+  'currentStatus',
+  'skills', 'languages', 'orgRoles', 'supportNeeded',
+  'familyCount', 'earningMembers', 'hasDependents',
+  'parentsDeceased', 'chronicIll',
+  'fatherName', 'motherName', 'ownHouse', 'married'
+];
+
+function isProfileCompleted(doc) {
+  if (doc.profileCompleted) return true;
+  /* Backward compatibility for profiles completed before the flag existed. */
+  return PROFILE_DETAIL_FIELDS.every(function (key) {
+    var value = doc[key];
+    return value !== undefined && value !== null && String(value).trim() !== '';
+  });
+}
 
 function serialiseMember(doc) {
   var out = { _id: String(doc._id) };
@@ -1001,6 +1019,7 @@ function serialiseMember(doc) {
   out.createdAt = doc.createdAt ? new Date(doc.createdAt).toISOString() : null;
   out.updatedAt = doc.updatedAt ? new Date(doc.updatedAt).toISOString() : null;
   out.registeredEvents = Array.isArray(doc.registeredEvents) ? doc.registeredEvents.length : 0;
+  out.profileCompleted = isProfileCompleted(doc);
   return out;
 }
 
@@ -1634,7 +1653,7 @@ async function getAllMembers() {
         name:       doc.name       || '',
         email:      doc.email      || '',
         batch:      batchYear(doc.batch),
-        joinedDate: formatJoinedDate(doc.createdAt),
+        profileCompleted: isProfileCompleted(doc),
         phone:      phone,
         telLink:    phone ? 'tel:' + phone.replace(/[^0-9+]/g, '') : '',
         whatsapp:   doc.whatsapp || '',

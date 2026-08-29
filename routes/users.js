@@ -598,7 +598,7 @@ router.post('/user/profile', requireAuth, async function (req, res) {
 
     await MemberDetails.findByIdAndUpdate(
       req.session.memberId,
-      { $set: update },
+      { $set: update},
       { new: true }
     );
 
