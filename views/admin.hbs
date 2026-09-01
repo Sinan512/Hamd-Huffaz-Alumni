@@ -69,7 +69,9 @@
     .sidebar {
       width: var(--sidebar-width);
       background: linear-gradient(180deg, #0b0f19 0%, #111827 100%);
+      height: 100vh;
       min-height: 100vh;
+      overflow: hidden;
       color: #94a3b8;
       position: fixed;
       top: 0;
@@ -82,6 +84,7 @@
     }
 
     .sidebar .brand {
+      flex: 0 0 auto;
       padding: 20px 24px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       display: flex;
@@ -97,8 +100,37 @@
 
     .sidebar-menu {
       padding: 20px 16px;
-      flex-grow: 1;
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+    }
+
+    /* --- SIDEBAR SIMPLE SCROLLER --- */
+    .sidebar-menu::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar-menu::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+    }
+
+    .sidebar-menu::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 8px;
+    }
+
+    .sidebar-menu::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.6);
+    }
+
+    /* --- SECTION VIEW SWITCHING --- */
+    .admin-view-hidden {
+      display: none !important;
     }
 
     .sidebar-section-title {
@@ -1157,6 +1189,9 @@
     <!-- CONTENT BODY -->
     <div class="container-fluid boxed px-4 py-4">
 
+      <!-- DASHBOARD OVERVIEW (banner + stat cards) -->
+      <div id="dashboard-overview">
+
       <!-- WELCOME BANNER -->
       <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
@@ -1243,6 +1278,8 @@
 
 
       </div>
+
+      </div><!-- /#dashboard-overview -->
 
       <!-- CHARTS SECTION -->
       <div class="row g-4 mb-4" id="batches-section">
@@ -5235,6 +5272,95 @@
       }
 
       renderTable();
+    })();
+  </script>
+  <!-- ===== SIDEBAR SECTION VIEW SWITCHER ===== -->
+  <script>
+    (function () {
+      var VIEWS = [
+        'dashboard-overview',
+        'batches-section',
+        'batch-leaders-section',
+        'members-section',
+        'events-section',
+        'registrations-section',
+        'articles-section',
+        'payment-section',
+        'gallery-section',
+        'contributions-section'
+      ];
+
+      var menu = document.getElementById('sidebarMenu');
+      if (!menu) return;
+
+      var links = Array.prototype.slice.call(menu.querySelectorAll('a[href^="#"]'));
+
+      function elements() {
+        return VIEWS.map(function (id) { return document.getElementById(id); })
+                    .filter(function (el) { return !!el; });
+      }
+
+      function normalize(hash) {
+        var id = (hash || '').replace(/^#/, '');
+        if (!id || id === 'top' || VIEWS.indexOf(id) === -1) return 'top';
+        return id;
+      }
+
+      function applyView(view) {
+        var showAll = (view === 'top');
+        elements().forEach(function (el) {
+          el.classList.toggle('admin-view-hidden', !showAll && el.id !== view);
+        });
+
+        links.forEach(function (a) {
+          a.classList.toggle('active', normalize(a.getAttribute('href')) === view);
+        });
+
+        // Let Chart.js re-measure canvases that just became visible
+        if (window.Chart && Chart.instances) {
+          try {
+            Object.keys(Chart.instances).forEach(function (k) { Chart.instances[k].resize(); });
+          } catch (e) {}
+        } else if (window.Chart && typeof Chart.helpers === 'object') {
+          try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+        } else {
+          try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+        }
+      }
+
+      function syncFromHash() {
+        applyView(normalize(window.location.hash));
+      }
+
+      links.forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          var view = normalize(a.getAttribute('href'));
+          var newHash = '#' + view;
+          if (window.location.hash !== newHash) {
+            window.location.hash = newHash;
+          } else {
+            applyView(view);
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+
+          // Close the off-canvas sidebar on small screens
+          if (window.innerWidth < 992) {
+            var sb = document.getElementById('sidebar');
+            var ov = document.getElementById('sidebarOverlay');
+            if (sb) sb.classList.remove('show');
+            if (ov) ov.classList.remove('show');
+          }
+        });
+      });
+
+      window.addEventListener('hashchange', syncFromHash);
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', syncFromHash);
+      } else {
+        syncFromHash();
+      }
     })();
   </script>
 </body>
