@@ -5306,11 +5306,40 @@
         return id;
       }
 
+      var tempHidden = [];
+
       function applyView(view) {
         var showAll = (view === 'top');
+
+        // undo any wrapper hiding from the previous view
+        tempHidden.forEach(function (el) { el.classList.remove('admin-view-hidden'); });
+        tempHidden = [];
+
         elements().forEach(function (el) {
           el.classList.toggle('admin-view-hidden', !showAll && el.id !== view);
         });
+
+        // Some sections are nested inside another section's wrapper
+        // (e.g. Events lives inside the Members row). Reveal the target's
+        // ancestors and hide their other children instead.
+        if (!showAll) {
+          var target = document.getElementById(view);
+          var stop = document.getElementById('top') || document.body;
+          var node = target;
+          while (node && node.parentElement && node.parentElement !== stop && node !== stop) {
+            var parent = node.parentElement;
+            parent.classList.remove('admin-view-hidden');
+            Array.prototype.slice.call(parent.children).forEach(function (child) {
+              if (child !== node && !child.classList.contains('admin-view-hidden')) {
+                child.classList.add('admin-view-hidden');
+                tempHidden.push(child);
+              }
+            });
+            node = parent;
+          }
+          if (target) target.classList.remove('admin-view-hidden');
+        }
+
 
         links.forEach(function (a) {
           a.classList.toggle('active', normalize(a.getAttribute('href')) === view);
