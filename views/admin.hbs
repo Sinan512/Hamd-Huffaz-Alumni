@@ -1014,9 +1014,24 @@
       }
 
       /* Hide profile status column on small screens to preserve table space. */
-      #membersTable th:nth-child(3),
-      #membersTable td:nth-child(3) {
+      #membersTable th[data-col="status"],
+      #membersTable td[data-col="status"] {
         display: none;
+      }
+
+      .sortable-th {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+        transition: background-color 0.15s ease;
+      }
+      .sortable-th:hover {
+        background-color: var(--surface-alt, rgba(0,0,0,0.04));
+      }
+      .sort-icon {
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
       }
 
       /* Member name + email: constrain width to prevent blowout */
@@ -1290,7 +1305,16 @@
           <div class="card h-100">
             <div class="card-header">
               <span><i class="bi bi-bar-chart-fill text-indigo me-2"></i>Members per Batch</span>
+              <div style="justify-content: end;">
+                <button
+      class="btn btn-sm text-muted"
+      type="button"
+      title="Create Batch"
+      data-bs-toggle="modal" data-bs-target="#createBatchModal">
+      <i class="bi bi-plus-circle"></i>
+    </button>
               <span class="badge bg-light text-dark">{{stats.totalBatches}} Batches</span>
+              </div>
             </div>
             <div class="card-body">
               <div style="height: 320px; position: relative;">
@@ -1390,7 +1414,7 @@
       <div class="row g-4 mb-4" id="members-section">
         
         <!-- All Members Table -->
-        <div class="col-lg-8">
+        <div class="col-lg-12">
           <div class="card">
             <div class="card-header">
               <div class="d-flex align-items-center gap-2">
@@ -1398,7 +1422,7 @@
                 <span>All Registered Members</span>
                 <span id="memberCountBadge" class="badge bg-primary-subtle text-primary rounded-pill ms-1" style="font-size:11px;"></span>
               </div>
-              <div class="d-flex align-items-center gap-2">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
                 <select id="batchFilterSelect" class="form-select form-select-sm rounded-3" style="width:auto;font-size:13px;">
                   <option value="">All Batches</option>
                   {{#each batchYears}}
@@ -1410,6 +1434,190 @@
                   <option value="completed">Completed</option>
                   <option value="incomplete">Incomplete</option>
                 </select>
+
+                <!-- Columns / View Dropdown Checklist -->
+                <div class="dropdown">
+                  <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-3 text-nowrap d-flex align-items-center gap-1" id="membersColumnsDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Select columns to view">
+                    <i class="bi bi-layout-three-columns"></i>
+                    <span>Columns</span>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-3" style="min-width: 320px; max-height: 480px; overflow-y: auto;" aria-labelledby="membersColumnsDropdownBtn">
+                    <div class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom">
+                      <span class="fw-bold small text-uppercase" style="letter-spacing:0.5px; font-size:11px;">Select Columns</span>
+                      <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small" id="membersColSelectAll">Select All</button>
+                        <span class="text-muted small">|</span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small text-danger" id="membersColResetDefault">Reset</button>
+                      </div>
+                    </div>
+                    
+                    <!-- Default Group -->
+                    <div class="mb-2">
+                      <div class="text-muted fw-bold small text-uppercase mb-1" style="font-size:10px;">Default Columns</div>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="profile" checked disabled>
+                        <span class="small fw-semibold">Member Profile</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="batch" checked>
+                        <span class="small">Batch</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="status" checked>
+                        <span class="small">Profile Status</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="contact" checked>
+                        <span class="small">Contact (WhatsApp / Call)</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="actions" checked disabled>
+                        <span class="small fw-semibold">Actions</span>
+                      </label>
+                    </div>
+
+                    <!-- Contact & Personal Group -->
+                    <div class="mb-2 pt-2 border-top">
+                      <div class="text-muted fw-bold small text-uppercase mb-1" style="font-size:10px;">Personal & Contact</div>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="admissionNumber">
+                        <span class="small">Admission Number</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="phone">
+                        <span class="small">Phone</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="whatsapp">
+                        <span class="small">WhatsApp</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="place">
+                        <span class="small">Place</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="address">
+                        <span class="small">Address</span>
+                      </label>
+                    </div>
+
+                    <!-- Education & Career Group -->
+                    <div class="mb-2 pt-2 border-top">
+                      <div class="text-muted fw-bold small text-uppercase mb-1" style="font-size:10px;">Education & Career</div>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="currentStatus">
+                        <span class="small">Current Status</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="jobRole">
+                        <span class="small">Job Role</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="workLocation">
+                        <span class="small">Work Location</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="college">
+                        <span class="small">College</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="course">
+                        <span class="small">Course</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="admYear">
+                        <span class="small">Admission Year</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="leaveYear">
+                        <span class="small">Leaving Year</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="eduQual">
+                        <span class="small">Edu Qualification</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="religiousDegree">
+                        <span class="small">Religious Degree</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="higherEdu">
+                        <span class="small">Higher Edu</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="skills">
+                        <span class="small">Skills</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="languages">
+                        <span class="small">Languages</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="orgRoles">
+                        <span class="small">Org Roles</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="supportNeeded">
+                        <span class="small">Support Needed</span>
+                      </label>
+                    </div>
+
+                    <!-- Family & Misc Group -->
+                    <div class="mb-1 pt-2 border-top">
+                      <div class="text-muted fw-bold small text-uppercase mb-1" style="font-size:10px;">Family & Background</div>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="fatherName">
+                        <span class="small">Father's Name</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="motherName">
+                        <span class="small">Mother's Name</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="familyCount">
+                        <span class="small">Family Count</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="earningMembers">
+                        <span class="small">Earning Members</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="hasDependents">
+                        <span class="small">Has Dependents</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="dependentsWho">
+                        <span class="small">Dependents (Who)</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="parentsDeceased">
+                        <span class="small">Parents Deceased</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="chronicIll">
+                        <span class="small">Chronic Illness</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="chronicIllDetails">
+                        <span class="small">Illness Details</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="ownHouse">
+                        <span class="small">Own House</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="married">
+                        <span class="small">Married</span>
+                      </label>
+                      <label class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-check-input col-toggle-cb m-0" data-col="childrenCount">
+                        <span class="small">Children Count</span>
+                      </label>
+                    </div>
+
+                  </div>
+                </div>
+
                 <button type="button" id="membersDownloadExcelBtn" class="btn btn-sm btn-outline-success rounded-3 text-nowrap" title="Download the filtered member list as Excel">
                   <i class="bi bi-file-earmark-excel me-1"></i>Excel
                 </button>
@@ -1423,17 +1631,256 @@
               <table class="custom-table" id="membersTable">
                 <thead>
                   <tr>
-                    <th>Member Profile</th>
-                    <th>Batch</th>
-                    <th>Profile Status</th>
-                    <th class="text-center">Contact</th>
-                    <th class="text-end">Actions</th>
+                    <th class="sortable-th" data-sort-key="name" data-col="profile" title="Click to sort by Name">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Member Profile</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th" data-sort-key="batch" data-col="batch" title="Click to sort by Batch">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Batch</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th" data-sort-key="status" data-col="status" title="Click to sort by Status">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Profile Status</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    
+                    <!-- Dynamic Detail Column Headers (Hidden by default) -->
+                    <th class="sortable-th d-none" data-sort-key="admissionNumber" data-col="admissionNumber" title="Click to sort by Admission Number">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Adm No</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="phone" data-col="phone" title="Click to sort by Phone">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Phone</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="whatsapp" data-col="whatsapp" title="Click to sort by WhatsApp">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>WhatsApp</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="place" data-col="place" title="Click to sort by Place">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Place</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="address" data-col="address" title="Click to sort by Address">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Address</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="currentStatus" data-col="currentStatus" title="Click to sort by Current Status">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Current Status</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="jobRole" data-col="jobRole" title="Click to sort by Job Role">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Job Role</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="workLocation" data-col="workLocation" title="Click to sort by Work Location">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Work Location</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="college" data-col="college" title="Click to sort by College">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>College</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="course" data-col="course" title="Click to sort by Course">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Course</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="admYear" data-col="admYear" title="Click to sort by Admission Year">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Adm Year</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="leaveYear" data-col="leaveYear" title="Click to sort by Leaving Year">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Leave Year</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="eduQual" data-col="eduQual" title="Click to sort by Education Qualification">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Edu Qual</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="religiousDegree" data-col="religiousDegree" title="Click to sort by Religious Degree">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Religious Degree</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="higherEdu" data-col="higherEdu" title="Click to sort by Higher Education">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Higher Edu</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="skills" data-col="skills" title="Click to sort by Skills">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Skills</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="languages" data-col="languages" title="Click to sort by Languages">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Languages</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="orgRoles" data-col="orgRoles" title="Click to sort by Organization Roles">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Org Roles</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="supportNeeded" data-col="supportNeeded" title="Click to sort by Support Needed">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Support Needed</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="fatherName" data-col="fatherName" title="Click to sort by Father Name">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Father Name</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="motherName" data-col="motherName" title="Click to sort by Mother Name">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Mother Name</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="familyCount" data-col="familyCount" title="Click to sort by Family Count">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Family Count</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="earningMembers" data-col="earningMembers" title="Click to sort by Earning Members">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Earning Mem</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="hasDependents" data-col="hasDependents" title="Click to sort by Has Dependents">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Dependents</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="dependentsWho" data-col="dependentsWho" title="Click to sort by Dependents Description">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Dep (Who)</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="parentsDeceased" data-col="parentsDeceased" title="Click to sort by Parents Deceased">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Parents Dec</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="chronicIll" data-col="chronicIll" title="Click to sort by Chronic Illness">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Chronic Ill</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="chronicIllDetails" data-col="chronicIllDetails" title="Click to sort by Illness Details">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Illness Details</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="ownHouse" data-col="ownHouse" title="Click to sort by Own House">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Own House</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="married" data-col="married" title="Click to sort by Marital Status">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Married</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+                    <th class="sortable-th d-none" data-sort-key="childrenCount" data-col="childrenCount" title="Click to sort by Children Count">
+                      <div class="d-flex align-items-center justify-content-between gap-1">
+                        <span>Children</span>
+                        <span class="sort-icon"><i class="bi bi-arrow-down-up text-muted opacity-50"></i></span>
+                      </div>
+                    </th>
+
+                    <th class="text-center" data-col="contact">Contact</th>
+                    <th class="text-end" data-col="actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="membersTableBody">
                   {{#each allMembers}}
-                  <tr data-batch="{{this.batch}}" data-profile-complete="{{#if this.profileCompleted}}completed{{else}}incomplete{{/if}}" data-name="{{this.name}}" data-email="{{this.email}}" data-phone="{{this.phone}}" data-whatsapp="{{this.whatsapp}}" data-member-id="{{this.id}}">
-                    <td>
+                  <tr data-batch="{{this.batch}}" 
+                      data-profile-complete="{{#if this.profileCompleted}}completed{{else}}incomplete{{/if}}" 
+                      data-name="{{this.name}}" 
+                      data-email="{{this.email}}" 
+                      data-phone="{{this.phone}}" 
+                      data-whatsapp="{{this.whatsapp}}" 
+                      data-member-id="{{this.id}}"
+                      data-admission-number="{{this.admissionNumber}}"
+                      data-place="{{this.place}}"
+                      data-address="{{this.address}}"
+                      data-current-status="{{this.currentStatus}}"
+                      data-job-role="{{this.jobRole}}"
+                      data-work-location="{{this.workLocation}}"
+                      data-college="{{this.college}}"
+                      data-course="{{this.course}}"
+                      data-adm-year="{{this.admYear}}"
+                      data-leave-year="{{this.leaveYear}}"
+                      data-edu-qual="{{this.eduQual}}"
+                      data-religious-degree="{{this.religiousDegree}}"
+                      data-higher-edu="{{this.higherEdu}}"
+                      data-skills="{{this.skills}}"
+                      data-languages="{{this.languages}}"
+                      data-org-roles="{{this.orgRoles}}"
+                      data-support-needed="{{this.supportNeeded}}"
+                      data-father-name="{{this.fatherName}}"
+                      data-mother-name="{{this.motherName}}"
+                      data-family-count="{{this.familyCount}}"
+                      data-earning-members="{{this.earningMembers}}"
+                      data-has-dependents="{{this.hasDependents}}"
+                      data-dependents-who="{{this.dependentsWho}}"
+                      data-parents-deceased="{{this.parentsDeceased}}"
+                      data-chronic-ill="{{this.chronicIll}}"
+                      data-chronic-ill-details="{{this.chronicIllDetails}}"
+                      data-own-house="{{this.ownHouse}}"
+                      data-married="{{this.married}}"
+                      data-children-count="{{this.childrenCount}}">
+                    <td data-col="profile">
                       <div class="d-flex align-items-center gap-3">
                         <div class="member-avatar-wrapper">
                           <div class="member-avatar-icon">
@@ -1446,15 +1893,49 @@
                         </div>
                       </div>
                     </td>
-                    <td><span class="batch-tag">{{this.batch}}</span></td>
-                    <td>
+                    <td data-col="batch"><span class="batch-tag">{{this.batch}}</span></td>
+                    <td data-col="status">
                       {{#if this.profileCompleted}}
                       <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Completed</span>
                       {{else}}
                       <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Incomplete · {{this.profileCompletionPercent}}%</span>
                       {{/if}}
                     </td>
-                    <td class="text-center">
+
+                    <!-- Dynamic Detail Column Data Cells (Hidden by default) -->
+                    <td data-col="admissionNumber" class="d-none small fw-semibold text-nowrap">{{this.admissionNumber}}</td>
+                    <td data-col="phone" class="d-none small text-nowrap">{{this.phone}}</td>
+                    <td data-col="whatsapp" class="d-none small text-nowrap">{{this.whatsapp}}</td>
+                    <td data-col="place" class="d-none small">{{this.place}}</td>
+                    <td data-col="address" class="d-none small text-truncate" style="max-width:160px;" title="{{this.address}}">{{this.address}}</td>
+                    <td data-col="currentStatus" class="d-none small">{{this.currentStatus}}</td>
+                    <td data-col="jobRole" class="d-none small">{{this.jobRole}}</td>
+                    <td data-col="workLocation" class="d-none small">{{this.workLocation}}</td>
+                    <td data-col="college" class="d-none small">{{this.college}}</td>
+                    <td data-col="course" class="d-none small">{{this.course}}</td>
+                    <td data-col="admYear" class="d-none small text-center">{{this.admYear}}</td>
+                    <td data-col="leaveYear" class="d-none small text-center">{{this.leaveYear}}</td>
+                    <td data-col="eduQual" class="d-none small">{{this.eduQual}}</td>
+                    <td data-col="religiousDegree" class="d-none small">{{this.religiousDegree}}</td>
+                    <td data-col="higherEdu" class="d-none small text-capitalize">{{this.higherEdu}}</td>
+                    <td data-col="skills" class="d-none small text-truncate" style="max-width:140px;" title="{{this.skills}}">{{this.skills}}</td>
+                    <td data-col="languages" class="d-none small">{{this.languages}}</td>
+                    <td data-col="orgRoles" class="d-none small">{{this.orgRoles}}</td>
+                    <td data-col="supportNeeded" class="d-none small text-truncate" style="max-width:140px;" title="{{this.supportNeeded}}">{{this.supportNeeded}}</td>
+                    <td data-col="fatherName" class="d-none small">{{this.fatherName}}</td>
+                    <td data-col="motherName" class="d-none small">{{this.motherName}}</td>
+                    <td data-col="familyCount" class="d-none small text-center">{{this.familyCount}}</td>
+                    <td data-col="earningMembers" class="d-none small">{{this.earningMembers}}</td>
+                    <td data-col="hasDependents" class="d-none small text-capitalize">{{this.hasDependents}}</td>
+                    <td data-col="dependentsWho" class="d-none small text-truncate" style="max-width:120px;" title="{{this.dependentsWho}}">{{this.dependentsWho}}</td>
+                    <td data-col="parentsDeceased" class="d-none small text-capitalize">{{this.parentsDeceased}}</td>
+                    <td data-col="chronicIll" class="d-none small text-capitalize">{{this.chronicIll}}</td>
+                    <td data-col="chronicIllDetails" class="d-none small text-truncate" style="max-width:140px;" title="{{this.chronicIllDetails}}">{{this.chronicIllDetails}}</td>
+                    <td data-col="ownHouse" class="d-none small text-capitalize">{{this.ownHouse}}</td>
+                    <td data-col="married" class="d-none small text-capitalize">{{this.married}}</td>
+                    <td data-col="childrenCount" class="d-none small text-center">{{this.childrenCount}}</td>
+
+                    <td class="text-center" data-col="contact">
                       <div class="d-flex gap-1 justify-content-center">
                         {{#if this.waLink}}
                         <a href="{{this.waLink}}?text=Hello%20{{this.name}}" target="_blank" rel="noopener"
@@ -1477,7 +1958,7 @@
                         {{/if}}
                       </div>
                     </td>
-                    <td class="text-end">
+                    <td class="text-end" data-col="actions">
                       <button type="button" class="btn btn-sm btn-light border rounded-2 px-2 text-primary"
                               title="View / Edit Member" data-member-view="{{this.id}}">
                         <i class="bi bi-eye"></i>
@@ -1517,7 +1998,7 @@
         </div>
 
         <!-- Right Side Widgets -->
-        <div class="col-lg-4">
+        <div class="col-lg-12">
 
           <!-- Upcoming and ended events -->
 <div class="card mb-4" id="events-section">
@@ -1665,30 +2146,6 @@
   </div>
 </div>
 
-          <!-- Quick Actions -->
-          <div class="card">
-            <div class="card-header">
-              <span><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Quick Actions</span>
-            </div>
-            <div class="card-body">
-              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#addAlumniModal">
-                <span><i class="bi bi-person-plus me-2 text-primary"></i>Add Alumni Member</span>
-                <i class="bi bi-chevron-right"></i>
-              </button>
-              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#createBatchModal">
-                <span><i class="bi bi-folder-plus me-2 text-emerald"></i>Create New Batch</span>
-                <i class="bi bi-chevron-right"></i>
-              </button>
-              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#assignLeaderModal">
-                <span><i class="bi bi-person-badge me-2 text-purple"></i>Assign Batch Leader</span>
-                <i class="bi bi-chevron-right"></i>
-              </button>
-              <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#createEventModal">
-                <span><i class="bi bi-calendar-plus me-2 text-amber"></i>Create Event</span>
-                <i class="bi bi-chevron-right"></i>
-              </button>
-            </div>
-          </div>
 
         </div>
 
@@ -2463,7 +2920,10 @@
       var currentPage = 1;
       var activeBatch = '';
       var activeProfileStatus = '';
+      var currentSortKey = null;
+      var currentSortDir = null; // 'asc' | 'desc' | null
 
+      var table      = document.getElementById('membersTable');
       var tbody      = document.getElementById('membersTableBody');
       var filterSel  = document.getElementById('batchFilterSelect');
       var profileFilterSel = document.getElementById('profileFilterSelect');
@@ -2473,21 +2933,137 @@
       var pageInfo   = document.getElementById('membersPageInfo');
       var countBadge = document.getElementById('memberCountBadge');
       var dotsWrap   = document.getElementById('membersPageDots');
+      var emptyRow   = document.getElementById('membersEmptyRow');
 
-      if (!tbody) return;
+      if (!tbody || !table) return;
 
-      /* Collect all data rows once (exclude the empty-state row) */
+      /* Collect all initial data rows once */
       var allRows = Array.from(tbody.querySelectorAll('tr[data-batch]'));
+
+      /* ---- helper to get cell sort value from row ---- */
+      function getRowSortValue(row, key) {
+        if (!key) return '';
+        if (key === 'name') return (row.getAttribute('data-name') || '').trim();
+        if (key === 'batch') {
+          var b = Number(row.getAttribute('data-batch'));
+          return isNaN(b) ? (row.getAttribute('data-batch') || '') : b;
+        }
+        if (key === 'status') {
+          return row.getAttribute('data-profile-complete') === 'completed' ? 1 : 0;
+        }
+        
+        var attrMap = {
+          'admissionNumber': 'data-admission-number',
+          'phone': 'data-phone',
+          'whatsapp': 'data-whatsapp',
+          'place': 'data-place',
+          'address': 'data-address',
+          'currentStatus': 'data-current-status',
+          'jobRole': 'data-job-role',
+          'workLocation': 'data-work-location',
+          'college': 'data-college',
+          'course': 'data-course',
+          'admYear': 'data-adm-year',
+          'leaveYear': 'data-leave-year',
+          'eduQual': 'data-edu-qual',
+          'religiousDegree': 'data-religious-degree',
+          'higherEdu': 'data-higher-edu',
+          'skills': 'data-skills',
+          'languages': 'data-languages',
+          'orgRoles': 'data-org-roles',
+          'supportNeeded': 'data-support-needed',
+          'fatherName': 'data-father-name',
+          'motherName': 'data-mother-name',
+          'familyCount': 'data-family-count',
+          'earningMembers': 'data-earning-members',
+          'hasDependents': 'data-has-dependents',
+          'dependentsWho': 'data-dependents-who',
+          'parentsDeceased': 'data-parents-deceased',
+          'chronicIll': 'data-chronic-ill',
+          'chronicIllDetails': 'data-chronic-ill-details',
+          'ownHouse': 'data-own-house',
+          'married': 'data-married',
+          'childrenCount': 'data-children-count'
+        };
+
+        var attrName = attrMap[key];
+        if (attrName) {
+          var val = row.getAttribute(attrName) || '';
+          if (key === 'familyCount' || key === 'childrenCount' || key === 'admYear' || key === 'leaveYear') {
+            var n = Number(val);
+            return isNaN(n) ? val : n;
+          }
+          return val.trim();
+        }
+
+        return '';
+      }
+
+      /* ---- sort rows ---- */
+      function sortRows(rows) {
+        if (!currentSortKey || !currentSortDir) return rows;
+
+        var isNumeric = (currentSortKey === 'batch' || currentSortKey === 'familyCount' || 
+                         currentSortKey === 'childrenCount' || currentSortKey === 'admYear' || 
+                         currentSortKey === 'leaveYear' || currentSortKey === 'status');
+
+        return rows.slice().sort(function (a, b) {
+          var va = getRowSortValue(a, currentSortKey);
+          var vb = getRowSortValue(b, currentSortKey);
+
+          if (isNumeric) {
+            var na = typeof va === 'number' ? va : parseFloat(va) || 0;
+            var nb = typeof vb === 'number' ? vb : parseFloat(vb) || 0;
+            return currentSortDir === 'asc' ? na - nb : nb - na;
+          }
+
+          var sa = String(va || '');
+          var sb = String(vb || '');
+          var cmp = sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+          return currentSortDir === 'asc' ? cmp : -cmp;
+        });
+      }
 
       /* ---- filter ---- */
       function getVisibleRows() {
-        return allRows.filter(function (row) {
+        var filtered = allRows.filter(function (row) {
           var batchMatch = !activeBatch || row.getAttribute('data-batch') === activeBatch;
           var profileMatch = !activeProfileStatus || row.getAttribute('data-profile-complete') === activeProfileStatus;
           var query      = (document.getElementById('memberSearchInput') || {}).value || '';
           var textMatch  = !query || row.innerText.toLowerCase().includes(query.toLowerCase().trim());
           return batchMatch && profileMatch && textMatch;
         });
+
+        return sortRows(filtered);
+      }
+
+      /* ---- update sort header icons ---- */
+      function updateSortIcons() {
+        var ths = table.querySelectorAll('thead th.sortable-th');
+        ths.forEach(function (th) {
+          var key = th.getAttribute('data-sort-key');
+          var iconSpan = th.querySelector('.sort-icon');
+          if (!iconSpan) return;
+
+          if (key === currentSortKey && currentSortDir) {
+            th.classList.add('text-primary');
+            if (currentSortDir === 'asc') {
+              iconSpan.innerHTML = '<i class="bi bi-sort-alpha-down text-primary fw-bold"></i>';
+            } else {
+              iconSpan.innerHTML = '<i class="bi bi-sort-alpha-up text-primary fw-bold"></i>';
+            }
+          } else {
+            th.classList.remove('text-primary');
+            iconSpan.innerHTML = '<i class="bi bi-arrow-down-up text-muted opacity-50"></i>';
+          }
+        });
+      }
+
+      /* ---- update empty row colspan ---- */
+      function updateColspan() {
+        if (!emptyRow) return;
+        var visibleThCount = table.querySelectorAll('thead th:not(.d-none)').length || 5;
+        emptyRow.querySelector('td').setAttribute('colspan', visibleThCount);
       }
 
       /* ---- render ---- */
@@ -2500,13 +3076,20 @@
         var start = (currentPage - 1) * PAGE_SIZE;
         var end   = start + PAGE_SIZE;
 
-        /* Show / hide rows */
+        /* Show / hide rows & re-append in sorted order */
         allRows.forEach(function (row) { row.style.display = 'none'; });
-        visible.slice(start, end).forEach(function (row) { row.style.display = ''; });
+
+        var pageSlice = visible.slice(start, end);
+        pageSlice.forEach(function (row) {
+          row.style.display = '';
+          tbody.appendChild(row); // preserves sorted order in DOM
+        });
 
         /* Empty state */
-        var emptyRow = document.getElementById('membersEmptyRow');
-        if (emptyRow) emptyRow.style.display = total === 0 ? '' : 'none';
+        if (emptyRow) {
+          emptyRow.style.display = total === 0 ? '' : 'none';
+          if (total === 0) tbody.appendChild(emptyRow);
+        }
 
         /* Info text */
         var from = total === 0 ? 0 : start + 1;
@@ -2540,9 +3123,79 @@
           })(p);
           dotsWrap.appendChild(btn);
         }
+
+        updateSortIcons();
+        updateColspan();
       }
 
-      /* ---- event listeners ---- */
+      /* ---- sort header click listeners ---- */
+      var sortableThs = table.querySelectorAll('thead th.sortable-th');
+      sortableThs.forEach(function (th) {
+        th.addEventListener('click', function (e) {
+          var key = th.getAttribute('data-sort-key');
+          if (!key) return;
+
+          if (currentSortKey === key) {
+            // Toggle: asc -> desc -> asc
+            currentSortDir = (currentSortDir === 'asc') ? 'desc' : 'asc';
+          } else {
+            currentSortKey = key;
+            currentSortDir = 'asc';
+          }
+
+          currentPage = 1;
+          render();
+        });
+      });
+
+      /* ---- column toggle checkbox listeners ---- */
+      function setColumnVisibility(colName, isVisible) {
+        var ths = table.querySelectorAll('thead th[data-col="' + colName + '"]');
+        var tds = table.querySelectorAll('tbody td[data-col="' + colName + '"]');
+
+        ths.forEach(function (th) {
+          th.classList.toggle('d-none', !isVisible);
+        });
+        tds.forEach(function (td) {
+          td.classList.toggle('d-none', !isVisible);
+        });
+        updateColspan();
+      }
+
+      var colCheckboxes = document.querySelectorAll('.col-toggle-cb');
+      colCheckboxes.forEach(function (cb) {
+        cb.addEventListener('change', function () {
+          var colName = cb.getAttribute('data-col');
+          setColumnVisibility(colName, cb.checked);
+        });
+      });
+
+      /* Select All Columns */
+      var selectAllBtn = document.getElementById('membersColSelectAll');
+      if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function () {
+          colCheckboxes.forEach(function (cb) {
+            cb.checked = true;
+            setColumnVisibility(cb.getAttribute('data-col'), true);
+          });
+        });
+      }
+
+      /* Reset to Default Columns */
+      var resetDefaultBtn = document.getElementById('membersColResetDefault');
+      if (resetDefaultBtn) {
+        resetDefaultBtn.addEventListener('click', function () {
+          var defaultCols = ['profile', 'batch', 'status', 'contact', 'actions'];
+          colCheckboxes.forEach(function (cb) {
+            var colName = cb.getAttribute('data-col');
+            var isDef = defaultCols.includes(colName);
+            cb.checked = isDef;
+            setColumnVisibility(colName, isDef);
+          });
+        });
+      }
+
+      /* ---- filters ---- */
       if (filterSel) {
         filterSel.addEventListener('change', function () {
           activeBatch = filterSel.value;
@@ -2565,6 +3218,7 @@
         return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
       }
 
+      /* ---- Dynamic Excel export of active visible columns ---- */
       function downloadFilteredMembers() {
         var visible = getVisibleRows();
         if (!visible.length) return;
@@ -2573,23 +3227,59 @@
           return;
         }
 
-        var rows = [['#', 'Name', 'Email', 'Batch', 'Profile Status', 'Phone', 'WhatsApp']];
+        // 1. Identify all visible columns except 'actions' and 'contact'
+        var visibleThs = Array.from(table.querySelectorAll('thead th:not(.d-none)'))
+          .filter(function (th) {
+            var col = th.getAttribute('data-col');
+            return col !== 'actions' && col !== 'contact';
+          });
+
+        var headers = ['#'];
+        var colKeys = [];
+
+        visibleThs.forEach(function (th) {
+          var colName = th.getAttribute('data-col');
+          colKeys.push(colName);
+          // Header text
+          var title = th.querySelector('span') ? th.querySelector('span').textContent.trim() : th.textContent.trim();
+          if (colName === 'profile') {
+            headers.push('Name', 'Email');
+          } else {
+            headers.push(title);
+          }
+        });
+
+        // 2. Build rows
+        var rows = [headers];
+
         visible.forEach(function (row, index) {
-          rows.push([
-            index + 1,
-            row.getAttribute('data-name') || '',
-            row.getAttribute('data-batch') || '',
-            row.getAttribute('data-profile-complete') === 'completed' ? 'Completed' : 'Incomplete',
-            row.getAttribute('data-phone') || '',
-            row.getAttribute('data-whatsapp') || ''
-          ]);
+          var rowData = [index + 1];
+
+          colKeys.forEach(function (colName) {
+            if (colName === 'profile') {
+              rowData.push(row.getAttribute('data-name') || '', row.getAttribute('data-email') || '');
+            } else if (colName === 'batch') {
+              rowData.push(row.getAttribute('data-batch') || '');
+            } else if (colName === 'status') {
+              rowData.push(row.getAttribute('data-profile-complete') === 'completed' ? 'Completed' : 'Incomplete');
+            } else {
+              var td = row.querySelector('td[data-col="' + colName + '"]');
+              rowData.push(td ? td.textContent.trim() : (row.getAttribute('data-' + colName) || ''));
+            }
+          });
+
+          rows.push(rowData);
         });
 
         var sheet = XLSX.utils.aoa_to_sheet(rows);
-        sheet['!cols'] = [
-          { wch: 6 }, { wch: 28 }, { wch: 34 }, { wch: 12 },
-          { wch: 18 }, { wch: 18 }, { wch: 18 }
-        ];
+
+        // Auto column widths
+        var colWidths = headers.map(function (h, i) {
+          if (i === 0) return { wch: 6 };
+          return { wch: Math.max(14, (h.length || 10) + 4) };
+        });
+        sheet['!cols'] = colWidths;
+
         var workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, sheet, 'Registered Members');
         XLSX.writeFile(workbook, 'registered-members-' + todayStamp() + '.xlsx');
@@ -2609,7 +3299,7 @@
       /* Initial render */
       render();
 
-      /* Allow other scripts (member delete) to refresh the table */
+      /* Allow other scripts (member delete / update) to refresh the table */
       window.refreshMembersTable = function () {
         allRows = Array.from(tbody.querySelectorAll('tr[data-batch]'));
         render();
