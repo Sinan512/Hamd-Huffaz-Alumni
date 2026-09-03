@@ -280,6 +280,14 @@ function buildUserContext(doc) {
   var ownHouse  = doc.ownHouse      || '';
   var married   = doc.married       || '';
 
+  var place     = (doc.place || '').trim();
+  var address   = (doc.address || '').trim();
+  var email     = (doc.email || '').trim();
+  var phone     = (doc.phone || '').trim();
+  var whatsapp  = (doc.whatsapp || '').trim();
+
+  var isPersonalDataComplete = !!(place && address && email && phone && whatsapp);
+
   return {
     /* ── core (set by admin) ── */
     name:            doc.name            || '',
@@ -287,11 +295,13 @@ function buildUserContext(doc) {
     batch:           doc.batch           || '',
 
     /* ── personal ── */
-    email:           doc.email           || '',
-    place:           doc.place           || '',
-    address:         doc.address         || '',
-    phone:           doc.phone           || '',
-    whatsapp:        doc.whatsapp        || '',
+    email:           email,
+    place:           place,
+    address:         address,
+    phone:           phone,
+    whatsapp:        whatsapp,
+    isPersonalDataComplete: isPersonalDataComplete,
+    missingPersonalData:    !isPersonalDataComplete,
 
     /* ── education ── */
     admYear:         doc.admYear         || '',

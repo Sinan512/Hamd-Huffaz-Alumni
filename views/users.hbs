@@ -1532,7 +1532,7 @@
               <label class="form-label-custom" for="ep_admYear">
                 <span data-en="Year of Admission" data-ml="സ്ഥാപനത്തിൽ ചേർന്ന വർഷം">Year of Admission</span>
               </label>
-              <input type="number" class="form-control" id="ep_admYear" name="admYear" value="{{user.admYear}}" min="1950" max="2099" placeholder="e.g. 2018">
+              <input type="number" disabled class="form-control" id="ep_admYear" name="admYear" value="{{user.admYear}}" min="1950" max="2099">
             </div>
           </div>
           <div class="col-6">
@@ -2375,6 +2375,74 @@
     </div>
   </div>
 
+  <!-- ===== PERSONAL DATA REQUIRED POPUP MODAL ===== -->
+  {{#if user.missingPersonalData}}
+  <div class="modal fade" id="personalDataPromptModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="personalDataPromptLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom bg-primary text-white px-4 py-3 rounded-top-4">
+          <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="personalDataPromptLabel">
+            <i class="bi bi-person-fill-exclamation fs-4"></i>
+            <span>Personal Details Required</span>
+          </h5>
+        </div>
+        <div class="modal-body px-4 py-3">
+          <div class="alert alert-warning border-0 rounded-3 d-flex align-items-center mb-3 py-2 px-3 small">
+            <i class="bi bi-info-circle-fill fs-5 me-2 text-warning flex-shrink-0"></i>
+            <div>Please complete your personal contact information (Place, Address, Email, Phone, and WhatsApp) to continue.</div>
+          </div>
+
+          <form id="personalDataQuickForm" onsubmit="handleSavePersonalDataQuick(event)">
+            <div id="personalDataAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_place">
+                Place <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control rounded-3" id="quick_place" name="place" value="{{user.place}}" placeholder="Your hometown or city" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_address">
+                Address <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control rounded-3" id="quick_address" name="address" rows="2" placeholder="Your full postal address" required>{{user.address}}</textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_email">
+                Email Address <span class="text-danger">*</span>
+              </label>
+              <input type="email" class="form-control rounded-3" id="quick_email" name="email" value="{{user.email}}" placeholder="name@example.com" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_phone">
+                  Phone <span class="text-danger">*</span>
+                </label>
+                <input type="tel" class="form-control rounded-3" id="quick_phone" name="phone" value="{{user.phone}}" placeholder="+91..." required>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_whatsapp">
+                  WhatsApp <span class="text-danger">*</span>
+                </label>
+                <input type="tel" class="form-control rounded-3" id="quick_whatsapp" name="whatsapp" value="{{user.whatsapp}}" placeholder="+91..." required>
+              </div>
+            </div>
+
+            <div class="d-grid mt-4">
+              <button type="submit" id="savePersonalDataBtn" class="btn btn-primary fw-bold rounded-3 py-2 shadow-sm">
+                <i class="bi bi-check-circle me-1"></i>Save &amp; Continue
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+
   <!-- ===== UNPAID MONTHS POPUP MODAL ===== -->
   {{#if contribution.hasUnpaidMonths}}
   <div class="modal fade" id="unpaidMonthsPopupModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="unpaidMonthsPopupLabel" aria-hidden="true">
@@ -3039,10 +3107,10 @@ function downloadReceipt(button) {
         });
       }
 
-      document.addEventListener('DOMContentLoaded', function () {
+      function checkAndShowUnpaidModal() {
         var unpaidModalEl = document.getElementById('unpaidMonthsPopupModal');
         if (unpaidModalEl && window.bootstrap) {
-          var unpaidInst = new window.bootstrap.Modal(unpaidModalEl);
+          var unpaidInst = window.bootstrap.Modal.getOrCreateInstance(unpaidModalEl);
           unpaidInst.show();
 
           var payNowBtn = document.getElementById('unpaidPayNowBtn');
@@ -3055,6 +3123,91 @@ function downloadReceipt(button) {
               }
             });
           }
+        }
+      }
+
+      window.handleSavePersonalDataQuick = function (e) {
+        e.preventDefault();
+
+        var alertEl = document.getElementById('personalDataAlert');
+        var btn     = document.getElementById('savePersonalDataBtn');
+        var origTxt = btn.innerHTML;
+
+        var place    = (document.getElementById('quick_place').value || '').trim();
+        var address  = (document.getElementById('quick_address').value || '').trim();
+        var email    = (document.getElementById('quick_email').value || '').trim();
+        var phone    = (document.getElementById('quick_phone').value || '').trim();
+        var whatsapp = (document.getElementById('quick_whatsapp').value || '').trim();
+
+        if (!place || !address || !email || !phone || !whatsapp) {
+          alertEl.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
+          alertEl.textContent = 'Please fill all required personal fields (Place, Address, Email, Phone, WhatsApp).';
+          return;
+        }
+
+        btn.disabled  = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
+
+        var payload = {
+          place: place,
+          address: address,
+          email: email,
+          phone: phone,
+          whatsapp: whatsapp
+        };
+
+        fetch('/users/user/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload)
+        })
+        .then(readJsonResponse)
+        .then(function (result) {
+          if (result.ok && result.data && result.data.success) {
+            // Synchronize with offcanvas fields
+            if (document.getElementById('ep_place')) document.getElementById('ep_place').value = place;
+            if (document.getElementById('ep_address')) document.getElementById('ep_address').value = address;
+            if (document.getElementById('ep_email')) document.getElementById('ep_email').value = email;
+            if (document.getElementById('ep_phone')) document.getElementById('ep_phone').value = phone;
+            if (document.getElementById('ep_whatsapp')) document.getElementById('ep_whatsapp').value = whatsapp;
+
+            var personalModalEl = document.getElementById('personalDataPromptModal');
+            if (personalModalEl && window.bootstrap) {
+              var personalInst = window.bootstrap.Modal.getInstance(personalModalEl);
+              if (personalInst) personalInst.hide();
+            }
+
+            // After completing personal data, pop up the unpaid payment notification
+            setTimeout(function () {
+              checkAndShowUnpaidModal();
+            }, 400);
+          } else {
+            alertEl.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
+            alertEl.textContent = serverMessage(result, 'Could not save personal details. Please try again.');
+          }
+        })
+        .catch(function () {
+          alertEl.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
+          alertEl.textContent = 'Could not reach the server. Please check your connection and try again.';
+        })
+        .finally(function () {
+          btn.disabled  = false;
+          btn.innerHTML = origTxt;
+        });
+      };
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var personalModalEl = document.getElementById('personalDataPromptModal');
+        if (personalModalEl && window.bootstrap) {
+          var personalInst = new window.bootstrap.Modal(personalModalEl, {
+            backdrop: 'static',
+            keyboard: false
+          });
+          personalInst.show();
+        } else {
+          // If personal data is already complete, directly show unpaid months popup
+          checkAndShowUnpaidModal();
         }
       });
     })();

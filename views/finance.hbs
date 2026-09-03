@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <link rel="icon" href="/logo/hamd-icon-white.png" />
+  <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png" />
+
+  <!-- Google Fonts: Outfit & Inter (Same as home.hbs) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5.3.3 & Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- Export Tools: SheetJS & jsPDF with AutoTable -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Prevent Theme Flash -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('financeTheme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-bs-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    /* ============================================================
+       CSS CUSTOM PROPERTIES & DESIGN SYSTEM (Matching home.hbs)
+    ============================================================ */
+    :root {
+      --blue-50:   #eff6ff;
+      --blue-100:  #dbeafe;
+      --blue-200:  #bfdbfe;
+      --blue-300:  #93c5fd;
+      --blue-400:  #60a5fa;
+      --blue-500:  #3b82f6;
+      --blue-600:  #2563eb;
+      --blue-700:  #1d4ed8;
+      --blue-800:  #1e40af;
+      --blue-900:  #1e3a8a;
+      
+      --navy:      #0b1120;
+      --navy-card: #131c31;
+      --navy-mid:  #1e293b;
+      --slate:     #334155;
+      --muted:     #64748b;
+      --light:     #f8fafc;
+      --white:     #ffffff;
+
+      --emerald-500: #10b981;
+      --amber-500:   #f59e0b;
+      --rose-500:    #ef4444;
+
+      --grad-hero:     linear-gradient(160deg, #0b1120 0%, #1e3a8a 50%, #1d4ed8 100%);
+      --grad-primary:  linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      --grad-card:     linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(59, 130, 246, 0.02) 100%);
+      --grad-glow:     linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.1));
+
+      --font: 'Outfit', 'Inter', sans-serif;
+      --cubic-spring: cubic-bezier(0.16, 1, 0.3, 1);
+      --transition: all 0.25s var(--cubic-spring);
+
+      /* Theme specific variables (Light Mode defaults) */
+      --bg-body: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --text-main: #0b1120;
+      --text-muted: #64748b;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --border-focus: #2563eb;
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      --card-shadow-hover: 0 16px 40px rgba(37, 99, 235, 0.12);
+      --navbar-bg: rgba(255, 255, 255, 0.85);
+      --table-header-bg: #f8fafc;
+      --table-hover-bg: #f1f5f9;
+    }
+
+    [data-bs-theme="dark"] {
+      --bg-body: #0b1120;
+      --bg-surface: #131c31;
+      --bg-subtle: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #3b82f6;
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      --card-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.5);
+      --navbar-bg: rgba(19, 28, 49, 0.88);
+      --table-header-bg: #0f172a;
+      --table-hover-bg: rgba(255, 255, 255, 0.03);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* ============================================================
+       NAVBAR & HEADER
+    ============================================================ */
+    .finance-navbar {
+      background: var(--navbar-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: var(--transition);
+    }
+
+    .brand-logo {
+      height: 42px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .finance-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 30px;
+      background: rgba(37, 99, 235, 0.12);
+      color: var(--blue-500);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+    }
+
+    .nav-btn-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .nav-btn-icon:hover {
+      background: var(--blue-600);
+      color: #fff;
+      border-color: var(--blue-600);
+      transform: translateY(-1px);
+    }
+
+    /* ============================================================
+       CARDS & UI CONTAINERS
+    ============================================================ */
+    .glass-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      transition: var(--transition);
+      overflow: hidden;
+    }
+    .glass-card:hover {
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .card-header-custom {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .card-header-title {
+      font-weight: 700;
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-main);
+    }
+
+    /* ============================================================
+       LOGIN SCREEN
+    ============================================================ */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-bg-aurora {
+      position: absolute;
+      top: -20%;
+      left: -20%;
+      width: 140%;
+      height: 140%;
+      background: radial-gradient(circle at 50% 30%, rgba(37, 99, 235, 0.15), transparent 60%),
+                  radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.08), transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 440px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .login-logo-box {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .login-logo-img {
+      height: 64px;
+      max-width: 220px;
+      object-fit: contain;
+    }
+
+    /* ============================================================
+       METRICS / STAT CARDS
+    ============================================================ */
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 20px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--card-shadow);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--blue-600);
+      border-radius: 4px 0 0 4px;
+    }
+    .stat-card.stat-pending::after { background: var(--amber-500); }
+    .stat-card.stat-approved::after { background: var(--emerald-500); }
+    .stat-card.stat-rejected::after { background: var(--rose-500); }
+    .stat-card.stat-unpaid::after { background: #64748b; }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--card-shadow-hover);
+    }
+    .stat-number {
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .stat-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--blue-600);
+    }
+    .stat-pending .stat-icon-wrap { background: rgba(245, 158, 11, 0.12); color: var(--amber-500); }
+    .stat-approved .stat-icon-wrap { background: rgba(16, 185, 129, 0.12); color: var(--emerald-500); }
+    .stat-rejected .stat-icon-wrap { background: rgba(239, 68, 68, 0.12); color: var(--rose-500); }
+    .stat-unpaid .stat-icon-wrap { background: rgba(100, 116, 139, 0.12); color: #64748b; }
+
+    /* ============================================================
+       BUTTONS & INPUTS
+    ============================================================ */
+    .btn-hamd-primary {
+      background: var(--grad-primary);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 10px 20px;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+    .btn-hamd-primary:hover {
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-hamd-primary:disabled {
+      opacity: 0.7;
+      transform: none;
+    }
+
+    .form-control, .form-select {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      transition: var(--transition);
+    }
+    .form-control:focus, .form-select:focus {
+      background-color: var(--bg-surface);
+      border-color: var(--border-focus);
+      color: var(--text-main);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .input-group-text {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      border-radius: 12px 0 0 12px;
+    }
+
+    /* ============================================================
+       TABLE & LIST STYLING
+    ============================================================ */
+    .finance-table {
+      width: 100%;
+      margin: 0;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    .finance-table th {
+      background-color: var(--table-header-bg);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .finance-table td {
+      padding: 14px 18px;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 0.9rem;
+    }
+    .finance-table tbody tr {
+      transition: background-color 0.15s ease;
+    }
+    .finance-table tbody tr:hover {
+      background-color: var(--table-hover-bg);
+    }
+
+    /* Status Badges */
+    .badge-status {
+      font-weight: 600;
+      font-size: 0.76rem;
+      padding: 5px 11px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .badge-approved { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-pending  { background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-rejected { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-unpaid   { background: rgba(100, 116, 139, 0.15); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); }
+
+    [data-bs-theme="dark"] .badge-pending { color: #fbbf24; }
+
+    /* Action buttons in table */
+    .btn-action-approve {
+      background: #10b981;
+      color: #fff;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px 0 0 8px;
+      transition: var(--transition);
+    }
+    .btn-action-approve:hover { background: #059669; color: #fff; }
+
+    .btn-action-reject {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 0 8px 8px 0;
+      transition: var(--transition);
+    }
+    .btn-action-reject:hover { background: #dc2626; color: #fff; }
+
+    /* Modals */
+    .modal-content {
+      background-color: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    }
+    .modal-header {
+      border-bottom: 1px solid var(--border-color);
+      padding: 18px 24px;
+    }
+    .modal-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 16px 24px;
+    }
+
+    /* QR Code Box */
+    .qr-preview-box {
+      border: 2px dashed var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      background: var(--bg-subtle);
+      transition: var(--transition);
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-preview-img {
+      max-height: 180px;
+      max-width: 100%;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    /* Search & Filter Bar */
+    .search-input-wrap {
+      position: relative;
+    }
+    .search-input-wrap i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-input-wrap input {
+      padding-left: 38px;
+    }
+
+    /* Toast Notification */
+    .toast-container-custom {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1090;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       TOP NAVBAR (Shown on all states)
+  ============================================================ -->
+  <nav class="finance-navbar">
+    <div class="container-fluid px-3 px-lg-4 py-2 d-flex align-items-center justify-content-between">
+      
+      <!-- Brand -->
+      <a href="/finance" class="d-flex align-items-center gap-2 text-decoration-none text-reset">
+        <img src="/logo/hamd-full-dark.png" alt="HAMD Logo" class="brand-logo d-none d-dark-inline" id="navbarDarkLogo">
+        <img src="/logo/hamd-full-light.png" alt="HAMD Logo" class="brand-logo d-none d-light-inline" id="navbarLightLogo">
+        <span class="finance-badge ms-1"><i class="bi bi-wallet2 me-1"></i>Finance Secretary</span>
+      </a>
+
+      <!-- Actions -->
+      <div class="d-flex align-items-center gap-2">
+        <!-- Theme Toggle -->
+        <button type="button" class="nav-btn-icon" id="themeToggleBtn" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
+          <i class="bi bi-moon-stars" id="themeIcon"></i>
+        </button>
+
+        {{#if authenticated}}
+        <!-- User Badge -->
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-none d-sm-inline-flex align-items-center py-2 px-3 rounded-3">
+          <i class="bi bi-person-badge-fill me-2"></i>{{financeUser}}
+        </span>
+
+        <!-- Logout -->
+        <a href="/finance/logout" class="btn btn-outline-danger btn-sm rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center" title="Sign Out">
+          <i class="bi bi-box-arrow-right me-1"></i><span class="d-none d-md-inline">Sign Out</span>
+        </a>
+        {{else}}
+        <a href="/" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-2">
+          <i class="bi bi-house-door me-1"></i><span class="d-none d-sm-inline">Home</span>
+        </a>
+        {{/if}}
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       MAIN CONTENT CONTAINER
+  ============================================================ -->
+  {{#unless authenticated}}
+  <!-- ==================== LOGIN VIEW ==================== -->
+  <div class="login-container">
+    <div class="login-bg-aurora"></div>
+
+    <div class="login-box">
+      <div class="glass-card p-4 p-sm-5">
+        
+        <div class="login-logo-box">
+          <img src="/logo/hamd-full-dark.png" alt="HAMD Logo" class="login-logo-img d-none d-dark-inline" id="loginDarkLogo">
+          <img src="/logo/hamd-full-light.png" alt="HAMD Logo" class="login-logo-img d-none d-light-inline" id="loginLightLogo">
+          <h2 class="fw-bold mt-3 mb-1 fs-4">Finance Portal</h2>
+          <p class="text-muted small">Sign in using your assigned <strong>FINANCE_ID</strong> key.</p>
+        </div>
+
+        <div id="loginAlert" class="alert alert-danger d-none rounded-3 py-2 px-3 small mb-3"></div>
+
+        <form id="financeLoginForm" autocomplete="off">
+          <div class="mb-4">
+            <label for="financeIdInput" class="form-label fw-bold small text-uppercase text-muted">Finance Access Key / ID</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-key-fill text-primary"></i></span>
+              <input type="password" id="financeIdInput" name="financeId" class="form-control" placeholder="Enter FINANCE_ID" required autofocus>
+              <button type="button" class="btn btn-outline-secondary" id="toggleShowKey" title="Show / Hide key">
+                <i class="bi bi-eye" id="toggleEyeIcon"></i>
+              </button>
+            </div>
+            <div class="form-text small text-muted mt-1">Configured in system environment (.env).</div>
+          </div>
+
+          <button type="submit" id="financeLoginSubmit" class="btn btn-hamd-primary w-100 py-2 fs-6">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In to Finance Portal
+          </button>
+        </form>
+
+        <div class="text-center mt-4 pt-2 border-top">
+          <small class="text-muted">Hamd Huffaz Alumni · Secure Financial Management</small>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  {{else}}
+  <!-- ==================== DASHBOARD VIEW ==================== -->
+  <main class="container-fluid px-3 px-lg-4 py-4 max-w-7xl">
+
+    <!-- Header Greeting -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h3 fw-bold mb-1 d-flex align-items-center gap-2">
+          <i class="bi bi-cash-coin text-primary"></i>Finance Management Dashboard
+        </h1>
+        <p class="text-muted small mb-0">Configure payment gateways and process alumni monthly contributions.</p>
+      </div>
+
+      <!-- Quick Section Anchor Links -->
+      <div class="d-flex gap-2">
+        <a href="#payment-setup-section" class="btn btn-sm btn-outline-primary rounded-3 px-3">
+          <i class="bi bi-qr-code-scan me-1"></i>Payment Setup
+        </a>
+        <a href="#contributions-section" class="btn btn-sm btn-primary rounded-3 px-3">
+          <i class="bi bi-wallet2 me-1"></i>Alumni Contributions
+        </a>
+      </div>
+    </div>
+
+    <!-- ==================== METRICS OVERVIEW ==================== -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-4 col-xl-2 flex-grow-1">
+        <div class="stat-card">
+          <div>
+            <div class="stat-number" id="metricTotal">{{contributions.counts.total}}</div>
+            <div class="stat-label">Total Submissions</div>
+          </div>
+          <div class="stat-icon-wrap"><i class="bi bi-collection"></i></div>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-4 col-xl-2 flex-grow-1">
+        <div class="stat-card stat-pending">
+          <div>
+            <div class="stat-number text-warning" id="metricPending">{{contributions.counts.pending}}</div>
+            <div class="stat-label">Pending Review</div>
+          </div>
+          <div class="stat-icon-wrap"><i class="bi bi-hourglass-split"></i></div>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-4 col-xl-2 flex-grow-1">
+        <div class="stat-card stat-approved">
+          <div>
+            <div class="stat-number text-success" id="metricApproved">{{contributions.counts.approved}}</div>
+            <div class="stat-label">Approved</div>
+          </div>
+          <div class="stat-icon-wrap"><i class="bi bi-check2-circle"></i></div>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-4 col-xl-2 flex-grow-1">
+        <div class="stat-card stat-rejected">
+          <div>
+            <div class="stat-number text-danger" id="metricRejected">{{contributions.counts.rejected}}</div>
+            <div class="stat-label">Rejected</div>
+          </div>
+          <div class="stat-icon-wrap"><i class="bi bi-x-circle"></i></div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-4 col-xl-2 flex-grow-1">
+        <div class="stat-card stat-unpaid">
+          <div>
+            <div class="stat-number text-secondary" id="metricUnpaid">{{contributions.counts.unpaid}}</div>
+            <div class="stat-label">Unpaid Months</div>
+          </div>
+          <div class="stat-icon-wrap"><i class="bi bi-exclamation-octagon"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SECTION 1: PAYMENT SETUP ==================== -->
+    <div class="glass-card mb-4" id="payment-setup-section">
+      <div class="card-header-custom">
+        <div class="card-header-title">
+          <i class="bi bi-qr-code-scan text-primary"></i>
+          <span>Payment Details Setup</span>
+        </div>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">PAYMENT_SETUP</span>
+      </div>
+
+      <div class="p-4">
+        <form id="financePaymentSetupForm" enctype="multipart/form-data">
+          <div id="paymentSetupAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+
+          <div class="row g-4 align-items-start">
+            
+            <!-- QR Code Section -->
+            <div class="col-12 col-md-5 col-lg-4">
+              <label class="form-label fw-bold mb-2 small text-uppercase text-muted">Official Payment QR Code</label>
+              <div class="qr-preview-box">
+                <div id="qrCodePreviewContainer" class="{{#unless paymentSetup.hasQrCode}}d-none{{/unless}} mb-2">
+                  <img id="qrCodePreviewImage" src="{{#if paymentSetup.hasQrCode}}/finance/payment-setup/qr-code{{/if}}" alt="QR Code" class="qr-preview-img">
+                </div>
+                <div id="qrCodePlaceholder" class="{{#if paymentSetup.hasQrCode}}d-none{{/if}} text-muted py-3">
+                  <i class="bi bi-qr-code fs-1 d-block mb-1 text-primary opacity-50"></i>
+                  <span class="small">No QR Code Image Saved</span>
+                </div>
+                <div class="w-100 mt-2">
+                  <input type="file" name="qrCode" id="qrCodeInput" class="form-control form-control-sm" accept="image/*">
+                  <div class="text-muted small mt-1">Image size must be <strong>less than 2MB</strong>.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- UPI & GPay Fields -->
+            <div class="col-12 col-md-7 col-lg-8">
+              <div class="mb-3">
+                <label for="upiIdInput" class="form-label fw-bold small text-uppercase text-muted">UPI ID</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                  <input type="text" name="upiId" id="upiIdInput" class="form-control" placeholder="e.g. hamd@upi or 9876543210@okaxis" value="{{paymentSetup.upiId}}">
+                </div>
+                <div class="form-text small text-muted">Members will transfer funds using this official UPI ID.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="gpayNumberInput" class="form-label fw-bold small text-uppercase text-muted">Google Pay (GPay) Phone Number</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                  <input type="text" name="gpayNumber" id="gpayNumberInput" class="form-control" placeholder="e.g. 9876543210" value="{{paymentSetup.gpayNumber}}">
+                </div>
+                <div class="form-text small text-muted">Direct phone number linked with GPay / PhonePe / Paytm.</div>
+              </div>
+
+              <div class="d-flex align-items-center gap-2 mt-4 pt-2">
+                <button type="submit" id="savePaymentBtn" class="btn btn-hamd-primary px-4 py-2">
+                  <i class="bi bi-floppy me-1"></i>Save Payment Details
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== SECTION 2: ALUMNI CONTRIBUTIONS ==================== -->
+    <div class="glass-card mb-5" id="contributions-section">
+      <div class="card-header-custom flex-wrap">
+        <div class="card-header-title">
+          <i class="bi bi-wallet2 text-primary"></i>
+          <span>Alumni Contributions Management</span>
+          <span class="badge bg-primary rounded-pill ms-2" id="contribTotalBadge">{{contributions.counts.total}}</span>
+        </div>
+
+        <!-- Controls: Search, Filter & Dual Exports -->
+        <div class="d-flex align-items-center gap-2 ms-auto flex-wrap mt-2 mt-md-0">
+          <!-- Search -->
+          <div class="search-input-wrap" style="min-width: 200px;">
+            <i class="bi bi-search"></i>
+            <input type="text" id="contribSearchInput" class="form-control form-control-sm" placeholder="Search member, batch...">
+          </div>
+
+          <!-- Status Dropdown -->
+          <select id="contribStatusFilter" class="form-select form-select-sm" style="width: 140px;">
+            <option value="ALL">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+            <option value="UN PAID">Unpaid Months</option>
+          </select>
+
+          <!-- Export to Excel -->
+          <button type="button" id="contribExportExcelBtn" class="btn btn-sm btn-outline-success rounded-3 d-inline-flex align-items-center gap-1" title="Export as Excel">
+            <i class="bi bi-file-earmark-excel"></i><span>Excel</span>
+          </button>
+
+          <!-- Export to PDF -->
+          <button type="button" id="contribExportPdfBtn" class="btn btn-sm btn-outline-danger rounded-3 d-inline-flex align-items-center gap-1" title="Export as PDF">
+            <i class="bi bi-file-earmark-pdf"></i><span>PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Summary Pills -->
+      <div class="px-4 py-2 bg-body-tertiary border-bottom d-flex gap-2 flex-wrap small align-items-center">
+        <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill">Total: <strong id="cntAll">{{contributions.counts.total}}</strong></span>
+        <span class="badge bg-warning-subtle text-warning-emphasis px-3 py-2 rounded-pill">Pending: <strong id="cntPending">{{contributions.counts.pending}}</strong></span>
+        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Approved: <strong id="cntApproved">{{contributions.counts.approved}}</strong></span>
+        <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">Rejected: <strong id="cntRejected">{{contributions.counts.rejected}}</strong></span>
+        <span class="badge bg-danger text-white px-3 py-2 rounded-pill">Unpaid Months: <strong id="cntUnpaid">{{contributions.counts.unpaid}}</strong></span>
+      </div>
+
+      <!-- Table -->
+      <div class="table-responsive">
+        <table class="finance-table align-middle" id="contribTable">
+          <thead>
+            <tr>
+              <th>Member Name</th>
+              <th>Batch / Adm No</th>
+              <th>Month &amp; Year</th>
+              <th>Amount</th>
+              <th>Receipt Proof</th>
+              <th>Status</th>
+              <th>Date &amp; Details</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="contribTableBody">
+            <!-- Dynamically populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- REJECT CONTRIBUTION MODAL -->
+  <div class="modal fade" id="rejectContributionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2">
+            <i class="bi bi-x-circle"></i>Reject Payment Submission
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="rejectContributionForm">
+            <input type="hidden" id="rejectMemberId" value="">
+            <input type="hidden" id="rejectPaymentId" value="">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Select Rejection Reason:</label>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="rejectReasonOption" id="rrOpt1" value="screenshot not visible perfectly" checked>
+                <label class="form-check-label" for="rrOpt1">Screenshot not visible perfectly</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="rejectReasonOption" id="rrOpt2" value="the amount is less than 30">
+                <label class="form-check-label" for="rrOpt2">The amount is less than 30</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="rejectReasonOption" id="rrOpt3" value="other">
+                <label class="form-check-label" for="rrOpt3">Other (Custom input)</label>
+              </div>
+            </div>
+
+            <div class="mb-3 d-none" id="customReasonWrapper">
+              <label for="customRejectReason" class="form-label fw-semibold">Custom Rejection Reason:</label>
+              <textarea id="customRejectReason" class="form-control" rows="3" placeholder="Specify clear reason for rejection..."></textarea>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-outline-secondary rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" id="confirmRejectBtn" class="btn btn-danger rounded-3 px-4 fw-bold">Confirm Rejection</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW SCREENSHOT MODAL -->
+  <div class="modal fade" id="viewScreenshotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="viewScreenshotModalTitle">Payment Receipt Screenshot</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center p-4">
+          <img id="contribModalImage" src="" alt="Payment Receipt" class="img-fluid rounded-3 border shadow-sm" style="max-height: 520px; object-fit: contain;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{/unless}}
+
+  <!-- Toast Container -->
+  <div class="toast-container toast-container-custom">
+    <div id="liveToast" class="toast align-items-center text-bg-primary border-0 rounded-3 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMessage">Action completed.</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ============================================================
+       THEME CONTROLLER SCRIPT (Zero-flash, auto-sync)
+  ============================================================ -->
+  <script>
+    (function () {
+      var themeToggleBtn = document.getElementById('themeToggleBtn');
+      var themeIcon      = document.getElementById('themeIcon');
+
+      function updateThemeIcons(theme) {
+        if (!themeIcon) return;
+        if (theme === 'dark') {
+          themeIcon.className = 'bi bi-sun';
+          document.querySelectorAll('.d-dark-inline').forEach(function (el) { el.classList.remove('d-none'); });
+          document.querySelectorAll('.d-light-inline').forEach(function (el) { el.classList.add('d-none'); });
+        } else {
+          themeIcon.className = 'bi bi-moon-stars';
+          document.querySelectorAll('.d-dark-inline').forEach(function (el) { el.classList.add('d-none'); });
+          document.querySelectorAll('.d-light-inline').forEach(function (el) { el.classList.remove('d-none'); });
+        }
+      }
+
+      var currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
+      updateThemeIcons(currentTheme);
+
+      if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', function () {
+          var active = document.documentElement.getAttribute('data-bs-theme');
+          var next = active === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-bs-theme', next);
+          try { localStorage.setItem('financeTheme', next); } catch (e) {}
+          updateThemeIcons(next);
+        });
+      }
+    })();
+  </script>
+
+  <!-- ============================================================
+       TOAST NOTIFIER UTILITY
+  ============================================================ -->
+  <script>
+    function showFinanceToast(message, type) {
+      var toastEl = document.getElementById('liveToast');
+      var toastMsg = document.getElementById('toastMessage');
+      if (!toastEl || !toastMsg) return;
+
+      toastMsg.textContent = message;
+      toastEl.className = 'toast align-items-center border-0 rounded-3 shadow text-bg-' + (type || 'primary');
+      var toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+      toast.show();
+    }
+  </script>
+
+  {{#unless authenticated}}
+  <!-- ============================================================
+       LOGIN JAVASCRIPT
+  ============================================================ -->
+  <script>
+    (function () {
+      var loginForm = document.getElementById('financeLoginForm');
+      var keyInput = document.getElementById('financeIdInput');
+      var alertBox = document.getElementById('loginAlert');
+      var submitBtn = document.getElementById('financeLoginSubmit');
+      var toggleShowKey = document.getElementById('toggleShowKey');
+      var toggleEyeIcon = document.getElementById('toggleEyeIcon');
+
+      if (toggleShowKey && keyInput) {
+        toggleShowKey.addEventListener('click', function () {
+          if (keyInput.type === 'password') {
+            keyInput.type = 'text';
+            toggleEyeIcon.className = 'bi bi-eye-slash';
+          } else {
+            keyInput.type = 'password';
+            toggleEyeIcon.className = 'bi bi-eye';
+          }
+        });
+      }
+
+      if (loginForm) {
+        loginForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var idVal = (keyInput.value || '').trim();
+          if (!idVal) {
+            alertBox.textContent = 'Please enter your Finance Access Key / ID.';
+            alertBox.classList.remove('d-none');
+            return;
+          }
+
+          alertBox.classList.add('d-none');
+          submitBtn.disabled = true;
+          var originalText = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Authenticating...';
+
+          fetch('/finance/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ financeId: idVal })
+          })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+              if (data && data.success) {
+                window.location.href = data.redirect || '/finance';
+              } else {
+                alertBox.textContent = (data && data.message) || 'Invalid Finance Key. Please check and try again.';
+                alertBox.classList.remove('d-none');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+              }
+            })
+            .catch(function () {
+              alertBox.textContent = 'Network error while contacting server.';
+              alertBox.classList.remove('d-none');
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalText;
+            });
+        });
+      }
+    })();
+  </script>
+
+  {{else}}
+  <!-- ============================================================
+       DASHBOARD JAVASCRIPT (Payment Setup & Contributions)
+  ============================================================ -->
+  <script>
+    (function () {
+      /* -------------------------------------------------------------
+         1. PAYMENT SETUP CONTROLLER
+      ------------------------------------------------------------- */
+      var pForm       = document.getElementById('financePaymentSetupForm');
+      var qrInput     = document.getElementById('qrCodeInput');
+      var previewBox  = document.getElementById('qrCodePreviewContainer');
+      var previewImg  = document.getElementById('qrCodePreviewImage');
+      var placeholder = document.getElementById('qrCodePlaceholder');
+      var pAlert      = document.getElementById('paymentSetupAlert');
+      var pSaveBtn    = document.getElementById('savePaymentBtn');
+
+      function showPaymentAlert(type, msg) {
+        if (!pAlert) return;
+        pAlert.className = 'alert alert-' + type + ' rounded-3 py-2 px-3 small mb-3';
+        pAlert.textContent = msg;
+        pAlert.classList.remove('d-none');
+      }
+
+      if (qrInput) {
+        qrInput.addEventListener('change', function () {
+          var file = qrInput.files && qrInput.files[0];
+          if (!file) return;
+          if (file.size > 2 * 1024 * 1024) {
+            showPaymentAlert('danger', 'QR Code image must be less than 2MB.');
+            qrInput.value = '';
+            return;
+          }
+          if (pAlert) pAlert.classList.add('d-none');
+          previewImg.src = URL.createObjectURL(file);
+          previewBox.classList.remove('d-none');
+          placeholder.classList.add('d-none');
+        });
+      }
+
+      if (pForm) {
+        pForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          if (pAlert) pAlert.classList.add('d-none');
+
+          var file = qrInput.files && qrInput.files[0];
+          if (file && file.size > 2 * 1024 * 1024) {
+            showPaymentAlert('danger', 'QR Code image must be less than 2MB.');
+            return;
+          }
+
+          pSaveBtn.disabled = true;
+          var originalBtnHtml = pSaveBtn.innerHTML;
+          pSaveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+          var formData = new FormData(pForm);
+
+          fetch('/finance/payment-setup', {
+            method: 'POST',
+            body: formData
+          })
+            .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+            .then(function (result) {
+              if (!result.ok || !result.data.success) {
+                showPaymentAlert('danger', (result.data && result.data.message) || 'Could not save payment setup.');
+                return;
+              }
+              showPaymentAlert('success', result.data.message || 'Payment details saved successfully.');
+              showFinanceToast('Payment details saved successfully!', 'success');
+
+              if (result.data.paymentSetup && result.data.paymentSetup.hasQrCode) {
+                previewImg.src = '/finance/payment-setup/qr-code?t=' + Date.now();
+                previewBox.classList.remove('d-none');
+                placeholder.classList.add('d-none');
+              }
+              qrInput.value = '';
+            })
+            .catch(function () {
+              showPaymentAlert('danger', 'Network error while saving payment setup.');
+            })
+            .finally(function () {
+              pSaveBtn.disabled = false;
+              pSaveBtn.innerHTML = originalBtnHtml;
+            });
+        });
+      }
+
+      /* -------------------------------------------------------------
+         2. ALUMNI CONTRIBUTIONS CONTROLLER
+      ------------------------------------------------------------- */
+      var initialData = {{{contributionsJson}}} || {};
+      var submittedData = initialData.submitted || [];
+      var unpaidData    = initialData.unpaid || [];
+
+      var searchInput   = document.getElementById('contribSearchInput');
+      var statusFilter  = document.getElementById('contribStatusFilter');
+      var tbody         = document.getElementById('contribTableBody');
+      var exportExcelBtn= document.getElementById('contribExportExcelBtn');
+      var exportPdfBtn  = document.getElementById('contribExportPdfBtn');
+
+      var currentFiltered = [];
+
+      function escapeHtml(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function renderTable() {
+        if (!tbody) return;
+        var q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        var st = statusFilter ? statusFilter.value : 'ALL';
+
+        var list = [];
+        if (st === 'UN PAID') {
+          list = unpaidData;
+        } else {
+          list = submittedData.filter(function (item) {
+            if (st !== 'ALL' && item.status !== st) return false;
+            return true;
+          });
+        }
+
+        if (q) {
+          list = list.filter(function (item) {
+            var name = (item.memberName || '').toLowerCase();
+            var batch = (item.batch || '').toLowerCase();
+            var adm = (item.admissionNumber || '').toLowerCase();
+            var month = (item.monthLabel || '').toLowerCase();
+            return name.includes(q) || batch.includes(q) || adm.includes(q) || month.includes(q);
+          });
+        }
+
+        currentFiltered = list;
+
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>No contribution records found matching criteria.</td></tr>';
+          return;
+        }
+
+        if (st === 'UN PAID') {
+          tbody.innerHTML = list.map(function (item) {
+            return '<tr>' +
+              '<td><div class="fw-bold">' + escapeHtml(item.memberName) + '</div></td>' +
+              '<td><span class="badge bg-secondary-subtle text-secondary">Batch ' + escapeHtml(item.batch) + '</span> <small class="text-muted ms-1">' + escapeHtml(item.admissionNumber) + '</small></td>' +
+              '<td><span class="fw-bold text-primary">' + escapeHtml(item.monthLabel) + '</span></td>' +
+              '<td><span class="fw-bold">₹' + item.amount + '</span></td>' +
+              '<td><span class="text-muted small">—</span></td>' +
+              '<td><span class="badge-status badge-unpaid"><i class="bi bi-clock"></i>UN PAID</span></td>' +
+              '<td><span class="text-muted small">Not Paid Yet</span></td>' +
+              '<td class="text-end"><span class="badge bg-light text-secondary border">Unpaid Month</span></td>' +
+            '</tr>';
+          }).join('');
+        } else {
+          tbody.innerHTML = list.map(function (item) {
+            var statusBadgeClass = item.status === 'Approved' ? 'badge-approved' : (item.status === 'Pending' ? 'badge-pending' : 'badge-rejected');
+            var statusIcon = item.status === 'Approved' ? 'bi-check-circle-fill' : (item.status === 'Pending' ? 'bi-hourglass-split' : 'bi-x-circle-fill');
+            var statusBadge = '<span class="badge-status ' + statusBadgeClass + '"><i class="bi ' + statusIcon + '"></i>' + escapeHtml(item.status) + '</span>';
+
+            var imgHtml = item.hasScreenshot
+              ? '<button type="button" class="btn btn-sm btn-outline-primary rounded-2 view-screenshot-btn" data-img="/finance/contributions/image/' + item.memberId + '/' + item.paymentId + '" data-name="' + escapeHtml(item.memberName) + '"><i class="bi bi-image me-1"></i>View Receipt</button>'
+              : '<span class="text-muted small">No receipt</span>';
+
+            var detailsHtml = '<div class="small text-muted">Submitted: ' + escapeHtml(item.submittedAtFormatted || '—') + '</div>';
+            if (item.status === 'Approved' && item.approvedBy) {
+              detailsHtml += '<div class="small text-success"><i class="bi bi-check me-1"></i>Approved by ' + escapeHtml(item.approvedBy) + ' (' + escapeHtml(item.approvedAtFormatted) + ')</div>';
+            } else if (item.status === 'Rejected') {
+              detailsHtml += '<div class="small text-danger"><i class="bi bi-info-circle me-1"></i>' + escapeHtml(item.rejectionReason || 'Rejected') + '</div>';
+            }
+
+            var actionsHtml = '';
+            if (item.status === 'Pending') {
+              actionsHtml = '<div class="btn-group btn-group-sm shadow-sm">' +
+                '<button type="button" class="btn-action-approve approve-btn" data-member="' + item.memberId + '" data-payment="' + item.paymentId + '"><i class="bi bi-check-lg me-1"></i>Approve</button>' +
+                '<button type="button" class="btn-action-reject reject-btn" data-member="' + item.memberId + '" data-payment="' + item.paymentId + '"><i class="bi bi-x-lg me-1"></i>Reject</button>' +
+              '</div>';
+            } else {
+              actionsHtml = '<span class="small text-muted"><i class="bi bi-check2-all me-1"></i>Processed</span>';
+            }
+
+            return '<tr>' +
+              '<td><div class="fw-bold">' + escapeHtml(item.memberName) + '</div></td>' +
+              '<td><span class="badge bg-secondary-subtle text-secondary">Batch ' + escapeHtml(item.batch) + '</span> <small class="text-muted ms-1">' + escapeHtml(item.admissionNumber) + '</small></td>' +
+              '<td><span class="fw-bold text-primary">' + escapeHtml(item.monthLabel) + '</span></td>' +
+              '<td><span class="fw-bold">₹' + item.amount + '</span></td>' +
+              '<td>' + imgHtml + '</td>' +
+              '<td>' + statusBadge + '</td>' +
+              '<td>' + detailsHtml + '</td>' +
+              '<td class="text-end">' + actionsHtml + '</td>' +
+            '</tr>';
+          }).join('');
+        }
+      }
+
+      function refreshContributionsData() {
+        return fetch('/finance/contributions', { headers: { 'Accept': 'application/json' } })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data && data.success) {
+              submittedData = data.submitted || [];
+              unpaidData    = data.unpaid || [];
+
+              if (data.counts) {
+                var c = data.counts;
+                if (document.getElementById('metricTotal')) document.getElementById('metricTotal').textContent = c.total;
+                if (document.getElementById('metricPending')) document.getElementById('metricPending').textContent = c.pending;
+                if (document.getElementById('metricApproved')) document.getElementById('metricApproved').textContent = c.approved;
+                if (document.getElementById('metricRejected')) document.getElementById('metricRejected').textContent = c.rejected;
+                if (document.getElementById('metricUnpaid')) document.getElementById('metricUnpaid').textContent = c.unpaid;
+
+                if (document.getElementById('cntAll')) document.getElementById('cntAll').textContent = c.total;
+                if (document.getElementById('cntPending')) document.getElementById('cntPending').textContent = c.pending;
+                if (document.getElementById('cntApproved')) document.getElementById('cntApproved').textContent = c.approved;
+                if (document.getElementById('cntRejected')) document.getElementById('cntRejected').textContent = c.rejected;
+                if (document.getElementById('cntUnpaid')) document.getElementById('cntUnpaid').textContent = c.unpaid;
+                if (document.getElementById('contribTotalBadge')) document.getElementById('contribTotalBadge').textContent = c.total;
+              }
+              renderTable();
+            }
+          })
+          .catch(function (err) { console.error('Error refreshing contributions:', err); });
+      }
+
+      if (searchInput) searchInput.addEventListener('input', renderTable);
+      if (statusFilter) statusFilter.addEventListener('change', renderTable);
+
+      // Table Action Delegations
+      if (tbody) {
+        tbody.addEventListener('click', function (e) {
+          // View screenshot modal
+          var viewBtn = e.target.closest('.view-screenshot-btn');
+          if (viewBtn) {
+            var imgSrc = viewBtn.getAttribute('data-img');
+            var memberName = viewBtn.getAttribute('data-name');
+            var imgEl = document.getElementById('contribModalImage');
+            var titleEl = document.getElementById('viewScreenshotModalTitle');
+            if (imgEl) imgEl.src = imgSrc;
+            if (titleEl) titleEl.textContent = 'Payment Receipt - ' + memberName;
+            var modalEl = document.getElementById('viewScreenshotModal');
+            if (modalEl && window.bootstrap) {
+              var inst = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+              inst.show();
+            }
+            return;
+          }
+
+          // Approve submission
+          var appBtn = e.target.closest('.approve-btn');
+          if (appBtn) {
+            var memberId = appBtn.getAttribute('data-member');
+            var paymentId = appBtn.getAttribute('data-payment');
+            if (!confirm('Approve this payment contribution?')) return;
+            appBtn.disabled = true;
+
+            fetch('/finance/contributions/' + memberId + '/' + paymentId + '/approve', {
+              method: 'POST',
+              headers: { 'Accept': 'application/json' }
+            })
+              .then(function (res) { return res.json(); })
+              .then(function (resData) {
+                if (resData && resData.success) {
+                  showFinanceToast('Payment contribution approved successfully.', 'success');
+                  refreshContributionsData();
+                } else {
+                  alert((resData && resData.message) || 'Approval failed.');
+                  appBtn.disabled = false;
+                }
+              })
+              .catch(function () { alert('Network error.'); appBtn.disabled = false; });
+            return;
+          }
+
+          // Reject submission
+          var rejBtn = e.target.closest('.reject-btn');
+          if (rejBtn) {
+            var memberId = rejBtn.getAttribute('data-member');
+            var paymentId = rejBtn.getAttribute('data-payment');
+
+            document.getElementById('rejectMemberId').value = memberId;
+            document.getElementById('rejectPaymentId').value = paymentId;
+
+            var rForm = document.getElementById('rejectContributionForm');
+            if (rForm) rForm.reset();
+            document.getElementById('customReasonWrapper').classList.add('d-none');
+
+            var rejModalEl = document.getElementById('rejectContributionModal');
+            if (rejModalEl && window.bootstrap) {
+              var inst = bootstrap.Modal.getInstance(rejModalEl) || new bootstrap.Modal(rejModalEl);
+              inst.show();
+            }
+            return;
+          }
+        });
+      }
+
+      // Reject Radio change listener
+      var rRadios = document.querySelectorAll('input[name="rejectReasonOption"]');
+      rRadios.forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          var customWrap = document.getElementById('customReasonWrapper');
+          if (customWrap) {
+            if (this.value === 'other') {
+              customWrap.classList.remove('d-none');
+            } else {
+              customWrap.classList.add('d-none');
+            }
+          }
+        });
+      });
+
+      // Reject Form submission
+      var rForm = document.getElementById('rejectContributionForm');
+      if (rForm) {
+        rForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var memberId = document.getElementById('rejectMemberId').value;
+          var paymentId = document.getElementById('rejectPaymentId').value;
+
+          var selectedRadio = document.querySelector('input[name="rejectReasonOption"]:checked');
+          var reasonOption = selectedRadio ? selectedRadio.value : 'screenshot not visible perfectly';
+          var customReason = (document.getElementById('customRejectReason').value || '').trim();
+
+          if (reasonOption === 'other' && !customReason) {
+            alert('Please specify the custom rejection reason.');
+            return;
+          }
+
+          var confirmBtn = document.getElementById('confirmRejectBtn');
+          confirmBtn.disabled = true;
+
+          fetch('/finance/contributions/' + memberId + '/' + paymentId + '/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ reasonOption: reasonOption, customReason: customReason })
+          })
+            .then(function (res) { return res.json(); })
+            .then(function (resData) {
+              if (resData && resData.success) {
+                var rejModalEl = document.getElementById('rejectContributionModal');
+                if (rejModalEl && window.bootstrap) {
+                  var inst = bootstrap.Modal.getInstance(rejModalEl);
+                  if (inst) inst.hide();
+                }
+                showFinanceToast('Payment submission rejected.', 'warning');
+                refreshContributionsData();
+              } else {
+                alert((resData && resData.message) || 'Rejection failed.');
+              }
+            })
+            .catch(function () { alert('Network error.'); })
+            .finally(function () { confirmBtn.disabled = false; });
+        });
+      }
+
+      /* -------------------------------------------------------------
+         3. EXPORT TO EXCEL
+      ------------------------------------------------------------- */
+      if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', function () {
+          if (!window.XLSX) {
+            alert('Excel export engine is loading... Please try again.');
+            return;
+          }
+          if (currentFiltered.length === 0) {
+            alert('No contribution records to export.');
+            return;
+          }
+
+          var st = statusFilter ? statusFilter.value : 'ALL';
+          var excelRows = [];
+
+          if (st === 'UN PAID') {
+            excelRows = currentFiltered.map(function (i) {
+              return {
+                'Member Name': i.memberName,
+                'Admission No': i.admissionNumber,
+                'Batch': i.batch,
+                'Month & Year': i.monthLabel,
+                'Amount (INR)': i.amount,
+                'Status': i.status
+              };
+            });
+          } else {
+            excelRows = currentFiltered.map(function (i) {
+              return {
+                'Member Name': i.memberName,
+                'Admission No': i.admissionNumber,
+                'Batch': i.batch,
+                'Month & Year': i.monthLabel,
+                'Amount (INR)': i.amount,
+                'Status': i.status,
+                'Submitted At': i.submittedAtFormatted,
+                'Approved By': i.approvedBy,
+                'Approved At': i.approvedAtFormatted,
+                'Rejection Reason': i.rejectionReason
+              };
+            });
+          }
+
+          var worksheet = XLSX.utils.json_to_sheet(excelRows);
+          var workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Contributions');
+          XLSX.writeFile(workbook, 'HAMD_Alumni_Contributions_' + st + '_' + Date.now() + '.xlsx');
+        });
+      }
+
+      /* -------------------------------------------------------------
+         4. EXPORT TO PDF (Clean AutoTable layout)
+      ------------------------------------------------------------- */
+      if (exportPdfBtn) {
+        exportPdfBtn.addEventListener('click', function () {
+          var jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+          if (!jsPDF) {
+            alert('PDF engine is loading... Please try again.');
+            return;
+          }
+
+          if (currentFiltered.length === 0) {
+            alert('No contribution records to export.');
+            return;
+          }
+
+          var doc = new jsPDF('landscape');
+          var st = statusFilter ? statusFilter.value : 'ALL';
+
+          // Header
+          doc.setFontSize(16);
+          doc.setTextColor(37, 99, 235);
+          doc.text('HAMD Alumni - Financial Contributions Report', 14, 16);
+
+          doc.setFontSize(10);
+          doc.setTextColor(100);
+          doc.text('Status Filter: ' + st + ' | Generated on: ' + new Date().toLocaleString('en-GB') + ' | Total Records: ' + currentFiltered.length, 14, 23);
+
+          var tableHeaders = [['#', 'Member Name', 'Admission No', 'Batch', 'Month & Year', 'Amount', 'Status', 'Date & Notes']];
+          var tableData = currentFiltered.map(function (item, idx) {
+            var notes = '';
+            if (item.status === 'Approved' && item.approvedBy) {
+              notes = 'Approved by ' + item.approvedBy;
+            } else if (item.status === 'Rejected') {
+              notes = item.rejectionReason || 'Rejected';
+            } else if (item.status === 'Pending') {
+              notes = 'Submitted: ' + (item.submittedAtFormatted || '—');
+            } else {
+              notes = 'Unpaid Month';
+            }
+
+            return [
+              idx + 1,
+              item.memberName || '—',
+              item.admissionNumber || '—',
+              'Batch ' + (item.batch || '—'),
+              item.monthLabel || '—',
+              'Rs. ' + (item.amount || 30),
+              item.status || '—',
+              notes
+            ];
+          });
+
+          if (typeof doc.autoTable === 'function') {
+            doc.autoTable({
+              startY: 28,
+              head: tableHeaders,
+              body: tableData,
+              theme: 'grid',
+              headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+              alternateRowStyles: { fillColor: [248, 250, 252] },
+              styles: { fontSize: 9, cellPadding: 3 }
+            });
+          }
+
+          doc.save('HAMD_Contributions_' + st + '_' + Date.now() + '.pdf');
+        });
+      }
+
+      // Initial Render
+      renderTable();
+    })();
+  </script>
+  {{/unless}}
+
+</body>
+</html>

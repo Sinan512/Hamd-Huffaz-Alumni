@@ -14,6 +14,7 @@ var adminRouter = require('./routes/admin');
 var mediaRouter   = require('./routes/media');
 var usersRouter = require('./routes/users');
 var leadersRouter = require('./routes/leaders');
+var financeRouter = require('./routes/finance');
 const { log } = require('console');
 
 var app = express();
@@ -104,7 +105,7 @@ app.use(session(sessionConfig));
    request from a logged-in user, so an active user is never signed out
    before a full 7 idle days have passed. */
 app.use(function (req, res, next) {
-  if (req.session && (req.session.memberId || req.session.adminId || req.session.leaderId)) {
+  if (req.session && (req.session.memberId || req.session.adminId || req.session.leaderId || req.session.financeId)) {
     req.session.cookie.maxAge = SEVEN_DAYS_MS;
     req.session.cookie.expires = new Date(Date.now() + SEVEN_DAYS_MS);
     req.session.touch();
@@ -129,6 +130,7 @@ app.use('/media', mediaRouter);
 app.use('/admin', adminRouter);
 app.use('/users', usersRouter);
 app.use('/leaders', leadersRouter);
+app.use('/finance', financeRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
