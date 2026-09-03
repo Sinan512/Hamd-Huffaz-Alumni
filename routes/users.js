@@ -181,10 +181,6 @@ async function getMemberContributionMonths(member) {
   };
 }
 
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 function categoryBadge(cat) {
   var map = {
     'Reunion':    'bg-primary',
@@ -461,7 +457,6 @@ router.get('/', async function (req, res, next) {
 router.post('/login', async function (req, res, next) {
   await connectDB();
 
-  var name     = (req.body.name     || '').trim();
   var password = (req.body.password || '').trim();
 
   function loginError(msg) {
@@ -473,30 +468,29 @@ router.post('/login', async function (req, res, next) {
     });
   }
 
-  if (!name || !password) {
-    return loginError('Please enter both your name and password.');
+  if (!password) {
+    return loginError('Please enter your password.');
   }
 
   try {
-    /* Case-insensitive exact name match.
-       Several members can share the same name, so fetch ALL of them and
-       resolve the account by password instead of taking the first hit. */
-    var members = await MemberDetails
-      .find({ name: new RegExp('^' + escapeRegex(name) + '$', 'i') })
-      .lean();
-
-    if (!members || members.length === 0) {
-      return loginError('No account found with that name. Please check and try again.');
-    }
-
     /* Password logic:
        – If member.password is set, check against it.
        – Otherwise fall back to admissionNumber as the default/initial password.
-       This means members with no custom password can log in using their
-       admission number until they change it from the dashboard. */
-    var matches = members.filter(function (m) {
-      var storedPassword = m.password ? m.password : m.admissionNumber;
-      return storedPassword && password === String(storedPassword).trim();
+       Find any member where custom password or admissionNumber matches. */
+    var members = await MemberDetails
+      .find({
+        $or: [
+          { password: password },
+          { admissionNumber: password }
+        ]
+      })
+      .lean();
+
+    /* Filter matches to handle cases where member.password is empty and admissionNumber matches,
+       or member.password is explicitly set and matches. */
+    var matches = (members || []).filter(function (m) {
+      var storedPassword = (m.password && m.password.trim()) ? m.password.trim() : (m.admissionNumber ? String(m.admissionNumber).trim() : '');
+      return storedPassword && password === storedPassword;
     });
 
     if (matches.length === 0) {
@@ -505,7 +499,7 @@ router.post('/login', async function (req, res, next) {
 
     if (matches.length > 1) {
       return loginError(
-        'Multiple members share this name and password. Please contact the admin to update your password.'
+        'Multiple members share this password. Please contact the admin to update your password.'
       );
     }
 
