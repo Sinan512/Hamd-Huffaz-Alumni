@@ -617,60 +617,6 @@ router.post('/user/profile', requireAuth, async function (req, res) {
 });
 
 /* ================================================================== */
-/* POST /user/change-password                                          */
-/* ================================================================== */
-
-router.post('/user/change-password', requireAuth, async function (req, res) {
-  await connectDB();
-  try {
-    var currentPassword = (req.body.currentPassword || '').trim();
-    var newPassword     = (req.body.newPassword     || '').trim();
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Both current and new password are required.'
-      });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'New password must be at least 6 characters long.'
-      });
-    }
-
-    var member = await MemberDetails.findById(req.session.memberId).lean();
-    if (!member) {
-      return res.status(404).json({ success: false, message: 'Member account not found.' });
-    }
-
-    /* Same fallback logic as login */
-    var storedPassword = member.password ? member.password : member.admissionNumber;
-
-    if (currentPassword !== storedPassword) {
-      return res.status(401).json({
-        success: false,
-        message: 'Current password is incorrect.'
-      });
-    }
-
-    await MemberDetails.findByIdAndUpdate(
-      req.session.memberId,
-      { $set: { password: newPassword } }
-    );
-
-    return res.json({ success: true, message: 'Password updated successfully.' });
-  } catch (err) {
-    console.error('Change password failed:', err.message);
-    return res.status(500).json({
-      success: false,
-      message: 'Could not update password. Please try again.'
-    });
-  }
-});
-
-/* ================================================================== */
 /* POST /user/register-event/:id                                       */
 /* ================================================================== */
 
