@@ -1573,6 +1573,12 @@
         <!-- Job fields -->
         <div id="jobFields" style="display:none;">
           <div class="mb-3">
+            <label class="form-label-custom" for="ep_workInstitution">
+              <span data-en="Work Institution" data-ml="ജോലി ചെയ്യുന്ന സ്ഥാപനം">Work Institution</span>
+            </label>
+            <input type="text" class="form-control" id="ep_workInstitution" name="workInstitution" value="{{user.workInstitution}}" placeholder="Firm, Company, Institution name">
+          </div>
+          <div class="mb-3">
             <label class="form-label-custom" for="ep_workLocation">
               <span data-en="Work Location" data-ml="ജോലി ചെയ്യുന്ന സ്ഥലം">Work Location</span>
             </label>
@@ -1593,6 +1599,12 @@
               <span data-en="Current College" data-ml="നിലവിൽ പഠിക്കുന്ന കോളേജ്">Current College</span>
             </label>
             <input type="text" class="form-control" id="ep_college" name="college" value="{{user.college}}" placeholder="College name">
+          </div>
+          <div class="mb-3">
+            <label class="form-label-custom" for="ep_collegePlace">
+              <span data-en="College Place" data-ml="കോളേജ് സ്ഥിതി ചെയ്യുന്ന സ്ഥലം">College Place</span>
+            </label>
+            <input type="text" class="form-control" id="ep_collegePlace" name="collegePlace" value="{{user.collegePlace}}" placeholder="e.g. Calicut, Bangalore...">
           </div>
           <div class="mb-3">
             <label class="form-label-custom" for="ep_course">
@@ -1616,17 +1628,83 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label-custom" for="ep_languages">
+          <label class="form-label-custom" for="ep_languages_btn">
             <span data-en="Languages Known" data-ml="അറിയുന്ന ഭാഷകൾ">Languages Known</span>
           </label>
-          <input type="text" class="form-control" id="ep_languages" name="languages" value="{{user.languages}}" placeholder="e.g. Malayalam, Arabic, English...">
+          <div class="dropdown">
+            <button class="form-select text-start d-flex justify-content-between align-items-center" type="button" id="ep_languages_btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+              <span id="ep_languages_placeholder" class="text-truncate text-muted">-- Select Languages --</span>
+            </button>
+            <div class="dropdown-menu p-3 w-100 shadow-sm" aria-labelledby="ep_languages_btn" style="max-height: 280px; overflow-y: auto;">
+              <div class="form-check mb-2">
+                <input class="form-check-input lang-cb" type="checkbox" value="Malayalam" id="lang_ml" {{#if user.lang_malayalam}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_ml" style="cursor: pointer;">Malayalam</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input lang-cb" type="checkbox" value="Arabic" id="lang_ar" {{#if user.lang_arabic}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_ar" style="cursor: pointer;">Arabic</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input lang-cb" type="checkbox" value="English" id="lang_en" {{#if user.lang_english}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_en" style="cursor: pointer;">English</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input lang-cb" type="checkbox" value="Urdu" id="lang_ur" {{#if user.lang_urdu}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_ur" style="cursor: pointer;">Urdu</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input lang-cb" type="checkbox" value="Kannada" id="lang_kn" {{#if user.lang_kannada}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_kn" style="cursor: pointer;">Kannada</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input lang-cb" type="checkbox" value="Spanish" id="lang_es" {{#if user.lang_spanish}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_es" style="cursor: pointer;">Spanish</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input lang-cb" type="checkbox" value="Tamil" id="lang_ta" {{#if user.lang_tamil}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_ta" style="cursor: pointer;">Tamil</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input lang-cb" type="checkbox" value="Hindi" id="lang_hi" {{#if user.lang_hindi}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_hi" style="cursor: pointer;">Hindi</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input lang-cb" type="checkbox" value="Other" id="lang_other" {{#if user.lang_other}}checked{{/if}}>
+                <label class="form-check-label w-100" for="lang_other" style="cursor: pointer;">Other</label>
+              </div>
+            </div>
+          </div>
+          <!-- Selected badges summary -->
+          <div id="ep_languages_badges" class="d-flex flex-wrap gap-1 mt-2"></div>
+          <!-- Hidden input holding actual languages string for form serialization -->
+          <input type="hidden" id="ep_languages" name="languages" value="{{user.languages}}">
+          <!-- Other languages input -->
+          <div id="languagesOtherWrap" class="mt-2" style="display: {{#if user.lang_other}}block{{else}}none{{/if}};">
+            <input type="text" class="form-control" id="ep_languages_other" placeholder="Please specify other language(s)" value="{{user.lang_other_val}}">
+          </div>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label-custom" for="ep_orgRoles">
-            <span data-en="Organizational Roles" data-ml="സംഘടനാ ഭാരവാഹിത്വം">Organizational Roles</span>
-          </label>
-          <input type="text" class="form-control" id="ep_orgRoles" name="orgRoles" value="{{user.orgRoles}}" placeholder="e.g. Secretary, President...">
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label-custom" for="ep_orgName">
+              <span data-en="Organisation" data-ml="സംഘടന">Organisation</span>
+            </label>
+            <select class="form-select" id="ep_orgName" name="orgName" onchange="toggleOrgOther()">
+              <option value="" {{#unless user.orgName}}selected{{/unless}}>-- Select --</option>
+              <option value="SSF" {{#if user.org_ssf}}selected{{/if}}>SSF</option>
+              <option value="SYS" {{#if user.org_sys}}selected{{/if}}>SYS</option>
+              <option value="Other" {{#if user.org_other}}selected{{/if}}>Other</option>
+            </select>
+            <div id="orgOtherWrap" class="mt-2" style="display: {{#if user.org_other}}block{{else}}none{{/if}};">
+              <input type="text" class="form-control" id="ep_orgName_other" placeholder="Organisation name" value="{{user.org_other_val}}">
+            </div>
+          </div>
+          <div class="col-6">
+            <label class="form-label-custom" for="ep_orgRole">
+              <span data-en="Role / Position" data-ml="ഭാരവാഹിത്വം / പദവി">Role</span>
+            </label>
+            <input type="text" class="form-control" id="ep_orgRole" name="orgRole" value="{{user.orgRole}}" placeholder="e.g. Secretary, President, Member...">
+          </div>
         </div>
 
         <!-- ── FAMILY DETAILS ── -->
@@ -1941,22 +2019,28 @@
   <!-- ===================================================== -->
   {{#if user.missingPersonalData}}
   <div class="modal fade" id="personalDataPromptModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="personalDataPromptLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
       <div class="modal-content rounded-4 border-0 shadow-lg">
         <div class="modal-header border-bottom bg-primary text-white px-4 py-3 rounded-top-4">
           <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="personalDataPromptLabel">
             <i class="bi bi-person-fill-exclamation fs-4"></i>
-            <span>Personal Details Required</span>
+            <span>Profile Details Required</span>
           </h5>
         </div>
         <div class="modal-body px-4 py-3">
           <div class="alert alert-warning border-0 rounded-3 d-flex align-items-center mb-3 py-2 px-3 small">
             <i class="bi bi-info-circle-fill fs-5 me-2 text-warning flex-shrink-0"></i>
-            <div>Please complete your personal contact information (Place, Address, Email, Phone, and WhatsApp) to continue.</div>
+            <div>Please complete your personal contact information along with your education and job/study details to continue.</div>
           </div>
 
           <form id="personalDataQuickForm" onsubmit="handleSavePersonalDataQuick(event)">
             <div id="personalDataAlert" class="alert d-none rounded-3 py-2 px-3 small mb-3"></div>
+
+            <!-- ── 1. PERSONAL DETAILS ── -->
+            <div class="form-section-title mb-3">
+              <i class="bi bi-person"></i>
+              <span>Personal Details</span>
+            </div>
 
             <div class="mb-3">
               <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_place">
@@ -2000,8 +2084,171 @@
               </div>
             </div>
 
-            <div class="d-grid mt-4">
-              <button type="submit" id="savePersonalDataBtn" class="btn btn-primary fw-bold rounded-3 py-2 shadow-sm">
+            <!-- ── 2. EDUCATION DETAILS ── -->
+            <div class="form-section-title mb-3 mt-4">
+              <i class="bi bi-mortarboard"></i>
+              <span>Education Details</span>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_admYear">
+                  Year of Admission
+                </label>
+                <input type="number" disabled class="form-control rounded-3" id="quick_admYear" name="admYear" value="{{user.admYear}}" min="1950" max="2099">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_leaveYear">
+                  Year of Leaving
+                </label>
+                <input type="number" class="form-control rounded-3" id="quick_leaveYear" name="leaveYear" value="{{user.leaveYear}}" min="1950" max="2099" placeholder="e.g. 2022">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_eduQual">
+                Educational Qualification
+              </label>
+              <select class="form-select rounded-3" id="quick_eduQual" name="eduQual" onchange="toggleQuickEduQualOther()">
+                <option value="" {{#unless user.eduQual}}selected{{/unless}}>-- Select --</option>
+                <option value="SSLC" {{#if user.eduQual_sslc}}selected{{/if}}>SSLC</option>
+                <option value="Plus Two" {{#if user.eduQual_plustwo}}selected{{/if}}>Plus Two</option>
+                <option value="Degree" {{#if user.eduQual_degree}}selected{{/if}}>Degree</option>
+                <option value="PG" {{#if user.eduQual_pg}}selected{{/if}}>PG</option>
+                <option value="Other" {{#if user.eduQual_other}}selected{{/if}}>Other</option>
+              </select>
+              <div id="quickEduQualOtherWrap" class="mt-2" style="display: {{#if user.eduQual_other}}block{{else}}none{{/if}};">
+                <input type="text" class="form-control rounded-3" id="quick_eduQual_other" placeholder="Please specify your qualification" value="{{user.eduQual_other_val}}">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_religiousDegree">
+                Religious / General Degree
+              </label>
+              <select class="form-select rounded-3" id="quick_religiousDegree" name="religiousDegree" onchange="toggleQuickReligiousDegreeOther()">
+                <option value="" {{#unless user.religiousDegree}}selected{{/unless}}>-- Select --</option>
+                <option value="Saquafi" {{#if user.rel_saquafi}}selected{{/if}}>Saquafi</option>
+                <option value="Ahsani" {{#if user.rel_ahsani}}selected{{/if}}>Ahsani</option>
+                <option value="Baqavi" {{#if user.rel_baqavi}}selected{{/if}}>Baqavi</option>
+                <option value="Saa'di" {{#if user.rel_saadi}}selected{{/if}}>Saa'di</option>
+                <option value="Adany" {{#if user.rel_adany}}selected{{/if}}>Adany</option>
+                <option value="Hadi" {{#if user.rel_hadi}}selected{{/if}}>Hadi</option>
+                <option value="Fazili" {{#if user.rel_fazili}}selected{{/if}}>Fazili</option>
+                <option value="Shamil Ifani" {{#if user.rel_shamil}}selected{{/if}}>Shamil Ifani</option>
+                <option value="Noorani" {{#if user.rel_noorani}}selected{{/if}}>Noorani</option>
+                <option value="Mueeni" {{#if user.rel_mueeni}}selected{{/if}}>Mueeni</option>
+                <option value="Naeemi" {{#if user.rel_naeemi}}selected{{/if}}>Naeemi</option>
+                <option value="Bukhari" {{#if user.rel_bukhari}}selected{{/if}}>Bukhari</option>
+                <option value="Other" {{#if user.rel_other}}selected{{/if}}>Other</option>
+              </select>
+              <div id="quickRelDegreeOtherWrap" class="mt-2" style="display: {{#if user.rel_other}}block{{else}}none{{/if}};">
+                <input type="text" class="form-control rounded-3" id="quick_religiousDegree_other" placeholder="Please specify your degree" value="{{user.rel_other_val}}">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase mb-1">
+                Wish to pursue higher education?
+              </label>
+              <div class="radio-group">
+                <label>
+                  <input type="radio" name="quick_higherEdu" value="yes" {{#if user.higherEdu_yes}}checked{{/if}}> 
+                  <span>Yes</span>
+                </label>
+                <label>
+                  <input type="radio" name="quick_higherEdu" value="no" {{#if user.higherEdu_no}}checked{{/if}}>
+                  <span>No</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_supportNeeded">
+                What help do you need in your current situation?
+              </label>
+              <select class="form-select rounded-3" id="quick_supportNeeded" name="supportNeeded" onchange="toggleQuickSupportNeededOther()">
+                <option value="" {{#unless user.supportNeeded}}selected{{/unless}}>-- Select --</option>
+                <option value="Degree completion" {{#if user.supportNeeded_degree}}selected{{/if}}>Degree completion</option>
+                <option value="Higher education" {{#if user.supportNeeded_higher}}selected{{/if}}>Higher education</option>
+                <option value="Research" {{#if user.supportNeeded_research}}selected{{/if}}>Research</option>
+                <option value="Competitive Exams" {{#if user.supportNeeded_exams}}selected{{/if}}>Competitive Exams</option>
+                <option value="Study Abroad opportunities" {{#if user.supportNeeded_abroad}}selected{{/if}}>Study Abroad opportunities</option>
+                <option value="English or Arabic language" {{#if user.supportNeeded_language}}selected{{/if}}>English or Arabic language</option>
+                <option value="Computer skills" {{#if user.supportNeeded_computer}}selected{{/if}}>Computer skills</option>
+                <option value="Online earning opportunities" {{#if user.supportNeeded_online}}selected{{/if}}>Online earning opportunities</option>
+                <option value="Other" {{#if user.supportNeeded_other}}selected{{/if}}>Other</option>
+              </select>
+              <div id="quickSupportNeededOtherWrap" class="mt-2" style="display: {{#if user.supportNeeded_other}}block{{else}}none{{/if}};">
+                <input type="text" class="form-control rounded-3" id="quick_supportNeeded_other" placeholder="Please specify the help you need" value="{{user.supportNeeded_other_val}}">
+              </div>
+            </div>
+
+            <!-- ── 3. JOB / STUDY ── -->
+            <div class="form-section-title mb-3 mt-4">
+              <i class="bi bi-briefcase"></i>
+              <span>Job / Study</span>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_status">
+                Current Status
+              </label>
+              <select class="form-select rounded-3" id="quick_status" name="currentStatus" onchange="toggleQuickJobStudy()">
+                <option value="" {{#unless user.currentStatus}}selected{{/unless}}>-- Select --</option>
+                <option value="Job" {{#if user.currentStatus_job}}selected{{/if}}>Job</option>
+                <option value="Study" {{#if user.currentStatus_study}}selected{{/if}}>Study</option>
+                <option value="Job & Study" {{#if user.currentStatus_both}}selected{{/if}}>Job &amp; Study</option>
+                <option value="Other" {{#if user.currentStatus_other}}selected{{/if}}>Other</option>
+              </select>
+            </div>
+
+            <!-- Quick Job fields -->
+            <div id="quickJobFields" style="display:none;">
+              <div class="mb-3">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_workInstitution">
+                  Work Institution
+                </label>
+                <input type="text" class="form-control rounded-3" id="quick_workInstitution" name="workInstitution" value="{{user.workInstitution}}" placeholder="Firm, Company, Institution name">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_workLocation">
+                  Work Location
+                </label>
+                <input type="text" class="form-control rounded-3" id="quick_workLocation" name="workLocation" value="{{user.workLocation}}" placeholder="City / Country">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_jobRole">
+                  Job Role
+                </label>
+                <input type="text" class="form-control rounded-3" id="quick_jobRole" name="jobRole" value="{{user.jobRole}}" placeholder="e.g. Software Engineer, Teacher...">
+              </div>
+            </div>
+
+            <!-- Quick Study fields -->
+            <div id="quickStudyFields" style="display:none;">
+              <div class="mb-3">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_college">
+                  Current College
+                </label>
+                <input type="text" class="form-control rounded-3" id="quick_college" name="college" value="{{user.college}}" placeholder="College name">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_collegePlace">
+                  College Place
+                </label>
+                <input type="text" class="form-control rounded-3" id="quick_collegePlace" name="collegePlace" value="{{user.collegePlace}}" placeholder="e.g. Calicut, Bangalore...">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_course">
+                  Course
+                </label>
+                <input type="text" class="form-control rounded-3" id="quick_course" name="course" value="{{user.course}}" placeholder="e.g. B.Tech CSE">
+              </div>
+            </div>
+
+            <div class="d-grid mt-4 mb-2">
+              <button type="submit" id="savePersonalDataBtn" class="btn btn-primary fw-bold rounded-3 py-2 shadow">
                 <i class="bi bi-check-circle me-1"></i>Save &amp; Continue
               </button>
             </div>
@@ -2296,6 +2543,118 @@
     }
   }
 
+  function toggleOrgOther() {
+    var sel = document.getElementById('ep_orgName');
+    var wrap = document.getElementById('orgOtherWrap');
+    if (sel && wrap) {
+      wrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+  }
+
+  /* Quick Modal Toggles */
+  function toggleQuickJobStudy() {
+    var statusEl = document.getElementById('quick_status');
+    if (!statusEl) return;
+    var val = statusEl.value;
+    var showJob   = (val === 'Job'  || val === 'Job & Study');
+    var showStudy = (val === 'Study'|| val === 'Job & Study');
+    var jobDiv   = document.getElementById('quickJobFields');
+    var studyDiv = document.getElementById('quickStudyFields');
+    if (jobDiv)   jobDiv.style.display   = showJob   ? 'block' : 'none';
+    if (studyDiv) studyDiv.style.display = showStudy ? 'block' : 'none';
+  }
+
+  function toggleQuickEduQualOther() {
+    var sel = document.getElementById('quick_eduQual');
+    var wrap = document.getElementById('quickEduQualOtherWrap');
+    if (sel && wrap) {
+      wrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+  }
+
+  function toggleQuickReligiousDegreeOther() {
+    var sel = document.getElementById('quick_religiousDegree');
+    var wrap = document.getElementById('quickRelDegreeOtherWrap');
+    if (sel && wrap) {
+      wrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+  }
+
+  function toggleQuickSupportNeededOther() {
+    var sel = document.getElementById('quick_supportNeeded');
+    var wrap = document.getElementById('quickSupportNeededOtherWrap');
+    if (sel && wrap) {
+      wrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+  }
+
+  function initLanguagesMultiSelect() {
+    var cbs = document.querySelectorAll('.lang-cb');
+    var otherWrap = document.getElementById('languagesOtherWrap');
+    var otherInput = document.getElementById('ep_languages_other');
+    var hiddenInput = document.getElementById('ep_languages');
+    var badgesContainer = document.getElementById('ep_languages_badges');
+    var placeholderEl = document.getElementById('ep_languages_placeholder');
+
+    function updateLanguages() {
+      var selected = [];
+      var hasOther = false;
+
+      cbs.forEach(function (cb) {
+        if (cb.checked) {
+          if (cb.value === 'Other') {
+            hasOther = true;
+          } else {
+            selected.push(cb.value);
+          }
+        }
+      });
+
+      if (otherWrap) {
+        otherWrap.style.display = hasOther ? 'block' : 'none';
+      }
+
+      var customVal = (otherInput && hasOther) ? otherInput.value.trim() : '';
+      if (customVal) {
+        var parts = customVal.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        parts.forEach(function (p) {
+          if (!selected.includes(p)) selected.push(p);
+        });
+      } else if (hasOther && selected.length === 0) {
+        selected.push('Other');
+      }
+
+      if (hiddenInput) {
+        hiddenInput.value = selected.join(', ');
+      }
+
+      if (badgesContainer) {
+        badgesContainer.innerHTML = '';
+        if (selected.length === 0) {
+          if (placeholderEl) placeholderEl.textContent = '-- Select Languages --';
+        } else {
+          if (placeholderEl) placeholderEl.textContent = selected.length + ' selected (' + selected.slice(0, 2).join(', ') + (selected.length > 2 ? '...' : '') + ')';
+          selected.forEach(function (lang) {
+            var badge = document.createElement('span');
+            badge.className = 'badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small fw-semibold';
+            badge.textContent = lang;
+            badgesContainer.appendChild(badge);
+          });
+        }
+      }
+    }
+
+    cbs.forEach(function (cb) {
+      cb.addEventListener('change', updateLanguages);
+    });
+
+    if (otherInput) {
+      otherInput.addEventListener('input', updateLanguages);
+    }
+
+    updateLanguages();
+  }
+
   function initSameWhatsappHandlers() {
     // Edit Profile form
     var phoneInput = document.getElementById('ep_phone');
@@ -2359,6 +2718,12 @@
     toggleEduQualOther();
     toggleReligiousDegreeOther();
     toggleSupportNeededOther();
+    toggleOrgOther();
+    toggleQuickJobStudy();
+    toggleQuickEduQualOther();
+    toggleQuickReligiousDegreeOther();
+    toggleQuickSupportNeededOther();
+    initLanguagesMultiSelect();
     initSameWhatsappHandlers();
   });
 
@@ -2419,6 +2784,45 @@
         data['supportNeeded'] = suppSelect.value;
       }
     }
+
+    // Handle Languages Known
+    var langCbs = document.querySelectorAll('.lang-cb');
+    var selectedLangs = [];
+    var otherLangChecked = false;
+    langCbs.forEach(function (cb) {
+      if (cb.checked) {
+        if (cb.value === 'Other') {
+          otherLangChecked = true;
+        } else {
+          selectedLangs.push(cb.value);
+        }
+      }
+    });
+    var otherLangInput = document.getElementById('ep_languages_other');
+    if (otherLangChecked && otherLangInput && otherLangInput.value.trim()) {
+      var customParts = otherLangInput.value.trim().split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      customParts.forEach(function (p) {
+        if (!selectedLangs.includes(p)) selectedLangs.push(p);
+      });
+    }
+    data['languages'] = selectedLangs.join(', ');
+
+    // Handle Organisation & Role
+    var orgSelect = document.getElementById('ep_orgName');
+    var orgOtherInput = document.getElementById('ep_orgName_other');
+    var orgRoleInput = document.getElementById('ep_orgRole');
+    var orgNameVal = '';
+    if (orgSelect) {
+      if (orgSelect.value === 'Other') {
+        orgNameVal = (orgOtherInput ? orgOtherInput.value.trim() : '') || 'Other';
+      } else {
+        orgNameVal = orgSelect.value;
+      }
+    }
+    var orgRoleVal = orgRoleInput ? orgRoleInput.value.trim() : '';
+    data['orgName'] = orgNameVal;
+    data['orgRole'] = orgRoleVal;
+    data['orgRoles'] = orgRoleVal ? (orgNameVal ? orgNameVal + ' - ' + orgRoleVal : orgRoleVal) : orgNameVal;
 
     // Make sure WhatsApp number is sent even if input is readonly
     var wpInput = document.getElementById('ep_whatsapp');
@@ -3020,12 +3424,60 @@
       btn.disabled  = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
 
+      // Education fields
+      var leaveYear = (document.getElementById('quick_leaveYear') ? document.getElementById('quick_leaveYear').value : '').trim();
+      
+      var qEdu = document.getElementById('quick_eduQual');
+      var qEduOther = document.getElementById('quick_eduQual_other');
+      var eduQualVal = '';
+      if (qEdu) {
+        eduQualVal = qEdu.value === 'Other' ? ((qEduOther ? qEduOther.value.trim() : '') || 'Other') : qEdu.value;
+      }
+
+      var qRel = document.getElementById('quick_religiousDegree');
+      var qRelOther = document.getElementById('quick_religiousDegree_other');
+      var relDegVal = '';
+      if (qRel) {
+        relDegVal = qRel.value === 'Other' ? ((qRelOther ? qRelOther.value.trim() : '') || 'Other') : qRel.value;
+      }
+
+      var higherEduChecked = document.querySelector('input[name="quick_higherEdu"]:checked');
+      var higherEduVal = higherEduChecked ? higherEduChecked.value : '';
+
+      var qSupp = document.getElementById('quick_supportNeeded');
+      var qSuppOther = document.getElementById('quick_supportNeeded_other');
+      var suppVal = '';
+      if (qSupp) {
+        suppVal = qSupp.value === 'Other' ? ((qSuppOther ? qSuppOther.value.trim() : '') || 'Other') : qSupp.value;
+      }
+
+      // Job / Study fields
+      var currentStatus = document.getElementById('quick_status') ? document.getElementById('quick_status').value : '';
+      var workInstitution = document.getElementById('quick_workInstitution') ? document.getElementById('quick_workInstitution').value.trim() : '';
+      var workLocation = document.getElementById('quick_workLocation') ? document.getElementById('quick_workLocation').value.trim() : '';
+      var jobRole = document.getElementById('quick_jobRole') ? document.getElementById('quick_jobRole').value.trim() : '';
+      var college = document.getElementById('quick_college') ? document.getElementById('quick_college').value.trim() : '';
+      var collegePlace = document.getElementById('quick_collegePlace') ? document.getElementById('quick_collegePlace').value.trim() : '';
+      var course = document.getElementById('quick_course') ? document.getElementById('quick_course').value.trim() : '';
+
       var payload = {
         place: place,
         address: address,
         email: email,
         phone: phone,
-        whatsapp: whatsapp
+        whatsapp: whatsapp,
+        leaveYear: leaveYear,
+        eduQual: eduQualVal,
+        religiousDegree: relDegVal,
+        higherEdu: higherEduVal,
+        supportNeeded: suppVal,
+        currentStatus: currentStatus,
+        workInstitution: workInstitution,
+        workLocation: workLocation,
+        jobRole: jobRole,
+        college: college,
+        collegePlace: collegePlace,
+        course: course
       };
 
       fetch('/users/user/profile', {
@@ -3037,6 +3489,7 @@
       .then(readJsonResponse)
       .then(function (result) {
         if (result.ok && result.data && result.data.success) {
+          // Sync Personal Details
           if (document.getElementById('ep_place')) document.getElementById('ep_place').value = place;
           if (document.getElementById('ep_address')) document.getElementById('ep_address').value = address;
           if (document.getElementById('ep_email')) document.getElementById('ep_email').value = email;
@@ -3051,6 +3504,73 @@
             }
           }
 
+          // Sync Education Details
+          if (document.getElementById('ep_leaveYear')) document.getElementById('ep_leaveYear').value = leaveYear;
+          if (document.getElementById('ep_eduQual')) {
+            var epEdu = document.getElementById('ep_eduQual');
+            var epEduOther = document.getElementById('ep_eduQual_other');
+            var standardEdus = ['SSLC', 'Plus Two', 'Degree', 'PG'];
+            if (standardEdus.includes(eduQualVal)) {
+              epEdu.value = eduQualVal;
+              if (epEduOther) epEduOther.value = '';
+            } else if (eduQualVal) {
+              epEdu.value = 'Other';
+              if (epEduOther) epEduOther.value = eduQualVal === 'Other' ? '' : eduQualVal;
+            } else {
+              epEdu.value = '';
+            }
+            toggleEduQualOther();
+          }
+
+          if (document.getElementById('ep_religiousDegree')) {
+            var epRel = document.getElementById('ep_religiousDegree');
+            var epRelOther = document.getElementById('ep_religiousDegree_other');
+            var standardRels = ['Saquafi', 'Ahsani', 'Baqavi', 'Saa\'di', 'Adany', 'Hadi', 'Fazili', 'Shamil Ifani', 'Noorani', 'Mueeni', 'Naeemi', 'Bukhari'];
+            if (standardRels.includes(relDegVal)) {
+              epRel.value = relDegVal;
+              if (epRelOther) epRelOther.value = '';
+            } else if (relDegVal) {
+              epRel.value = 'Other';
+              if (epRelOther) epRelOther.value = relDegVal === 'Other' ? '' : relDegVal;
+            } else {
+              epRel.value = '';
+            }
+            toggleReligiousDegreeOther();
+          }
+
+          if (higherEduVal) {
+            var epHe = document.querySelector('input[name="higherEdu"][value="' + higherEduVal + '"]');
+            if (epHe) epHe.checked = true;
+          }
+
+          if (document.getElementById('ep_supportNeeded')) {
+            var epSupp = document.getElementById('ep_supportNeeded');
+            var epSuppOther = document.getElementById('ep_supportNeeded_other');
+            var standardSupps = ['Degree completion', 'Higher education', 'Research', 'Competitive Exams', 'Study Abroad opportunities', 'English or Arabic language', 'Computer skills', 'Online earning opportunities'];
+            if (standardSupps.includes(suppVal)) {
+              epSupp.value = suppVal;
+              if (epSuppOther) epSuppOther.value = '';
+            } else if (suppVal) {
+              epSupp.value = 'Other';
+              if (epSuppOther) epSuppOther.value = suppVal === 'Other' ? '' : suppVal;
+            } else {
+              epSupp.value = '';
+            }
+            toggleSupportNeededOther();
+          }
+
+          // Sync Job / Study Details
+          if (document.getElementById('ep_status')) {
+            document.getElementById('ep_status').value = currentStatus;
+            toggleJobStudy();
+          }
+          if (document.getElementById('ep_workInstitution')) document.getElementById('ep_workInstitution').value = workInstitution;
+          if (document.getElementById('ep_workLocation')) document.getElementById('ep_workLocation').value = workLocation;
+          if (document.getElementById('ep_jobRole')) document.getElementById('ep_jobRole').value = jobRole;
+          if (document.getElementById('ep_college')) document.getElementById('ep_college').value = college;
+          if (document.getElementById('ep_collegePlace')) document.getElementById('ep_collegePlace').value = collegePlace;
+          if (document.getElementById('ep_course')) document.getElementById('ep_course').value = course;
+
           var personalModalEl = document.getElementById('personalDataPromptModal');
           if (personalModalEl && window.bootstrap) {
             var personalInst = window.bootstrap.Modal.getInstance(personalModalEl);
@@ -3062,7 +3582,7 @@
           }, 400);
         } else {
           alertEl.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
-          alertEl.textContent = serverMessage(result, 'Could not save personal details. Please try again.');
+          alertEl.textContent = serverMessage(result, 'Could not save profile details. Please try again.');
         }
       })
       .catch(function () {

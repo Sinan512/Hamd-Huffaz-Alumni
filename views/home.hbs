@@ -899,6 +899,52 @@
     .gallery-item:hover .gallery-overlay { opacity: 1; }
     .gallery-item:hover .gallery-overlay i { transform: scale(1); }
 
+    /* ---- Continuous curved gallery marquee ---- */
+    .gallery-marquee {
+      position: relative;
+      overflow: hidden;
+      padding: 34px 0 46px;
+      perspective: 1400px;
+      perspective-origin: 50% 45%;
+      -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+      mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+    }
+    .gallery-track {
+      display: flex;
+      width: max-content;
+      gap: 22px;
+      transform-style: preserve-3d;
+      will-change: transform;
+      animation: gallery-marquee-scroll var(--gallery-speed, 60s) linear infinite;
+      animation-play-state: running !important;
+    }
+    @keyframes gallery-marquee-scroll {
+      from { transform: translate3d(0, 0, 0); }
+      to   { transform: translate3d(-50%, 0, 0); }
+    }
+    .gallery-marquee .gallery-item {
+      flex: 0 0 auto;
+      width: clamp(220px, 30vw, 340px);
+      transform-style: preserve-3d;
+      will-change: transform;
+      backface-visibility: hidden;
+      transition: box-shadow .3s ease;
+    }
+    .gallery-marquee .gallery-item:hover { transform: none; }
+    .gallery-marquee .gallery-item:hover img { transform: scale(1.06); }
+    .gallery-marquee .gallery-item:active .gallery-overlay,
+    .gallery-marquee .gallery-item:focus-visible .gallery-overlay { opacity: 1; }
+    .gallery-marquee .gallery-item:focus-visible { outline: 3px solid var(--blue-400); outline-offset: 3px; }
+    @media (max-width: 575.98px) {
+      .gallery-marquee { padding: 24px 0 34px; }
+      .gallery-marquee .gallery-item { width: 76vw; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .gallery-track { animation: none; transform: none !important; }
+      .gallery-marquee { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .gallery-marquee .gallery-item { transform: none !important; }
+    }
+
     /* Lightbox Modal */
     .gallery-modal {
       position: fixed; inset: 0;
@@ -1612,27 +1658,39 @@
         <h2 class="section-title">Moments & Memories</h2>
         <p class="section-sub mx-auto mt-3">Visual highlights from our global reunions, convocations, and community programs.</p>
       </div>
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4 reveal" id="gallery-container">
-        {{#each gallery}}
-        <div class="col">
-          <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button" aria-label="{{this.description}}">
+      <div class="gallery-marquee reveal" id="gallery-marquee">
+        <div class="gallery-track" id="gallery-track">
+          {{#each gallery}}
+          <div class="gallery-item" onclick="openGallery(this)" tabindex="0" role="button"
+               aria-label="{{this.description}}"
+               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openGallery(this)}">
             <img src="{{this.url}}" alt="{{this.description}}" loading="lazy" onerror="imgFallback(this, 'gallery')" />
             <div class="gallery-overlay">
               <i class="bi bi-zoom-in"></i>
               <span>View Image</span>
             </div>
           </div>
-        </div>
-        {{/each}}
-        {{#unless gallery.length}}
-        <div class="col-12">
-          <div class="empty-state">
-            <i class="bi bi-images"></i>
-            <p>No gallery images have been published yet.</p>
+          {{/each}}
+          {{!-- duplicate set keeps the loop seamless --}}
+          {{#each gallery}}
+          <div class="gallery-item" onclick="openGallery(this)" tabindex="-1" aria-hidden="true">
+            <img src="{{this.url}}" alt="" loading="lazy" onerror="imgFallback(this, 'gallery')" />
+            <div class="gallery-overlay">
+              <i class="bi bi-zoom-in"></i>
+              <span>View Image</span>
+            </div>
           </div>
+          {{/each}}
         </div>
-        {{/unless}}
       </div>
+      {{#unless gallery.length}}
+      <div class="row"><div class="col-12">
+        <div class="empty-state">
+          <i class="bi bi-images"></i>
+          <p>No gallery images have been published yet.</p>
+        </div>
+      </div></div>
+      {{/unless}}
     </div>
   </section>
 
@@ -1766,6 +1824,7 @@
                   <button type="button" class="article-share-btn"
                           data-article-id="{{this.id}}"
                           data-article-heading="{{this.heading}}"
+                          data-article-image="{{this.imageUrl}}"
                           title="Share this article" aria-label="Share this article"
                           onclick="shareArticle(event, this)">
                     <i class="bi bi-share-fill"></i> Share
@@ -2414,6 +2473,74 @@
     })();
 
     // 7. Lightbox Gallery Modal
+    /* ---- Gallery marquee: constant speed, gentle arc, tap-to-view ---- */
+    (function initGalleryMarquee() {
+      function start() {
+        const wrap = document.getElementById('gallery-marquee');
+        const track = document.getElementById('gallery-track');
+        if (!wrap || !track) return;
+        const items = Array.prototype.slice.call(track.children);
+        if (!items.length) return;
+
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function setSpeed() {
+          const half = track.scrollWidth / 2;
+          if (!half) return;
+          const pxPerSecond = window.innerWidth < 576 ? 45 : 62;
+          track.style.setProperty('--gallery-speed', (half / pxPerSecond).toFixed(2) + 's');
+        }
+        setSpeed();
+        window.addEventListener('resize', setSpeed);
+        window.addEventListener('load', setSpeed);
+
+        if (reduce) return;
+
+        /* Curve the strip: each card tilts based on its distance from centre. */
+        let ticking = false;
+        function curve() {
+          const box = wrap.getBoundingClientRect();
+          const mid = box.left + box.width / 2;
+          const half = box.width / 2 || 1;
+          for (let i = 0; i < items.length; i++) {
+            const r = items[i].getBoundingClientRect();
+            if (r.right < box.left - 200 || r.left > box.right + 200) continue;
+            let t = ((r.left + r.width / 2) - mid) / half;
+            if (t > 1.4) t = 1.4; else if (t < -1.4) t = -1.4;
+            items[i].style.transform =
+              'rotateY(' + (-t * 13).toFixed(2) + 'deg) translateY(' + (t * t * 20).toFixed(2) +
+              'px) translateZ(' + (-Math.abs(t) * 46).toFixed(2) + 'px) scale(' + (1 - t * t * 0.05).toFixed(3) + ')';
+          }
+          ticking = false;
+        }
+        (function loop() {
+          if (!ticking) { ticking = true; requestAnimationFrame(curve); }
+          requestAnimationFrame(loop);
+        })();
+
+        /* Tap tolerance so a swipe never opens the lightbox. */
+        let down = null;
+        wrap.addEventListener('pointerdown', function (e) {
+          down = { x: e.clientX, y: e.clientY, t: Date.now() };
+        }, true);
+        wrap.addEventListener('click', function (e) {
+          if (!down) return;
+          const moved = Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y);
+          if (moved > 14 || Date.now() - down.t > 900) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          down = null;
+        }, true);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+      } else {
+        start();
+      }
+    })();
+
     function openGallery(element) {
       const img = element.querySelector('img');
       const modal = document.getElementById('gallery-modal');
@@ -2448,13 +2575,20 @@
 
       const shareBtn = document.getElementById('article-modal-share');
       if (shareBtn) {
-        if (id) { shareBtn.classList.remove('d-none'); shareBtn.setAttribute('data-article-id', id); shareBtn.setAttribute('data-article-heading', heading); }
+        if (id) {
+          shareBtn.classList.remove('d-none');
+          shareBtn.setAttribute('data-article-id', id);
+          shareBtn.setAttribute('data-article-heading', heading);
+          shareBtn.setAttribute('data-article-image', image);
+        }
         else { shareBtn.classList.add('d-none'); }
       }
 
       if (id && ('#article-' + id) !== window.location.hash) {
         history.replaceState(null, '', '#article-' + id);
       }
+
+      setSharePreviewImage(image, heading);
 
       modal.classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -2510,6 +2644,51 @@
       return ok;
     }
 
+    function absoluteUrl(u) {
+      if (!u) return '';
+      try { return new URL(u, window.location.href).href; } catch (e) { return u; }
+    }
+
+    /* Keeps the page's social meta tags pointed at the article being shared,
+       so in-app browsers and JS-aware crawlers pick up the article image. */
+    function setSharePreviewImage(image, heading) {
+      const img = absoluteUrl(image);
+      const pairs = [
+        ['property', 'og:image', img],
+        ['property', 'og:image:secure_url', img],
+        ['name', 'twitter:image', img],
+        ['name', 'twitter:card', img ? 'summary_large_image' : 'summary'],
+        ['property', 'og:title', heading || 'HAMD Alumni Portal']
+      ];
+      pairs.forEach(function (p) {
+        if (!p[2]) return;
+        let tag = document.head.querySelector('meta[' + p[0] + '="' + p[1] + '"]');
+        if (!tag) {
+          tag = document.createElement('meta');
+          tag.setAttribute(p[0], p[1]);
+          document.head.appendChild(tag);
+        }
+        tag.setAttribute('content', p[2]);
+      });
+    }
+
+    async function shareWithImageFile(heading, url, image) {
+      if (!image || !navigator.canShare || typeof fetch !== 'function') return false;
+      try {
+        const res = await fetch(absoluteUrl(image), { mode: 'cors' });
+        if (!res.ok) return false;
+        const blob = await res.blob();
+        if (!blob || blob.size === 0 || blob.size > 8 * 1024 * 1024) return false;
+        const ext = (blob.type.split('/')[1] || 'jpg').split('+')[0];
+        const file = new File([blob], 'article.' + ext, { type: blob.type || 'image/jpeg' });
+        if (!navigator.canShare({ files: [file] })) return false;
+        await navigator.share({ files: [file], title: heading, text: heading + '\n' + url });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
     function shareArticle(event, el) {
       if (event) { event.preventDefault(); event.stopPropagation(); }
       const holder = el || (event && event.currentTarget);
@@ -2517,24 +2696,36 @@
       const id = holder.getAttribute('data-article-id');
       if (!id) return;
       const heading = holder.getAttribute('data-article-heading') || 'Article';
+      const image = absoluteUrl(holder.getAttribute('data-article-image') || '');
       const url = articleShareUrl(id);
 
+      /* Point the page's own preview tags at this article first. */
+      setSharePreviewImage(image, heading);
+
       if (navigator.share) {
-        navigator.share({ title: heading, text: heading, url: url })
-          .catch(function () { /* user dismissed the share sheet */ });
+        shareWithImageFile(heading, url, image).then(function (done) {
+          if (done) return;
+          /* Including the image URL in the shared text makes chat apps
+             render the article image instead of the site logo. */
+          const text = image ? (heading + '\n' + image) : heading;
+          navigator.share({ title: heading, text: text, url: url })
+            .catch(function () { /* user dismissed the share sheet */ });
+        });
         return;
       }
 
+      const copyPayload = image ? (heading + '\n' + url + '\n' + image) : url;
+
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url)
+        navigator.clipboard.writeText(copyPayload)
           .then(function () { articleToast('Link copied'); })
           .catch(function () {
-            articleToast(copyTextFallback(url) ? 'Link copied' : url);
+            articleToast(copyTextFallback(copyPayload) ? 'Link copied' : url);
           });
         return;
       }
 
-      articleToast(copyTextFallback(url) ? 'Link copied' : url);
+      articleToast(copyTextFallback(copyPayload) ? 'Link copied' : url);
     }
 
     function openArticleFromHash() {

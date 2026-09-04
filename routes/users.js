@@ -331,6 +331,52 @@ function buildUserContext(doc) {
   var supp_other    = (supp === 'Other') || (!!supp && !supp_standard);
   var supp_other_val = supp_other ? (supp === 'Other' ? '' : supp) : '';
 
+  /* ── languages ── */
+  var languagesStr = (doc.languages || '').trim();
+  var langParts = languagesStr ? languagesStr.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : [];
+  var standardLangs = ['malayalam', 'arabic', 'english', 'urdu', 'kannada', 'spanish', 'tamil', 'hindi'];
+  var lang_malayalam = langParts.some(function (l) { return l.toLowerCase() === 'malayalam'; });
+  var lang_arabic    = langParts.some(function (l) { return l.toLowerCase() === 'arabic'; });
+  var lang_english   = langParts.some(function (l) { return l.toLowerCase() === 'english'; });
+  var lang_urdu      = langParts.some(function (l) { return l.toLowerCase() === 'urdu'; });
+  var lang_kannada   = langParts.some(function (l) { return l.toLowerCase() === 'kannada'; });
+  var lang_spanish   = langParts.some(function (l) { return l.toLowerCase() === 'spanish'; });
+  var lang_tamil     = langParts.some(function (l) { return l.toLowerCase() === 'tamil'; });
+  var lang_hindi     = langParts.some(function (l) { return l.toLowerCase() === 'hindi'; });
+  var customLangs    = langParts.filter(function (l) {
+    return !standardLangs.includes(l.toLowerCase());
+  });
+  var lang_other = customLangs.length > 0;
+  var lang_other_val = customLangs.join(', ');
+
+  /* ── organisation & role ── */
+  var orgName = (doc.orgName || '').trim();
+  var orgRole = (doc.orgRole || '').trim();
+  var orgRoles = (doc.orgRoles || '').trim();
+
+  if (!orgName && orgRoles) {
+    var orgRolesLower = orgRoles.toLowerCase();
+    if (orgRolesLower.startsWith('ssf')) {
+      orgName = 'SSF';
+      if (!orgRole) {
+        orgRole = orgRoles.replace(/^ssf\s*[-–—:]*\s*/i, '').trim();
+      }
+    } else if (orgRolesLower.startsWith('sys')) {
+      orgName = 'SYS';
+      if (!orgRole) {
+        orgRole = orgRoles.replace(/^sys\s*[-–—:]*\s*/i, '').trim();
+      }
+    } else {
+      orgName = orgRoles;
+    }
+  }
+
+  var orgLower = orgName.toLowerCase();
+  var org_ssf = orgLower === 'ssf';
+  var org_sys = orgLower === 'sys';
+  var org_other = (orgName === 'Other') || (!!orgName && !org_ssf && !org_sys);
+  var org_other_val = org_other ? (orgName === 'Other' ? '' : orgName) : '';
+
   return {
     /* ── core (set by admin) ── */
     name:            doc.name            || '',
@@ -381,14 +427,32 @@ function buildUserContext(doc) {
     currentStatus_both:  status === 'Job & Study',
     currentStatus_other: status === 'Other',
     workLocation:    doc.workLocation    || '',
+    workInstitution: doc.workInstitution || '',
     jobRole:         doc.jobRole         || '',
     college:         doc.college         || '',
+    collegePlace:    doc.collegePlace    || '',
     course:          doc.course          || '',
 
     /* ── other ── */
     skills:                   doc.skills          || '',
-    languages:                doc.languages       || '',
-    orgRoles:                 doc.orgRoles        || '',
+    languages:                languagesStr,
+    lang_malayalam:           lang_malayalam,
+    lang_arabic:              lang_arabic,
+    lang_english:             lang_english,
+    lang_urdu:                lang_urdu,
+    lang_kannada:             lang_kannada,
+    lang_spanish:             lang_spanish,
+    lang_tamil:               lang_tamil,
+    lang_hindi:               lang_hindi,
+    lang_other:               lang_other,
+    lang_other_val:           lang_other_val,
+    orgName:                  orgName,
+    orgRole:                  orgRole,
+    org_ssf:                  org_ssf,
+    org_sys:                  org_sys,
+    org_other:                org_other,
+    org_other_val:            org_other_val,
+    orgRoles:                 orgRoles,
     supportNeeded:            supp,
     supportNeeded_degree:     supp_degree,
     supportNeeded_higher:     supp_higher,
@@ -648,8 +712,8 @@ router.post('/user/profile', requireAuth, async function (req, res) {
     var ALLOWED = [
       'place', 'address', 'email', 'phone', 'whatsapp',
       'admYear', 'leaveYear', 'eduQual', 'religiousDegree', 'higherEdu',
-      'currentStatus', 'workLocation', 'jobRole', 'college', 'course',
-      'skills', 'languages', 'orgRoles', 'supportNeeded',
+      'currentStatus', 'workLocation', 'workInstitution', 'jobRole', 'college', 'collegePlace', 'course',
+      'skills', 'languages', 'orgName', 'orgRole', 'orgRoles', 'supportNeeded',
       'familyCount', 'earningMembers', 'hasDependents', 'dependentsWho',
       'parentsDeceased', 'chronicIll', 'chronicIllDetails',
       'fatherName', 'motherName',

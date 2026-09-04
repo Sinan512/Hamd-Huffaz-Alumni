@@ -28,14 +28,18 @@ const memberDetailsSchema = new mongoose.Schema(
     /* ── Job / Study ── */
     currentStatus:   { type: String, trim: true, default: '' },   // 'Job' | 'Study' | 'Job & Study' | 'Other'
     workLocation:    { type: String, trim: true, default: '' },
+    workInstitution: { type: String, trim: true, default: '' },
     jobRole:         { type: String, trim: true, default: '' },
     college:         { type: String, trim: true, default: '' },
+    collegePlace:    { type: String, trim: true, default: '' },
     course:          { type: String, trim: true, default: '' },
 
     /* ── Other ── */
     skills:          { type: String, trim: true, default: '' },   // Creative Skills
     languages:       { type: String, trim: true, default: '' },   // Languages Known
-    orgRoles:        { type: String, trim: true, default: '' },   // Organizational Roles
+    orgName:         { type: String, trim: true, default: '' },   // Organization Name (SSF, SYS, Other)
+    orgRole:         { type: String, trim: true, default: '' },   // Organization Role
+    orgRoles:        { type: String, trim: true, default: '' },   // Combined Organizational Roles
     supportNeeded:   { type: String, trim: true, default: '' },   // Help needed in career/academic situation
 
     /* ── Family ── */
