@@ -288,6 +288,49 @@ function buildUserContext(doc) {
 
   var isPersonalDataComplete = !!(place && address && email && phone && whatsapp);
 
+  /* ── education ── */
+  var eduQual = (doc.eduQual || '').trim();
+  var eqLower = eduQual.toLowerCase();
+  var eduQual_sslc = eqLower === 'sslc';
+  var eduQual_plustwo = eqLower === 'plus two' || eqLower === 'plus-two' || eqLower === 'plustwo' || eqLower === '+2';
+  var eduQual_degree = eqLower === 'degree';
+  var eduQual_pg = eqLower === 'pg';
+  var eduQual_standard = eduQual_sslc || eduQual_plustwo || eduQual_degree || eduQual_pg;
+  var eduQual_other = (eduQual === 'Other') || (!!eduQual && !eduQual_standard);
+  var eduQual_other_val = eduQual_other ? (eduQual === 'Other' ? '' : eduQual) : '';
+
+  var relDeg = (doc.religiousDegree || '').trim();
+  var rdLower = relDeg.toLowerCase();
+  var rel_saquafi = rdLower === 'saquafi' || rdLower === 'saqafi';
+  var rel_ahsani  = rdLower === 'ahsani';
+  var rel_baqavi  = rdLower === 'baqavi' || rdLower === 'baqawi';
+  var rel_saadi   = rdLower === "saa'di" || rdLower === "sa'di" || rdLower === 'saadi';
+  var rel_adany   = rdLower === 'adany' || rdLower === 'adani';
+  var rel_hadi    = rdLower === 'hadi' || rdLower === 'hadawi' || rdLower === 'hudawi';
+  var rel_fazili  = rdLower === 'fazili';
+  var rel_shamil  = rdLower === 'shamil ifani' || rdLower === 'shamil irfani' || rdLower === 'shamil-ifani' || rdLower === 'shamil-irfani';
+  var rel_noorani = rdLower === 'noorani' || rdLower === 'nurani';
+  var rel_mueeni  = rdLower === 'mueeni' || rdLower === 'muini';
+  var rel_naeemi  = rdLower === 'naeemi' || rdLower === 'naimi';
+  var rel_bukhari = rdLower === 'bukhari';
+  var rel_standard = rel_saquafi || rel_ahsani || rel_baqavi || rel_saadi || rel_adany || rel_hadi || rel_fazili || rel_shamil || rel_noorani || rel_mueeni || rel_naeemi || rel_bukhari;
+  var rel_other   = (relDeg === 'Other') || (!!relDeg && !rel_standard);
+  var rel_other_val = rel_other ? (relDeg === 'Other' ? '' : relDeg) : '';
+
+  /* ── support needed ── */
+  var supp = (doc.supportNeeded || '').trim();
+  var supp_degree   = supp === 'Degree completion';
+  var supp_higher   = supp === 'Higher education';
+  var supp_research = supp === 'Research';
+  var supp_exams    = supp === 'Competitive Exams';
+  var supp_abroad   = supp === 'Study Abroad opportunities';
+  var supp_language = supp === 'English or Arabic language';
+  var supp_computer = supp === 'Computer skills';
+  var supp_online   = supp === 'Online earning opportunities';
+  var supp_standard = supp_degree || supp_higher || supp_research || supp_exams || supp_abroad || supp_language || supp_computer || supp_online;
+  var supp_other    = (supp === 'Other') || (!!supp && !supp_standard);
+  var supp_other_val = supp_other ? (supp === 'Other' ? '' : supp) : '';
+
   return {
     /* ── core (set by admin) ── */
     name:            doc.name            || '',
@@ -304,12 +347,32 @@ function buildUserContext(doc) {
     missingPersonalData:    !isPersonalDataComplete,
 
     /* ── education ── */
-    admYear:         doc.admYear         || '',
-    leaveYear:       doc.leaveYear       || '',
-    eduQual:         doc.eduQual         || '',
-    religiousDegree: doc.religiousDegree || '',
-    higherEdu_yes:   higherEdu === 'yes',
-    higherEdu_no:    higherEdu === 'no',
+    admYear:               doc.admYear         || '',
+    leaveYear:             doc.leaveYear       || '',
+    eduQual:               eduQual,
+    eduQual_sslc:          eduQual_sslc,
+    eduQual_plustwo:       eduQual_plustwo,
+    eduQual_degree:        eduQual_degree,
+    eduQual_pg:            eduQual_pg,
+    eduQual_other:         eduQual_other,
+    eduQual_other_val:     eduQual_other_val,
+    religiousDegree:       relDeg,
+    rel_saquafi:           rel_saquafi,
+    rel_ahsani:            rel_ahsani,
+    rel_baqavi:            rel_baqavi,
+    rel_saadi:             rel_saadi,
+    rel_adany:             rel_adany,
+    rel_hadi:              rel_hadi,
+    rel_fazili:            rel_fazili,
+    rel_shamil:            rel_shamil,
+    rel_noorani:           rel_noorani,
+    rel_mueeni:            rel_mueeni,
+    rel_naeemi:            rel_naeemi,
+    rel_bukhari:           rel_bukhari,
+    rel_other:             rel_other,
+    rel_other_val:         rel_other_val,
+    higherEdu_yes:         higherEdu === 'yes',
+    higherEdu_no:          higherEdu === 'no',
 
     /* ── job/study ── */
     currentStatus:       status,
@@ -323,19 +386,20 @@ function buildUserContext(doc) {
     course:          doc.course          || '',
 
     /* ── other ── */
-    skills:          doc.skills          || '',
-    languages:       doc.languages       || '',
-    orgRoles:        doc.orgRoles        || '',
-    supportNeeded:            doc.supportNeeded || '',
-    supportNeeded_degree:     doc.supportNeeded === 'Degree completion',
-    supportNeeded_higher:     doc.supportNeeded === 'Higher education',
-    supportNeeded_research:   doc.supportNeeded === 'Research',
-    supportNeeded_exams:      doc.supportNeeded === 'Competitive Exams',
-    supportNeeded_abroad:     doc.supportNeeded === 'Study Abroad opportunities',
-    supportNeeded_language:   doc.supportNeeded === 'English or Arabic language',
-    supportNeeded_computer:   doc.supportNeeded === 'Computer skills',
-    supportNeeded_online:     doc.supportNeeded === 'Online earning opportunities',
-    supportNeeded_other:      doc.supportNeeded === 'Other',
+    skills:                   doc.skills          || '',
+    languages:                doc.languages       || '',
+    orgRoles:                 doc.orgRoles        || '',
+    supportNeeded:            supp,
+    supportNeeded_degree:     supp_degree,
+    supportNeeded_higher:     supp_higher,
+    supportNeeded_research:   supp_research,
+    supportNeeded_exams:      supp_exams,
+    supportNeeded_abroad:     supp_abroad,
+    supportNeeded_language:   supp_language,
+    supportNeeded_computer:   supp_computer,
+    supportNeeded_online:     supp_online,
+    supportNeeded_other:      supp_other,
+    supportNeeded_other_val:  supp_other_val,
 
 
     /* ── family ── */

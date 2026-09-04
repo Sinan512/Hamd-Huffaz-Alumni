@@ -379,7 +379,6 @@
           <h2 class="h6 fw-bold mb-0 me-auto">Contributions</h2>
           <div class="d-flex flex-wrap align-items-center gap-2">
             <select class="form-select form-select-sm" id="contribStatusFilter" style="width: auto; max-width: 140px;">
-              <option value="ALL">All Status</option>
               <option value="Pending">Pending</option>
               <option value="Approved">Approved</option>
               <option value="Rejected">Rejected</option>
@@ -404,7 +403,6 @@
                 <th>Status</th>
                 <th>Approved By</th>
                 <th>Screenshot</th>
-                <th class="text-end" style="width: 170px;">Actions</th>
               </tr>
             </thead>
             <tbody id="contribBody"></tbody>
@@ -521,99 +519,6 @@
         <div class="modal-footer border-0 pt-0">
           <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Close</button>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============ REJECT CONTRIBUTION MODAL ============ -->
-  <div class="modal fade" id="contribRejectModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content rounded-4 border-0 shadow">
-        <div class="modal-header border-0 pb-2">
-          <h5 class="modal-title fw-bold mb-0">Reject Payment</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form id="contribRejectForm">
-          <div class="modal-body pt-2">
-            <div id="contribRejectError" class="alert alert-danger rounded-3 py-2 px-3 small d-none"></div>
-            <p class="text-muted small mb-3">Please select a reason for rejecting this payment submission:</p>
-            <div class="mb-3">
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="radio" name="rejectOption" id="optNoVis" value="screenshot not visible perfectly" checked>
-                <label class="form-check-label" for="optNoVis">
-                  Screenshot not visible perfectly
-                </label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="radio" name="rejectOption" id="optLess30" value="the amount is less than 30">
-                <label class="form-check-label" for="optLess30">
-                  The amount is less than 30
-                </label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="radio" name="rejectOption" id="optOther" value="other">
-                <label class="form-check-label" for="optOther">
-                  Other
-                </label>
-              </div>
-            </div>
-            <div class="mb-3 d-none" id="customReasonWrap">
-              <label class="form-label" for="customReasonInput">Custom Reason</label>
-              <input class="form-control" id="customReasonInput" type="text" placeholder="Enter reason for rejection...">
-            </div>
-          </div>
-          <div class="modal-footer border-0 pt-0">
-            <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-danger rounded-3 fw-semibold" id="contribRejectSubmit">Reject Payment</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============ EDIT CONTRIBUTION MODAL ============ -->
-  <div class="modal fade" id="contribEditModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content rounded-4 border-0 shadow">
-        <div class="modal-header border-0 pb-2">
-          <h5 class="modal-title fw-bold mb-0">Edit Payment Details</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form id="contribEditForm">
-          <div class="modal-body pt-2">
-            <div id="contribEditError" class="alert alert-danger rounded-3 py-2 px-3 small d-none"></div>
-            <div class="mb-3">
-              <label class="form-label" for="editContribAmount">Amount (₹)</label>
-              <input class="form-control" id="editContribAmount" type="number" min="0" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="editContribStatus">Status</label>
-              <select class="form-select" id="editContribStatus">
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </div>
-            <div class="row g-2 mb-3">
-              <div class="col-6">
-                <label class="form-label" for="editContribMonth">Month (1-12)</label>
-                <input class="form-control" id="editContribMonth" type="number" min="1" max="12" required>
-              </div>
-              <div class="col-6">
-                <label class="form-label" for="editContribYear">Year</label>
-                <input class="form-control" id="editContribYear" type="number" min="2000" max="2100" required>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="editContribReason">Rejection Reason (if rejected)</label>
-              <input class="form-control" id="editContribReason" type="text" placeholder="Optional notes/reason">
-            </div>
-          </div>
-          <div class="modal-footer border-0 pt-0">
-            <button type="button" class="btn btn-light border rounded-3" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary rounded-3 fw-semibold" id="contribEditSubmit">Save Changes</button>
-          </div>
-        </form>
       </div>
     </div>
   </div>
@@ -1050,24 +955,6 @@
       var screenshotTitle = document.getElementById('contribScreenshotTitle');
       var screenshotSub = document.getElementById('contribScreenshotSub');
 
-      /* Reject modal */
-      var rejectModalEl = document.getElementById('contribRejectModal');
-      var rejectModal = rejectModalEl ? new bootstrap.Modal(rejectModalEl) : null;
-      var rejectForm = document.getElementById('contribRejectForm');
-      var rejectError = document.getElementById('contribRejectError');
-      var rejectSubmit = document.getElementById('contribRejectSubmit');
-      var customReasonWrap = document.getElementById('customReasonWrap');
-      var customReasonInput = document.getElementById('customReasonInput');
-      var rejectingTarget = null; // { memberId, paymentId }
-
-      /* Edit modal */
-      var editContribModalEl = document.getElementById('contribEditModal');
-      var editContribModal = editContribModalEl ? new bootstrap.Modal(editContribModalEl) : null;
-      var editContribForm = document.getElementById('contribEditForm');
-      var editContribError = document.getElementById('contribEditError');
-      var editContribSubmit = document.getElementById('contribEditSubmit');
-      var editingContribTarget = null; // { memberId, paymentId }
-
       function loadContributions() {
         return fetch('/leaders/contributions', { credentials: 'same-origin' })
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
@@ -1136,25 +1023,6 @@
               '<i class="bi bi-image me-1"></i>View</button>';
           }
 
-          var actions = '—';
-          if (item.status === 'Approved' || item.status === 'Rejected') {
-            actions = '<span class="text-muted small fw-semibold">Processed</span>';
-          } else if (item.status !== 'UN PAID' && item.paymentId) {
-            var approveBtn = '<button class="btn btn-sm btn-success rounded-2 py-1 px-2 me-1" title="Approve" ' +
-              'data-contrib-approve="' + esc(item.paymentId) + '" data-member-id="' + esc(item.memberId) + '">' +
-              '<i class="bi bi-check-lg"></i></button>';
-
-            var rejectBtn = '<button class="btn btn-sm btn-danger rounded-2 py-1 px-2 me-1" title="Reject" ' +
-              'data-contrib-reject="' + esc(item.paymentId) + '" data-member-id="' + esc(item.memberId) + '">' +
-              '<i class="bi bi-x-lg"></i></button>';
-
-            var editBtn = '<button class="btn btn-sm btn-light border rounded-2 py-1 px-2" title="Edit" ' +
-              'data-contrib-edit="' + esc(item.paymentId) + '" data-member-id="' + esc(item.memberId) + '">' +
-              '<i class="bi bi-pencil"></i></button>';
-
-            actions = '<div class="d-inline-flex align-items-center">' + approveBtn + rejectBtn + editBtn + '</div>';
-          }
-
           return '<tr>' +
             '<td class="text-muted">' + (index + 1) + '</td>' +
             '<td><span class="badge-soft">' + esc(item.admissionNumber || '—') + '</span></td>' +
@@ -1164,7 +1032,6 @@
             '<td>' + statusBadge + '</td>' +
             '<td>' + esc(item.approvedBy || '—') + '</td>' +
             '<td>' + screenshotBtn + '</td>' +
-            '<td class="text-end">' + actions + '</td>' +
             '</tr>';
         }).join('');
       }
@@ -1185,154 +1052,6 @@
             screenshotModal.show();
             return;
           }
-
-          var appBtn = e.target.closest('[data-contrib-approve]');
-          if (appBtn) {
-            var pId = appBtn.getAttribute('data-contrib-approve');
-            var mId = appBtn.getAttribute('data-member-id');
-            if (!window.confirm('Approve this payment submission?')) return;
-            appBtn.disabled = true;
-
-            fetch('/leaders/contributions/' + encodeURIComponent(mId) + '/' + encodeURIComponent(pId) + '/approve', {
-              method: 'POST',
-              credentials: 'same-origin'
-            })
-              .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
-              .then(function (res) {
-                if (!res.ok || !res.data.success) {
-                  flash((res.data && res.data.message) || 'Could not approve payment.', 'danger');
-                  appBtn.disabled = false;
-                  return;
-                }
-                flash('Payment approved successfully.', 'success');
-                loadContributions();
-              })
-              .catch(function () {
-                flash('Network error approving payment.', 'danger');
-                appBtn.disabled = false;
-              });
-            return;
-          }
-
-          var rejBtn = e.target.closest('[data-contrib-reject]');
-          if (rejBtn) {
-            var pId = rejBtn.getAttribute('data-contrib-reject');
-            var mId = rejBtn.getAttribute('data-member-id');
-            rejectingTarget = { memberId: mId, paymentId: pId };
-            rejectError.classList.add('d-none');
-            rejectForm.reset();
-            document.getElementById('optNoVis').checked = true;
-            customReasonWrap.classList.add('d-none');
-            customReasonInput.required = false;
-            if (rejectModal) rejectModal.show();
-            return;
-          }
-
-          var editBtn = e.target.closest('[data-contrib-edit]');
-          if (editBtn) {
-            var pId = editBtn.getAttribute('data-contrib-edit');
-            var mId = editBtn.getAttribute('data-member-id');
-            var item = allSubmittedContribs.find(function (c) { return c.paymentId === pId && c.memberId === mId; });
-            if (!item) return;
-
-            editingContribTarget = { memberId: mId, paymentId: pId };
-            editContribError.classList.add('d-none');
-            document.getElementById('editContribAmount').value = item.amount || 30;
-            document.getElementById('editContribStatus').value = item.status || 'Pending';
-            document.getElementById('editContribMonth').value = item.month || 1;
-            document.getElementById('editContribYear').value = item.year || new Date().getFullYear();
-            document.getElementById('editContribReason').value = item.rejectionReason || '';
-            if (editContribModal) editContribModal.show();
-            return;
-          }
-        });
-      }
-
-      if (rejectForm) {
-        rejectForm.querySelectorAll('input[name="rejectOption"]').forEach(function (radio) {
-          radio.addEventListener('change', function () {
-            if (this.value === 'other') {
-              customReasonWrap.classList.remove('d-none');
-              customReasonInput.required = true;
-            } else {
-              customReasonWrap.classList.add('d-none');
-              customReasonInput.required = false;
-            }
-          });
-        });
-
-        rejectForm.addEventListener('submit', function (e) {
-          e.preventDefault();
-          if (!rejectingTarget) return;
-          rejectError.classList.add('d-none');
-          rejectSubmit.disabled = true;
-
-          var selectedOpt = rejectForm.querySelector('input[name="rejectOption"]:checked').value;
-          var customVal = customReasonInput.value.trim();
-
-          fetch('/leaders/contributions/' + encodeURIComponent(rejectingTarget.memberId) + '/' + encodeURIComponent(rejectingTarget.paymentId) + '/reject', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              reasonOption: selectedOpt,
-              customReason: customVal
-            })
-          })
-            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
-            .then(function (res) {
-              if (!res.ok || !res.data.success) {
-                rejectError.textContent = (res.data && res.data.message) || 'Could not reject payment.';
-                rejectError.classList.remove('d-none');
-                return;
-              }
-              flash('Payment rejected successfully.', 'success');
-              rejectModal.hide();
-              loadContributions();
-            })
-            .catch(function () {
-              rejectError.textContent = 'Network error rejecting payment.';
-              rejectError.classList.remove('d-none');
-            })
-            .finally(function () { rejectSubmit.disabled = false; });
-        });
-      }
-
-      if (editContribForm) {
-        editContribForm.addEventListener('submit', function (e) {
-          e.preventDefault();
-          if (!editingContribTarget) return;
-          editContribError.classList.add('d-none');
-          editContribSubmit.disabled = true;
-
-          fetch('/leaders/contributions/' + encodeURIComponent(editingContribTarget.memberId) + '/' + encodeURIComponent(editingContribTarget.paymentId), {
-            method: 'PUT',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: document.getElementById('editContribAmount').value,
-              status: document.getElementById('editContribStatus').value,
-              month: document.getElementById('editContribMonth').value,
-              year: document.getElementById('editContribYear').value,
-              rejectionReason: document.getElementById('editContribReason').value
-            })
-          })
-            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
-            .then(function (res) {
-              if (!res.ok || !res.data.success) {
-                editContribError.textContent = (res.data && res.data.message) || 'Could not update payment.';
-                editContribError.classList.remove('d-none');
-                return;
-              }
-              flash('Payment details updated.', 'success');
-              editContribModal.hide();
-              loadContributions();
-            })
-            .catch(function () {
-              editContribError.textContent = 'Network error updating payment.';
-              editContribError.classList.remove('d-none');
-            })
-            .finally(function () { editContribSubmit.disabled = false; });
         });
       }
 

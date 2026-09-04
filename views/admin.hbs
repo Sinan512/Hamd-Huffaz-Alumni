@@ -2940,6 +2940,40 @@
       /* Collect all initial data rows once */
       var allRows = Array.from(tbody.querySelectorAll('tr[data-batch]'));
 
+      var attrMap = {
+        'admissionNumber': 'data-admission-number',
+        'phone': 'data-phone',
+        'whatsapp': 'data-whatsapp',
+        'place': 'data-place',
+        'address': 'data-address',
+        'currentStatus': 'data-current-status',
+        'jobRole': 'data-job-role',
+        'workLocation': 'data-work-location',
+        'college': 'data-college',
+        'course': 'data-course',
+        'admYear': 'data-adm-year',
+        'leaveYear': 'data-leave-year',
+        'eduQual': 'data-edu-qual',
+        'religiousDegree': 'data-religious-degree',
+        'higherEdu': 'data-higher-edu',
+        'skills': 'data-skills',
+        'languages': 'data-languages',
+        'orgRoles': 'data-org-roles',
+        'supportNeeded': 'data-support-needed',
+        'fatherName': 'data-father-name',
+        'motherName': 'data-mother-name',
+        'familyCount': 'data-family-count',
+        'earningMembers': 'data-earning-members',
+        'hasDependents': 'data-has-dependents',
+        'dependentsWho': 'data-dependents-who',
+        'parentsDeceased': 'data-parents-deceased',
+        'chronicIll': 'data-chronic-ill',
+        'chronicIllDetails': 'data-chronic-ill-details',
+        'ownHouse': 'data-own-house',
+        'married': 'data-married',
+        'childrenCount': 'data-children-count'
+      };
+
       /* ---- helper to get cell sort value from row ---- */
       function getRowSortValue(row, key) {
         if (!key) return '';
@@ -2951,40 +2985,6 @@
         if (key === 'status') {
           return row.getAttribute('data-profile-complete') === 'completed' ? 1 : 0;
         }
-        
-        var attrMap = {
-          'admissionNumber': 'data-admission-number',
-          'phone': 'data-phone',
-          'whatsapp': 'data-whatsapp',
-          'place': 'data-place',
-          'address': 'data-address',
-          'currentStatus': 'data-current-status',
-          'jobRole': 'data-job-role',
-          'workLocation': 'data-work-location',
-          'college': 'data-college',
-          'course': 'data-course',
-          'admYear': 'data-adm-year',
-          'leaveYear': 'data-leave-year',
-          'eduQual': 'data-edu-qual',
-          'religiousDegree': 'data-religious-degree',
-          'higherEdu': 'data-higher-edu',
-          'skills': 'data-skills',
-          'languages': 'data-languages',
-          'orgRoles': 'data-org-roles',
-          'supportNeeded': 'data-support-needed',
-          'fatherName': 'data-father-name',
-          'motherName': 'data-mother-name',
-          'familyCount': 'data-family-count',
-          'earningMembers': 'data-earning-members',
-          'hasDependents': 'data-has-dependents',
-          'dependentsWho': 'data-dependents-who',
-          'parentsDeceased': 'data-parents-deceased',
-          'chronicIll': 'data-chronic-ill',
-          'chronicIllDetails': 'data-chronic-ill-details',
-          'ownHouse': 'data-own-house',
-          'married': 'data-married',
-          'childrenCount': 'data-children-count'
-        };
 
         var attrName = attrMap[key];
         if (attrName) {
@@ -3030,7 +3030,7 @@
           var batchMatch = !activeBatch || row.getAttribute('data-batch') === activeBatch;
           var profileMatch = !activeProfileStatus || row.getAttribute('data-profile-complete') === activeProfileStatus;
           var query      = (document.getElementById('memberSearchInput') || {}).value || '';
-          var textMatch  = !query || row.innerText.toLowerCase().includes(query.toLowerCase().trim());
+          var textMatch  = !query || row.textContent.toLowerCase().includes(query.toLowerCase().trim());
           return batchMatch && profileMatch && textMatch;
         });
 
@@ -3264,7 +3264,12 @@
               rowData.push(row.getAttribute('data-profile-complete') === 'completed' ? 'Completed' : 'Incomplete');
             } else {
               var td = row.querySelector('td[data-col="' + colName + '"]');
-              rowData.push(td ? td.textContent.trim() : (row.getAttribute('data-' + colName) || ''));
+              var val = td ? td.textContent.trim() : '';
+              if (!val) {
+                var attrName = attrMap[colName] || ('data-' + colName);
+                val = (row.getAttribute(attrName) || '').trim();
+              }
+              rowData.push(val);
             }
           });
 
@@ -3590,6 +3595,7 @@
               var modalEl = document.getElementById('addAlumniModal');
               var modal = bootstrap.Modal.getInstance(modalEl);
               if (modal) modal.hide();
+              window.location.reload();
             }, 1500);
           } else {
             showAlert('danger', result.message || 'Could not save, please try again.');

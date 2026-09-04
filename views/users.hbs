@@ -1432,9 +1432,15 @@
           </div>
           <div class="col-6">
             <div class="mb-3">
-              <label class="form-label-custom" for="ep_whatsapp">
-                <span data-en="WhatsApp Number" data-ml="വാട്സ്ആപ്പ് നമ്പർ">WhatsApp Number</span>
-              </label>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label-custom mb-0" for="ep_whatsapp">
+                  <span data-en="WhatsApp Number" data-ml="വാട്സ്ആപ്പ് നമ്പർ">WhatsApp Number</span>
+                </label>
+                <div class="form-check d-inline-flex align-items-center gap-1 mb-0" style="font-size: 11.5px;">
+                  <input class="form-check-input mt-0" type="checkbox" id="ep_sameWhatsapp" style="cursor: pointer; width: 14px; height: 14px;">
+                  <label class="form-check-label mb-0 fw-semibold text-muted" for="ep_sameWhatsapp" style="cursor: pointer;" data-en="Same" data-ml="ഇത് തന്നെ">Same</label>
+                </div>
+              </div>
               <input type="tel" class="form-control" id="ep_whatsapp" name="whatsapp" value="{{user.whatsapp}}" placeholder="+91...">
             </div>
           </div>
@@ -1469,14 +1475,42 @@
           <label class="form-label-custom" for="ep_eduQual">
             <span data-en="Educational Qualification" data-ml="വിദ്യാഭ്യാസ യോഗ്യത">Educational Qualification</span>
           </label>
-          <input type="text" class="form-control" id="ep_eduQual" name="eduQual" value="{{user.eduQual}}" placeholder="e.g. B.Tech, SSLC, Plus Two...">
+          <select class="form-select" id="ep_eduQual" name="eduQual" onchange="toggleEduQualOther()">
+            <option value="" {{#unless user.eduQual}}selected{{/unless}}>-- Select --</option>
+            <option value="SSLC" {{#if user.eduQual_sslc}}selected{{/if}}>SSLC</option>
+            <option value="Plus Two" {{#if user.eduQual_plustwo}}selected{{/if}}>Plus Two</option>
+            <option value="Degree" {{#if user.eduQual_degree}}selected{{/if}}>Degree</option>
+            <option value="PG" {{#if user.eduQual_pg}}selected{{/if}}>PG</option>
+            <option value="Other" {{#if user.eduQual_other}}selected{{/if}}>Other</option>
+          </select>
+          <div id="eduQualOtherWrap" class="mt-2" style="display: {{#if user.eduQual_other}}block{{else}}none{{/if}};">
+            <input type="text" class="form-control" id="ep_eduQual_other" placeholder="Please specify your qualification" value="{{user.eduQual_other_val}}">
+          </div>
         </div>
 
         <div class="mb-3">
           <label class="form-label-custom" for="ep_religiousDegree">
             <span data-en="Religious / General Degree" data-ml="മത-ബിരുദം / ഭൗതിക-ബിരുദം">Religious / General Degree</span>
           </label>
-          <input type="text" class="form-control" id="ep_religiousDegree" name="religiousDegree" value="{{user.religiousDegree}}" placeholder="e.g. Alim, Hafiz...">
+          <select class="form-select" id="ep_religiousDegree" name="religiousDegree" onchange="toggleReligiousDegreeOther()">
+            <option value="" {{#unless user.religiousDegree}}selected{{/unless}}>-- Select --</option>
+            <option value="Saquafi" {{#if user.rel_saquafi}}selected{{/if}}>Saquafi</option>
+            <option value="Ahsani" {{#if user.rel_ahsani}}selected{{/if}}>Ahsani</option>
+            <option value="Baqavi" {{#if user.rel_baqavi}}selected{{/if}}>Baqavi</option>
+            <option value="Saa'di" {{#if user.rel_saadi}}selected{{/if}}>Saa'di</option>
+            <option value="Adany" {{#if user.rel_adany}}selected{{/if}}>Adany</option>
+            <option value="Hadi" {{#if user.rel_hadi}}selected{{/if}}>Hadi</option>
+            <option value="Fazili" {{#if user.rel_fazili}}selected{{/if}}>Fazili</option>
+            <option value="Shamil Ifani" {{#if user.rel_shamil}}selected{{/if}}>Shamil Ifani</option>
+            <option value="Noorani" {{#if user.rel_noorani}}selected{{/if}}>Noorani</option>
+            <option value="Mueeni" {{#if user.rel_mueeni}}selected{{/if}}>Mueeni</option>
+            <option value="Naeemi" {{#if user.rel_naeemi}}selected{{/if}}>Naeemi</option>
+            <option value="Bukhari" {{#if user.rel_bukhari}}selected{{/if}}>Bukhari</option>
+            <option value="Other" {{#if user.rel_other}}selected{{/if}}>Other</option>
+          </select>
+          <div id="relDegreeOtherWrap" class="mt-2" style="display: {{#if user.rel_other}}block{{else}}none{{/if}};">
+            <input type="text" class="form-control" id="ep_religiousDegree_other" placeholder="Please specify your degree" value="{{user.rel_other_val}}">
+          </div>
         </div>
 
         <div class="mb-4">
@@ -1500,7 +1534,7 @@
             <span data-en="What help do you need in your current career/academic situation?"
                   data-ml="നിലവിലെ നിങ്ങളുടെ career/academic situation-ൽ നിങ്ങൾക്ക് എന്ത് സഹായമാണ് ആവശ്യം?">What help do you need in your current situation?</span>
           </label>
-          <select class="form-control" id="ep_supportNeeded" name="supportNeeded">
+          <select class="form-select" id="ep_supportNeeded" name="supportNeeded" onchange="toggleSupportNeededOther()">
             <option value="" {{#unless user.supportNeeded}}selected{{/unless}}>-- Select --</option>
             <option value="Degree completion" {{#if user.supportNeeded_degree}}selected{{/if}}>Degree completion</option>
             <option value="Higher education" {{#if user.supportNeeded_higher}}selected{{/if}}>Higher education</option>
@@ -1512,6 +1546,9 @@
             <option value="Online earning opportunities" {{#if user.supportNeeded_online}}selected{{/if}}>Online earning opportunities</option>
             <option value="Other" {{#if user.supportNeeded_other}}selected{{/if}}>Other</option>
           </select>
+          <div id="supportNeededOtherWrap" class="mt-2" style="display: {{#if user.supportNeeded_other}}block{{else}}none{{/if}};">
+            <input type="text" class="form-control" id="ep_supportNeeded_other" placeholder="Please specify the help you need" value="{{user.supportNeeded_other_val}}">
+          </div>
         </div>
 
         <!-- ── JOB / STUDY ── -->
@@ -1950,9 +1987,15 @@
                 <input type="tel" class="form-control rounded-3" id="quick_phone" name="phone" value="{{user.phone}}" placeholder="+91..." required>
               </div>
               <div class="col-6">
-                <label class="form-label fw-semibold small text-muted text-uppercase mb-1" for="quick_whatsapp">
-                  WhatsApp <span class="text-danger">*</span>
-                </label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label fw-semibold small text-muted text-uppercase mb-0" for="quick_whatsapp">
+                    WhatsApp <span class="text-danger">*</span>
+                  </label>
+                  <div class="form-check d-inline-flex align-items-center gap-1 mb-0" style="font-size: 11px;">
+                    <input class="form-check-input mt-0" type="checkbox" id="quick_sameWhatsapp" style="cursor: pointer; width: 13px; height: 13px;">
+                    <label class="form-check-label mb-0 fw-semibold text-muted" for="quick_sameWhatsapp" style="cursor: pointer;">Same</label>
+                  </div>
+                </div>
                 <input type="tel" class="form-control rounded-3" id="quick_whatsapp" name="whatsapp" value="{{user.whatsapp}}" placeholder="+91..." required>
               </div>
             </div>
@@ -2215,7 +2258,7 @@
   }
 
   /* ============================================================ */
-  /* CONDITIONAL FORM FIELDS                                      */
+  /* CONDITIONAL FORM FIELDS & SYNC                               */
   /* ============================================================ */
   function toggleJobStudy() {
     var statusEl = document.getElementById('ep_status');
@@ -2229,8 +2272,94 @@
     if (studyDiv) studyDiv.style.display = showStudy ? 'block' : 'none';
   }
 
+  function toggleEduQualOther() {
+    var sel = document.getElementById('ep_eduQual');
+    var wrap = document.getElementById('eduQualOtherWrap');
+    if (sel && wrap) {
+      wrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+  }
+
+  function toggleReligiousDegreeOther() {
+    var sel = document.getElementById('ep_religiousDegree');
+    var wrap = document.getElementById('relDegreeOtherWrap');
+    if (sel && wrap) {
+      wrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+  }
+
+  function toggleSupportNeededOther() {
+    var sel = document.getElementById('ep_supportNeeded');
+    var wrap = document.getElementById('supportNeededOtherWrap');
+    if (sel && wrap) {
+      wrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+  }
+
+  function initSameWhatsappHandlers() {
+    // Edit Profile form
+    var phoneInput = document.getElementById('ep_phone');
+    var wpInput = document.getElementById('ep_whatsapp');
+    var sameCb = document.getElementById('ep_sameWhatsapp');
+
+    if (phoneInput && wpInput && sameCb) {
+      function syncWp() {
+        if (sameCb.checked) {
+          wpInput.value = phoneInput.value;
+          wpInput.readOnly = true;
+        } else {
+          wpInput.readOnly = false;
+        }
+      }
+
+      if (phoneInput.value && wpInput.value && phoneInput.value.trim() === wpInput.value.trim()) {
+        sameCb.checked = true;
+        wpInput.readOnly = true;
+      }
+
+      sameCb.addEventListener('change', syncWp);
+      phoneInput.addEventListener('input', function () {
+        if (sameCb.checked) {
+          wpInput.value = phoneInput.value;
+        }
+      });
+    }
+
+    // Quick Personal Data Modal
+    var qPhone = document.getElementById('quick_phone');
+    var qWp = document.getElementById('quick_whatsapp');
+    var qSame = document.getElementById('quick_sameWhatsapp');
+
+    if (qPhone && qWp && qSame) {
+      function syncQuickWp() {
+        if (qSame.checked) {
+          qWp.value = qPhone.value;
+          qWp.readOnly = true;
+        } else {
+          qWp.readOnly = false;
+        }
+      }
+
+      if (qPhone.value && qWp.value && qPhone.value.trim() === qWp.value.trim()) {
+        qSame.checked = true;
+        qWp.readOnly = true;
+      }
+
+      qSame.addEventListener('change', syncQuickWp);
+      qPhone.addEventListener('input', function () {
+        if (qSame.checked) {
+          qWp.value = qPhone.value;
+        }
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     toggleJobStudy();
+    toggleEduQualOther();
+    toggleReligiousDegreeOther();
+    toggleSupportNeededOther();
+    initSameWhatsappHandlers();
   });
 
   /* ============================================================ */
@@ -2257,6 +2386,45 @@
     var data = {};
     var fd   = new FormData(form);
     fd.forEach(function (val, key) { data[key] = val; });
+
+    // Handle Educational Qualification "Other"
+    var eduSelect = document.getElementById('ep_eduQual');
+    var eduOtherInput = document.getElementById('ep_eduQual_other');
+    if (eduSelect) {
+      if (eduSelect.value === 'Other') {
+        data['eduQual'] = (eduOtherInput ? eduOtherInput.value.trim() : '') || 'Other';
+      } else {
+        data['eduQual'] = eduSelect.value;
+      }
+    }
+
+    // Handle Religious Degree "Other"
+    var relSelect = document.getElementById('ep_religiousDegree');
+    var relOtherInput = document.getElementById('ep_religiousDegree_other');
+    if (relSelect) {
+      if (relSelect.value === 'Other') {
+        data['religiousDegree'] = (relOtherInput ? relOtherInput.value.trim() : '') || 'Other';
+      } else {
+        data['religiousDegree'] = relSelect.value;
+      }
+    }
+
+    // Handle Support Needed "Other"
+    var suppSelect = document.getElementById('ep_supportNeeded');
+    var suppOtherInput = document.getElementById('ep_supportNeeded_other');
+    if (suppSelect) {
+      if (suppSelect.value === 'Other') {
+        data['supportNeeded'] = (suppOtherInput ? suppOtherInput.value.trim() : '') || 'Other';
+      } else {
+        data['supportNeeded'] = suppSelect.value;
+      }
+    }
+
+    // Make sure WhatsApp number is sent even if input is readonly
+    var wpInput = document.getElementById('ep_whatsapp');
+    if (wpInput) {
+      data['whatsapp'] = wpInput.value.trim();
+    }
 
     fetch('/users/user/profile', {
       method: 'POST',
@@ -2873,7 +3041,15 @@
           if (document.getElementById('ep_address')) document.getElementById('ep_address').value = address;
           if (document.getElementById('ep_email')) document.getElementById('ep_email').value = email;
           if (document.getElementById('ep_phone')) document.getElementById('ep_phone').value = phone;
-          if (document.getElementById('ep_whatsapp')) document.getElementById('ep_whatsapp').value = whatsapp;
+          if (document.getElementById('ep_whatsapp')) {
+            var epWp = document.getElementById('ep_whatsapp');
+            epWp.value = whatsapp;
+            var epSame = document.getElementById('ep_sameWhatsapp');
+            if (epSame) {
+              epSame.checked = (phone === whatsapp);
+              epWp.readOnly = (phone === whatsapp);
+            }
+          }
 
           var personalModalEl = document.getElementById('personalDataPromptModal');
           if (personalModalEl && window.bootstrap) {
