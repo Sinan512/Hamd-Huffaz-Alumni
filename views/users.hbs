@@ -683,7 +683,7 @@
       width: 100%; max-width: 430px; box-shadow: var(--card-shadow-hover); position: relative; z-index: 1;
     }
     .login-brand-icon {
-      width: 88px; height: 88px; border-radius: 24px; background: white; border: 1.5px solid transparent;
+      width: 88px; height: 88px; border-radius: 24px; background: rgba(255, 255, 255, 0.018); border: 1.5px solid transparent;
       display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: var(--card-shadow);
     }
 
@@ -2033,9 +2033,9 @@
 
       <form method="POST" action="/users/login">
         <div class="mb-4">
-          <label class="form-label-custom" for="loginPassword">Admission Number</label>
+          <label class="form-label-custom" for="loginPassword">Member Id</label>
           <input type="password" name="password" id="loginPassword" class="form-control form-control-lg"
-            placeholder="Enter your admission no..." required autocomplete="current-password">
+            placeholder="Enter your Member Id..." required autocomplete="current-password">
         </div>
         <div class="d-grid">
           <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-3 py-2 shadow">
