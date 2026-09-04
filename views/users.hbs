@@ -130,9 +130,12 @@
     html {
       scroll-behavior: smooth;
       -webkit-font-smoothing: antialiased;
+      max-width: 100%;
+      overflow-x: clip;
     }
 
     body {
+      max-width: 100%;
       font-family: var(--font-body);
       background-color: var(--bg-body);
       background-image: var(--bg-grid-pattern);
@@ -141,7 +144,11 @@
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      overflow-x: hidden;
+      overflow-x: clip; /* was overflow-x: hidden — that forces overflow-y to
+        an implicit 'auto', turning <body> into its own scroll container and
+        making the sticky header's scroll math unstable. overflow-x: clip
+        gives the same "no horizontal scrollbar" result without that side
+        effect. */
     }
 
     h1, h2, h3, h4, h5, h6, .brand-title, .font-display {
@@ -206,6 +213,14 @@
       top: 0;
       z-index: 1030;
       transition: var(--transition-base);
+      /* Promote the sticky header to its own compositor layer. Without this,
+         the browser has to recompute the backdrop-filter blur against the
+         page content on every scroll frame, which is what causes the header
+         to visibly judder/shift by a pixel or two while scrolling. */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform;
+      backface-visibility: hidden;
     }
 
     .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -668,7 +683,7 @@
       width: 100%; max-width: 430px; box-shadow: var(--card-shadow-hover); position: relative; z-index: 1;
     }
     .login-brand-icon {
-      width: 88px; height: 88px; border-radius: 24px; background: var(--surface-alt); border: 1.5px solid var(--border-color);
+      width: 88px; height: 88px; border-radius: 24px; background: white; border: 1.5px solid transparent;
       display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: var(--card-shadow);
     }
 
@@ -1260,7 +1275,7 @@
           </div>
 
           <!-- Contact Info -->
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-12 col-lg-4">
             <div class="footer-heading">Community Centre</div>
             <ul class="footer-links">
               <li><a href="https://share.google/DqQemO3vLyOcaUe4e"><i class="bi bi-geo-alt-fill text-primary me-2"></i> Parappalli Markaz, Koyilandy, Kerala 673307</a></li>
@@ -1346,7 +1361,7 @@
   <!-- ===================================================== -->
   <!-- EDIT PROFILE OFFCANVAS                                -->
   <!-- ===================================================== -->
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="editProfileOffcanvas" style="width: min(540px, 100vw);">
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="editProfileOffcanvas" style="width: min(540px, 100);">
     <div class="offcanvas-header">
       <div>
         <h5 class="offcanvas-title fw-bold d-flex align-items-center gap-2">
@@ -1480,6 +1495,25 @@
           </div>
         </div>
 
+        <div class="mb-4">
+          <label class="form-label-custom" for="ep_supportNeeded">
+            <span data-en="What help do you need in your current career/academic situation?"
+                  data-ml="നിലവിലെ നിങ്ങളുടെ career/academic situation-ൽ നിങ്ങൾക്ക് എന്ത് സഹായമാണ് ആവശ്യം?">What help do you need in your current situation?</span>
+          </label>
+          <select class="form-control" id="ep_supportNeeded" name="supportNeeded">
+            <option value="" {{#unless user.supportNeeded}}selected{{/unless}}>-- Select --</option>
+            <option value="Degree completion" {{#if user.supportNeeded_degree}}selected{{/if}}>Degree completion</option>
+            <option value="Higher education" {{#if user.supportNeeded_higher}}selected{{/if}}>Higher education</option>
+            <option value="Research" {{#if user.supportNeeded_research}}selected{{/if}}>Research</option>
+            <option value="Competitive Exams" {{#if user.supportNeeded_exams}}selected{{/if}}>Competitive Exams</option>
+            <option value="Study Abroad opportunities" {{#if user.supportNeeded_abroad}}selected{{/if}}>Study Abroad opportunities</option>
+            <option value="English or Arabic language" {{#if user.supportNeeded_language}}selected{{/if}}>English or Arabic language</option>
+            <option value="Computer skills" {{#if user.supportNeeded_computer}}selected{{/if}}>Computer skills</option>
+            <option value="Online earning opportunities" {{#if user.supportNeeded_online}}selected{{/if}}>Online earning opportunities</option>
+            <option value="Other" {{#if user.supportNeeded_other}}selected{{/if}}>Other</option>
+          </select>
+        </div>
+
         <!-- ── JOB / STUDY ── -->
         <div class="form-section-title">
           <i class="bi bi-briefcase"></i>
@@ -1556,25 +1590,6 @@
             <span data-en="Organizational Roles" data-ml="സംഘടനാ ഭാരവാഹിത്വം">Organizational Roles</span>
           </label>
           <input type="text" class="form-control" id="ep_orgRoles" name="orgRoles" value="{{user.orgRoles}}" placeholder="e.g. Secretary, President...">
-        </div>
-
-        <div class="mb-4">
-          <label class="form-label-custom" for="ep_supportNeeded">
-            <span data-en="What help do you need in your current career/academic situation?"
-                  data-ml="നിലവിലെ നിങ്ങളുടെ career/academic situation-ൽ നിങ്ങൾക്ക് എന്ത് സഹായമാണ് ആവശ്യം?">What help do you need in your current situation?</span>
-          </label>
-          <select class="form-control" id="ep_supportNeeded" name="supportNeeded">
-            <option value="" {{#unless user.supportNeeded}}selected{{/unless}}>-- Select --</option>
-            <option value="Degree completion" {{#if user.supportNeeded_degree}}selected{{/if}}>Degree completion</option>
-            <option value="Higher education" {{#if user.supportNeeded_higher}}selected{{/if}}>Higher education</option>
-            <option value="Research" {{#if user.supportNeeded_research}}selected{{/if}}>Research</option>
-            <option value="Competitive Exams" {{#if user.supportNeeded_exams}}selected{{/if}}>Competitive Exams</option>
-            <option value="Study Abroad opportunities" {{#if user.supportNeeded_abroad}}selected{{/if}}>Study Abroad opportunities</option>
-            <option value="English or Arabic language" {{#if user.supportNeeded_language}}selected{{/if}}>English or Arabic language</option>
-            <option value="Computer skills" {{#if user.supportNeeded_computer}}selected{{/if}}>Computer skills</option>
-            <option value="Online earning opportunities" {{#if user.supportNeeded_online}}selected{{/if}}>Online earning opportunities</option>
-            <option value="Other" {{#if user.supportNeeded_other}}selected{{/if}}>Other</option>
-          </select>
         </div>
 
         <!-- ── FAMILY DETAILS ── -->
@@ -2018,9 +2033,9 @@
 
       <form method="POST" action="/users/login">
         <div class="mb-4">
-          <label class="form-label-custom" for="loginPassword">Password</label>
+          <label class="form-label-custom" for="loginPassword">Admission Number</label>
           <input type="password" name="password" id="loginPassword" class="form-control form-control-lg"
-            placeholder="Enter your admission no. / password" required autocomplete="current-password">
+            placeholder="Enter your admission no..." required autocomplete="current-password">
         </div>
         <div class="d-grid">
           <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-3 py-2 shadow">
