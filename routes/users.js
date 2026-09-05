@@ -511,11 +511,13 @@ function requireAuth(req, res, next) {
 /* Fully clear the session document in MongoDB + the browser cookie */
 function clearSession(req, res, done) {
   if (!req.session) {
+    res.clearCookie('hamd.user.sid', { path: '/' });
     res.clearCookie('hamd.sid', { path: '/' });
     return done();
   }
   req.session.destroy(function (err) {
     if (err) console.error('Session destroy failed:', err.message);
+    res.clearCookie('hamd.user.sid', { path: '/' });
     res.clearCookie('hamd.sid', { path: '/' });
     return done();
   });

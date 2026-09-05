@@ -637,6 +637,8 @@ router.get('/contributions/image/:memberId/:paymentId', requireLeader, async fun
 /* POST /leaders/logout – destroy the session document + clear the cookie */
 router.post('/logout', function (req, res) {
   if (!req.session) {
+    res.clearCookie('hamd.leader.sid', { path: '/' });
+    res.clearCookie('hamd.sid', { path: '/' });
     return res.json({ success: true });
   }
   req.session.destroy(function (error) {
@@ -644,6 +646,7 @@ router.post('/logout', function (req, res) {
       console.error('Leader logout failed:', error.message);
       return res.status(500).json({ success: false, message: 'Could not sign you out. Please try again.' });
     }
+    res.clearCookie('hamd.leader.sid', { path: '/' });
     res.clearCookie('hamd.sid', { path: '/' });
     return res.json({ success: true });
   });

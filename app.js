@@ -44,6 +44,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 /* ================================================================== */
 /* SESSIONS  –  stored in MongoDB "SESSIONS" collection, 7 day validity */
+/* Multi-role isolation: dedicated cookie name per portal so that     */
+/* Admin, Finance, Leader, and User can stay logged in simultaneously */
+/* on the same system without cookie collisions or session overrides. */
 /* ================================================================== */
 
 var SEVEN_DAYS_MS  = 7 * 24 * 60 * 60 * 1000;
@@ -61,36 +64,18 @@ if (!process.env.SESSION_SECRET) {
   console.warn('SESSION_SECRET is not set — using the development fallback. Set it in .env so logins survive restarts.');
 }
 
-var sessionConfig = {
-  name: 'hamd.sid',
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  rolling: true,           // every request pushes the expiry 7 more days out
-  unset: 'destroy',
-  cookie: {
-    maxAge: SEVEN_DAYS_MS,
-    expires: new Date(Date.now() + SEVEN_DAYS_MS), // never a browser-session cookie
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: isProduction,
-    path: '/'
-  }
-};
-
 /* Persist sessions in MongoDB. Without a store express-session falls back to
    MemoryStore, which loses every login on restart / serverless cold start —
    the main reason sessions appeared to expire early. */
 var SESSION_MONGO_URI =
   process.env.MONGODB_URI || process.env.MONGODB_ATLAS || process.env.MONGODB_LOCAL;
 
+var sharedMongoStore = null;
 if (SESSION_MONGO_URI) {
-  sessionConfig.store = MongoStore.create({
+  sharedMongoStore = MongoStore.create({
     mongoUrl: SESSION_MONGO_URI,
     collectionName: 'SESSIONS',
     ttl: SEVEN_DAYS_SEC,
-    /* Keep the stored expiry in step with the rolling cookie. With the old
-       24 hour value the DB document could expire before the cookie did. */
     touchAfter: 0,
     autoRemove: 'native',
     stringify: false,
@@ -99,38 +84,62 @@ if (SESSION_MONGO_URI) {
   console.warn('No MongoDB URI configured — sessions use in-memory storage and will NOT survive a restart.');
 }
 
-app.use(session(sessionConfig));
+function createSessionMiddleware(cookieName) {
+  var sessionConfig = {
+    name: cookieName,
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,           // every request pushes the expiry 7 more days out
+    unset: 'destroy',
+    cookie: {
+      maxAge: SEVEN_DAYS_MS,
+      expires: new Date(Date.now() + SEVEN_DAYS_MS), // never a browser-session cookie
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProduction,
+      path: '/'
+    }
+  };
 
-/* Refresh both the cookie window and the stored session document on every
-   request from a logged-in user, so an active user is never signed out
-   before a full 7 idle days have passed. */
-app.use(function (req, res, next) {
+  if (sharedMongoStore) {
+    sessionConfig.store = sharedMongoStore;
+  }
+
+  return session(sessionConfig);
+}
+
+var adminSession   = createSessionMiddleware('hamd.admin.sid');
+var financeSession = createSessionMiddleware('hamd.finance.sid');
+var leaderSession  = createSessionMiddleware('hamd.leader.sid');
+var userSession    = createSessionMiddleware('hamd.user.sid');
+
+function touchSession(req, res, next) {
   if (req.session && (req.session.memberId || req.session.adminId || req.session.leaderId || req.session.financeId)) {
     req.session.cookie.maxAge = SEVEN_DAYS_MS;
     req.session.cookie.expires = new Date(Date.now() + SEVEN_DAYS_MS);
-    req.session.touch();
+    if (typeof req.session.touch === 'function') {
+      req.session.touch();
+    }
   }
   next();
-});
-
-
-// Make login state available to every view
-app.use(function (req, res, next) {
-  res.locals.isLoggedIn = !!(req.session && req.session.memberId);
-  res.locals.memberName = (req.session && req.session.memberName) || null;
-  next();
-});
-
-// Home page + its public image endpoints — see routes/home.js
-app.use('/', homeRouter);
+}
 
 // Public, read-only image endpoints (not behind admin auth) — see routes/media.js
 app.use('/media', mediaRouter);
 
-app.use('/admin', adminRouter);
-app.use('/users', usersRouter);
-app.use('/leaders', leadersRouter);
-app.use('/finance', financeRouter);
+// Role-specific portals with isolated session cookies
+app.use('/admin', adminSession, touchSession, adminRouter);
+app.use('/finance', financeSession, touchSession, financeRouter);
+app.use('/leaders', leaderSession, touchSession, leadersRouter);
+app.use('/users', userSession, touchSession, usersRouter);
+
+// Home page + its public image endpoints — see routes/home.js
+app.use('/', userSession, touchSession, function (req, res, next) {
+  res.locals.isLoggedIn = !!(req.session && req.session.memberId);
+  res.locals.memberName = (req.session && req.session.memberName) || null;
+  next();
+}, homeRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

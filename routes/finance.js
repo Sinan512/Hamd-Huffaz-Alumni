@@ -414,12 +414,15 @@ router.get('/session', function (req, res) {
 /* ================================================================== */
 function handleLogout(req, res) {
   if (!req.session) {
+    res.clearCookie('hamd.finance.sid', { path: '/' });
+    res.clearCookie('hamd.sid', { path: '/' });
     if (wantsJson(req)) return res.json({ success: true });
     return res.redirect('/finance');
   }
 
   req.session.destroy(function (err) {
     if (err) console.error('Finance logout error:', err.message);
+    res.clearCookie('hamd.finance.sid', { path: '/' });
     res.clearCookie('hamd.sid', { path: '/' });
     if (wantsJson(req)) return res.json({ success: true, redirect: '/finance' });
     return res.redirect('/finance');

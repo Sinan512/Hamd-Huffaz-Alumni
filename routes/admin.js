@@ -193,9 +193,14 @@ router.post('/login', async function (req, res) {
 /* POST|GET /admin/logout – destroy the SESSIONS document + cookie     */
 /* ------------------------------------------------------------------ */
 function doLogout(req, res) {
-  if (!req.session) return res.redirect('/admin/login');
+  if (!req.session) {
+    res.clearCookie('hamd.admin.sid', { path: '/' });
+    res.clearCookie('hamd.sid', { path: '/' });
+    return res.redirect('/admin/login');
+  }
   return req.session.destroy(function (err) {
     if (err) console.error('Admin logout failed:', err.message);
+    res.clearCookie('hamd.admin.sid', { path: '/' });
     res.clearCookie('hamd.sid', { path: '/' });
     return res.redirect('/admin/login');
   });
