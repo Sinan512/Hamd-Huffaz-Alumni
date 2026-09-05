@@ -1021,7 +1021,7 @@ function isProfileCompleted(doc) {
 
 function profileCompletionPercent(doc) {
   let PROFILE_DETAIL_FIELD = PROFILE_DETAIL_FIELDS
-  const fieldsToDelete=['skills','languages','orgRoles','familyCount','earningMembers','hasDependents','dependentsWho','parentsDeceased','chronicIll','chronicIllDetails','fatherName','motherName','ownHouse','married','childrenCount','registeredEvents','workLocation','jobRole','college','course','collegePlace','workInstitution','supportNeeded']
+  const fieldsToDelete=['admYear','skills','languages','orgRoles','familyCount','earningMembers','hasDependents','dependentsWho','parentsDeceased','chronicIll','chronicIllDetails','fatherName','motherName','ownHouse','married','childrenCount','registeredEvents','workLocation','jobRole','college','course','collegePlace','workInstitution','supportNeeded']
   PROFILE_DETAIL_FIELD = PROFILE_DETAIL_FIELD.filter(item=>!fieldsToDelete.includes(item));
   
   var completedFields = PROFILE_DETAIL_FIELD.filter(function (key) {
