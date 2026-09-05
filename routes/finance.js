@@ -98,6 +98,8 @@ async function getAllContributionsData() {
       var memberIdStr = String(doc.memberId);
       var member = memberMap[memberIdStr] || { name: 'Unknown Member', admissionNumber: '', batch: '' };
 
+      var memberGroups = [];
+
       (doc.membersPayments || []).forEach(function (item) {
         var monthItems = [];
         if (typeof item.month === 'number' && typeof item.year === 'number') {
@@ -115,34 +117,104 @@ async function getAllContributionsData() {
           } else if (itemStatus === 'Pending' && paidMonthSet[mKey] !== 'Approved') {
             paidMonthSet[mKey] = 'Pending';
           }
+        });
 
+        var itemBuf = null;
+        if (item.screenShot && item.screenShot.data) {
+          if (Buffer.isBuffer(item.screenShot.data)) {
+            itemBuf = item.screenShot.data;
+          } else if (item.screenShot.data.buffer) {
+            itemBuf = Buffer.from(item.screenShot.data.buffer);
+          } else {
+            itemBuf = Buffer.from(item.screenShot.data);
+          }
+        }
+
+        var matchedGroup = null;
+        if (itemBuf && itemBuf.length > 0) {
+          matchedGroup = memberGroups.find(function (grp) {
+            return grp.status === (item.status || 'Pending') &&
+                   grp.screenShotBuffer &&
+                   Buffer.compare(itemBuf, grp.screenShotBuffer) === 0;
+          });
+        }
+
+        if (matchedGroup) {
+          matchedGroup.paymentIds.push(String(item._id));
+          monthItems.forEach(function (mItem) {
+            matchedGroup.months.push({
+              month: mItem.month,
+              year: mItem.year,
+              label: (MONTH_NAMES[mItem.month - 1] || '') + ' ' + mItem.year
+            });
+            if (mItem.year > matchedGroup.maxYear || (mItem.year === matchedGroup.maxYear && mItem.month > matchedGroup.maxMonth)) {
+              matchedGroup.maxYear = mItem.year;
+              matchedGroup.maxMonth = mItem.month;
+            }
+          });
+          matchedGroup.amount += (item.amount || 30);
+        } else {
           var dSub = item.submittedAt ? new Date(item.submittedAt) : null;
           var dApp = item.approvedAt ? new Date(item.approvedAt) : null;
+          var initMonths = monthItems.map(function (mItem) {
+            return {
+              month: mItem.month,
+              year: mItem.year,
+              label: (MONTH_NAMES[mItem.month - 1] || '') + ' ' + mItem.year
+            };
+          });
 
-          submittedList.push({
+          var maxYear = initMonths.length > 0 ? initMonths[0].year : 0;
+          var maxMonth = initMonths.length > 0 ? initMonths[0].month : 0;
+          initMonths.forEach(function (im) {
+            if (im.year > maxYear || (im.year === maxYear && im.month > maxMonth)) {
+              maxYear = im.year;
+              maxMonth = im.month;
+            }
+          });
+
+          var itemStatus = item.status || 'Pending';
+          var newGrp = {
+            paymentIds: [String(item._id)],
             paymentId: String(item._id),
             memberId: memberIdStr,
             memberName: member.name || 'Unnamed',
             admissionNumber: member.admissionNumber || '',
             batch: member.batch || '',
-            month: mItem.month,
-            year: mItem.year,
-            monthLabel: (MONTH_NAMES[mItem.month - 1] || '') + ' ' + mItem.year,
+            months: initMonths,
             amount: item.amount || 30,
+            unitAmount: item.amount || 30,
             status: itemStatus,
             badgeColor: itemStatus === 'Approved' ? 'bg-success' : (itemStatus === 'Pending' ? 'bg-warning text-dark' : 'bg-danger'),
-            hasScreenshot: !!(item.screenShot && item.screenShot.contentType),
+            hasScreenshot: !!(item.screenShot && item.screenShot.contentType && itemBuf),
+            screenShotBuffer: itemBuf,
             approvedBy: item.approvedBy || '',
             approvedAtFormatted: dApp ? dApp.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
             rejectionReason: item.rejectionReason || '',
-            submittedAtFormatted: dSub ? dSub.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
-          });
+            submittedAtFormatted: dSub ? dSub.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+            submittedAtTime: dSub ? dSub.getTime() : 0,
+            maxYear: maxYear,
+            maxMonth: maxMonth
+          };
+          memberGroups.push(newGrp);
+        }
+      });
+
+      memberGroups.forEach(function (grp) {
+        delete grp.screenShotBuffer;
+        grp.months.sort(function (a, b) {
+          return a.year - b.year || a.month - b.month;
         });
+        grp.monthCount = grp.months.length;
+        grp.monthLabel = grp.months.map(function (m) { return m.label; }).join(', ');
+        grp.year = grp.maxYear;
+        grp.month = grp.maxMonth;
+        submittedList.push(grp);
       });
     });
 
     submittedList.sort(function (a, b) {
-      return b.year - a.year || b.month - a.month;
+      return (b.year - a.year) || (b.month - a.month) || (b.submittedAtTime - a.submittedAtTime);
     });
 
     var now = new Date();
@@ -475,8 +547,8 @@ router.get('/contributions/image/:memberId/:paymentId', requireFinance, async fu
 router.post('/contributions/:memberId/:paymentId/approve', requireFinance, async function (req, res) {
   await connectDB();
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
-      return res.status(400).json({ success: false, message: 'Invalid member or payment ID.' });
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId)) {
+      return res.status(400).json({ success: false, message: 'Invalid member ID.' });
     }
 
     var doc = await PaymentStatus.findOne({ memberId: req.params.memberId });
@@ -484,20 +556,33 @@ router.post('/contributions/:memberId/:paymentId/approve', requireFinance, async
       return res.status(404).json({ success: false, message: 'Payment record not found.' });
     }
 
-    var targetId = String(req.params.paymentId);
-    var item = doc.membersPayments.id(targetId);
-    if (!item) {
-      return res.status(404).json({ success: false, message: 'Payment submission item not found.' });
+    var paymentIds = [];
+    if (Array.isArray(req.body.paymentIds) && req.body.paymentIds.length > 0) {
+      paymentIds = req.body.paymentIds.map(String);
+    } else if (req.params.paymentId && mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      paymentIds = [String(req.params.paymentId)];
     }
 
-    item.status = 'Approved';
-    item.approvedBy = req.session.financeUser || 'Finance Officer';
-    item.approvedAt = new Date();
-    item.rejectionReason = '';
+    var updatedCount = 0;
+    var now = new Date();
+
+    doc.membersPayments.forEach(function (item) {
+      if (paymentIds.includes(String(item._id))) {
+        item.status = 'Approved';
+        item.approvedBy = req.session.financeUser || 'Finance Officer';
+        item.approvedAt = now;
+        item.rejectionReason = '';
+        updatedCount++;
+      }
+    });
+
+    if (updatedCount === 0) {
+      return res.status(404).json({ success: false, message: 'Payment submission item(s) not found.' });
+    }
 
     await doc.save();
 
-    return res.json({ success: true, message: 'Payment approved successfully.' });
+    return res.json({ success: true, message: 'Payment approved successfully (' + updatedCount + ' month' + (updatedCount > 1 ? 's' : '') + ').' });
   } catch (error) {
     console.error('Finance approve payment error:', error.message);
     return res.status(500).json({ success: false, message: 'Could not approve payment.' });
@@ -510,8 +595,8 @@ router.post('/contributions/:memberId/:paymentId/approve', requireFinance, async
 router.post('/contributions/:memberId/:paymentId/reject', requireFinance, async function (req, res) {
   await connectDB();
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.memberId) || !mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
-      return res.status(400).json({ success: false, message: 'Invalid member or payment ID.' });
+    if (!mongoose.Types.ObjectId.isValid(req.params.memberId)) {
+      return res.status(400).json({ success: false, message: 'Invalid member ID.' });
     }
 
     var option = (req.body.reasonOption || '').trim();
@@ -524,20 +609,33 @@ router.post('/contributions/:memberId/:paymentId/reject', requireFinance, async 
       return res.status(404).json({ success: false, message: 'Payment record not found.' });
     }
 
-    var targetId = String(req.params.paymentId);
-    var item = doc.membersPayments.id(targetId);
-    if (!item) {
-      return res.status(404).json({ success: false, message: 'Payment submission item not found.' });
+    var paymentIds = [];
+    if (Array.isArray(req.body.paymentIds) && req.body.paymentIds.length > 0) {
+      paymentIds = req.body.paymentIds.map(String);
+    } else if (req.params.paymentId && mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+      paymentIds = [String(req.params.paymentId)];
     }
 
-    item.status = 'Rejected';
-    item.rejectionReason = finalReason;
-    item.approvedBy = req.session.financeUser || 'Finance Officer';
-    item.approvedAt = new Date();
+    var updatedCount = 0;
+    var now = new Date();
+
+    doc.membersPayments.forEach(function (item) {
+      if (paymentIds.includes(String(item._id))) {
+        item.status = 'Rejected';
+        item.rejectionReason = finalReason;
+        item.approvedBy = req.session.financeUser || 'Finance Officer';
+        item.approvedAt = now;
+        updatedCount++;
+      }
+    });
+
+    if (updatedCount === 0) {
+      return res.status(404).json({ success: false, message: 'Payment submission item(s) not found.' });
+    }
 
     await doc.save();
 
-    return res.json({ success: true, message: 'Payment rejected.' });
+    return res.json({ success: true, message: 'Payment rejected (' + updatedCount + ' month' + (updatedCount > 1 ? 's' : '') + ').' });
   } catch (error) {
     console.error('Finance reject payment error:', error.message);
     return res.status(500).json({ success: false, message: 'Could not reject payment.' });

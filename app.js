@@ -23,7 +23,7 @@ var app = express();
 // Connect to MongoDB (optional — home page works without it)
 if (process.env.MONGODB_ATLAS) {
   process.env.MONGODB_URI=
-  process.env.USE_LOCAL_DB === "false"
+  process.env.USE_ATLAS_DB === "false"
   ? process.env.MONGODB_LOCAL
   : process.env.MONGODB_ATLAS;
   connectDB();

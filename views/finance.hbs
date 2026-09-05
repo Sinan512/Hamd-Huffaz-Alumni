@@ -808,6 +808,7 @@
           <form id="rejectContributionForm">
             <input type="hidden" id="rejectMemberId" value="">
             <input type="hidden" id="rejectPaymentId" value="">
+            <input type="hidden" id="rejectPaymentIds" value="">
 
             <div class="mb-3">
               <label class="form-label fw-bold">Select Rejection Reason:</label>
@@ -1146,6 +1147,24 @@
             var statusIcon = item.status === 'Approved' ? 'bi-check-circle-fill' : (item.status === 'Pending' ? 'bi-hourglass-split' : 'bi-x-circle-fill');
             var statusBadge = '<span class="badge-status ' + statusBadgeClass + '"><i class="bi ' + statusIcon + '"></i>' + escapeHtml(item.status) + '</span>';
 
+            var monthBadges = '';
+            if (item.months && item.months.length > 1) {
+              monthBadges = '<div class="d-flex flex-wrap gap-1 align-items-center">' +
+                item.months.map(function (m) {
+                  return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 11px;">' + escapeHtml(m.label) + '</span>';
+                }).join('') +
+              '</div>';
+            } else {
+              monthBadges = '<span class="fw-bold text-primary">' + escapeHtml(item.monthLabel) + '</span>';
+            }
+
+            var amountHtml = '';
+            if (item.monthCount && item.monthCount > 1) {
+              amountHtml = '<div><div class="fw-bold fs-6">₹' + item.amount + '</div><span class="badge text-muted border small" style="font-size: 11px;">' + item.monthCount + ' mos (₹' + item.unitAmount + '/mo)</span></div>';
+            } else {
+              amountHtml = '<span class="fw-bold">₹' + item.amount + '</span>';
+            }
+
             var imgHtml = item.hasScreenshot
               ? '<button type="button" class="btn btn-sm btn-outline-primary rounded-2 view-screenshot-btn" data-img="/finance/contributions/image/' + item.memberId + '/' + item.paymentId + '" data-name="' + escapeHtml(item.memberName) + '"><i class="bi bi-image me-1"></i>View Receipt</button>'
               : '<span class="text-muted small">No receipt</span>';
@@ -1157,11 +1176,15 @@
               detailsHtml += '<div class="small text-danger"><i class="bi bi-info-circle me-1"></i>' + escapeHtml(item.rejectionReason || 'Rejected') + '</div>';
             }
 
+            var paymentIdsJson = escapeHtml(JSON.stringify(item.paymentIds || [item.paymentId]));
+            var approveBtnText = (item.monthCount && item.monthCount > 1) ? '<i class="bi bi-check-lg me-1"></i>Approve (' + item.monthCount + ' Mos)' : '<i class="bi bi-check-lg me-1"></i>Approve';
+            var rejectBtnText = (item.monthCount && item.monthCount > 1) ? '<i class="bi bi-x-lg me-1"></i>Reject (' + item.monthCount + ' Mos)' : '<i class="bi bi-x-lg me-1"></i>Reject';
+
             var actionsHtml = '';
             if (item.status === 'Pending') {
               actionsHtml = '<div class="btn-group btn-group-sm shadow-sm">' +
-                '<button type="button" class="btn-action-approve approve-btn" data-member="' + item.memberId + '" data-payment="' + item.paymentId + '"><i class="bi bi-check-lg me-1"></i>Approve</button>' +
-                '<button type="button" class="btn-action-reject reject-btn" data-member="' + item.memberId + '" data-payment="' + item.paymentId + '"><i class="bi bi-x-lg me-1"></i>Reject</button>' +
+                '<button type="button" class="btn-action-approve approve-btn" data-member="' + item.memberId + '" data-payment="' + item.paymentId + '" data-payment-ids="' + paymentIdsJson + '">' + approveBtnText + '</button>' +
+                '<button type="button" class="btn-action-reject reject-btn" data-member="' + item.memberId + '" data-payment="' + item.paymentId + '" data-payment-ids="' + paymentIdsJson + '">' + rejectBtnText + '</button>' +
               '</div>';
             } else {
               actionsHtml = '<span class="small text-muted"><i class="bi bi-check2-all me-1"></i>Processed</span>';
@@ -1170,8 +1193,8 @@
             return '<tr>' +
               '<td><div class="fw-bold">' + escapeHtml(item.memberName) + '</div></td>' +
               '<td><span class="badge bg-secondary-subtle text-secondary">Batch ' + escapeHtml(item.batch) + '</span> <small class="text-muted ms-1">' + escapeHtml(item.admissionNumber) + '</small></td>' +
-              '<td><span class="fw-bold text-primary">' + escapeHtml(item.monthLabel) + '</span></td>' +
-              '<td><span class="fw-bold">₹' + item.amount + '</span></td>' +
+              '<td>' + monthBadges + '</td>' +
+              '<td>' + amountHtml + '</td>' +
               '<td>' + imgHtml + '</td>' +
               '<td>' + statusBadge + '</td>' +
               '<td>' + detailsHtml + '</td>' +
@@ -1238,12 +1261,22 @@
           if (appBtn) {
             var memberId = appBtn.getAttribute('data-member');
             var paymentId = appBtn.getAttribute('data-payment');
-            if (!confirm('Approve this payment contribution?')) return;
+            var paymentIdsRaw = appBtn.getAttribute('data-payment-ids');
+            var paymentIds = [];
+            try { paymentIds = JSON.parse(paymentIdsRaw || '[]'); } catch (e) { paymentIds = [paymentId]; }
+            if (!paymentIds.length) paymentIds = [paymentId];
+
+            var confirmMsg = paymentIds.length > 1
+              ? 'Approve all ' + paymentIds.length + ' monthly contributions submitted with this screenshot?'
+              : 'Approve this payment contribution?';
+
+            if (!confirm(confirmMsg)) return;
             appBtn.disabled = true;
 
             fetch('/finance/contributions/' + memberId + '/' + paymentId + '/approve', {
               method: 'POST',
-              headers: { 'Accept': 'application/json' }
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({ paymentIds: paymentIds })
             })
               .then(function (res) { return res.json(); })
               .then(function (resData) {
@@ -1264,9 +1297,11 @@
           if (rejBtn) {
             var memberId = rejBtn.getAttribute('data-member');
             var paymentId = rejBtn.getAttribute('data-payment');
+            var paymentIdsRaw = rejBtn.getAttribute('data-payment-ids');
 
             document.getElementById('rejectMemberId').value = memberId;
             document.getElementById('rejectPaymentId').value = paymentId;
+            document.getElementById('rejectPaymentIds').value = paymentIdsRaw || JSON.stringify([paymentId]);
 
             var rForm = document.getElementById('rejectContributionForm');
             if (rForm) rForm.reset();
@@ -1304,6 +1339,10 @@
           e.preventDefault();
           var memberId = document.getElementById('rejectMemberId').value;
           var paymentId = document.getElementById('rejectPaymentId').value;
+          var paymentIdsRaw = document.getElementById('rejectPaymentIds').value;
+          var paymentIds = [];
+          try { paymentIds = JSON.parse(paymentIdsRaw || '[]'); } catch (e) { paymentIds = [paymentId]; }
+          if (!paymentIds.length) paymentIds = [paymentId];
 
           var selectedRadio = document.querySelector('input[name="rejectReasonOption"]:checked');
           var reasonOption = selectedRadio ? selectedRadio.value : 'screenshot not visible perfectly';
@@ -1320,7 +1359,7 @@
           fetch('/finance/contributions/' + memberId + '/' + paymentId + '/reject', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ reasonOption: reasonOption, customReason: customReason })
+            body: JSON.stringify({ reasonOption: reasonOption, customReason: customReason, paymentIds: paymentIds })
           })
             .then(function (res) { return res.json(); })
             .then(function (resData) {
@@ -1376,7 +1415,8 @@
                 'Admission No': i.admissionNumber,
                 'Batch': i.batch,
                 'Month & Year': i.monthLabel,
-                'Amount (INR)': i.amount,
+                'Months Count': i.monthCount || 1,
+                'Total Amount (INR)': i.amount,
                 'Status': i.status,
                 'Submitted At': i.submittedAtFormatted,
                 'Approved By': i.approvedBy,
