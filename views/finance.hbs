@@ -1098,7 +1098,8 @@
 
       function renderTable() {
         if (!tbody) return;
-        var q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        var q = (searchInput ? searchInput.value : '').split(',').map(function(term){return term.trim().toLowerCase();})
+        .filter(function(term){return term.length>0;});
         var st = statusFilter ? statusFilter.value : 'ALL';
 
         var list = [];
@@ -1117,7 +1118,9 @@
             var batch = (item.batch || '').toLowerCase();
             var adm = (item.admissionNumber || '').toLowerCase();
             var month = (item.monthLabel || '').toLowerCase();
-            return name.includes(q) || batch.includes(q) || adm.includes(q) || month.includes(q);
+            return q.every(function(term){
+            return name.includes(term) || batch.includes(term) || adm.includes(term) || month.includes(term);
+            });
           });
         }
 

@@ -1009,18 +1009,28 @@ var PROFILE_DETAIL_FIELDS = [
 function isProfileCompleted(doc) {
   if (doc.profileCompleted) return true;
   /* Backward compatibility for profiles completed before the flag existed. */
-  return PROFILE_DETAIL_FIELDS.every(function (key) {
+  let PROFILE_DETAIL_FIELD = PROFILE_DETAIL_FIELDS
+  const fieldsToDelete=['admYear','skills','languages','orgRoles','familyCount','earningMembers','hasDependents','dependentsWho','parentsDeceased','chronicIll','chronicIllDetails','fatherName','motherName','ownHouse','married','childrenCount','registeredEvents','workLocation','jobRole','college','course','collegePlace','workInstitution','supportNeeded']
+  PROFILE_DETAIL_FIELD = PROFILE_DETAIL_FIELD.filter(item=>!fieldsToDelete.includes(item));
+
+  return PROFILE_DETAIL_FIELD.every(function (key) {
     var value = doc[key];
     return value !== undefined && value !== null && String(value).trim() !== '';
   });
 }
 
 function profileCompletionPercent(doc) {
-  var completedFields = PROFILE_DETAIL_FIELDS.filter(function (key) {
+  let PROFILE_DETAIL_FIELD = PROFILE_DETAIL_FIELDS
+  const fieldsToDelete=['skills','languages','orgRoles','familyCount','earningMembers','hasDependents','dependentsWho','parentsDeceased','chronicIll','chronicIllDetails','fatherName','motherName','ownHouse','married','childrenCount','registeredEvents','workLocation','jobRole','college','course','collegePlace','workInstitution','supportNeeded']
+  PROFILE_DETAIL_FIELD = PROFILE_DETAIL_FIELD.filter(item=>!fieldsToDelete.includes(item));
+  
+  var completedFields = PROFILE_DETAIL_FIELD.filter(function (key) {
     var value = doc[key];
     return value !== undefined && value !== null && String(value).trim() !== '';
   }).length;
-  return Math.round((completedFields / PROFILE_DETAIL_FIELDS.length) * 100);
+  console.log(PROFILE_DETAIL_FIELD);
+  
+  return Math.round((completedFields / PROFILE_DETAIL_FIELD.length) * 100);
 }
 
 function serialiseMember(doc) {
